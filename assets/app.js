@@ -86,10 +86,8 @@ function applyTheme(theme){
   document.body.classList.toggle('has-cyber-bg', theme === 'cyber');
   const cp = $('#cyberPad');
   if(cp) cp.classList.toggle('hidden', theme !== 'cyber');
-  // 古风国潮背景图类 + 小二人物
+  // 古风国潮背景图类
   document.body.classList.toggle('has-guofeng-bg', theme === 'guofeng');
-  const gh = $('#guofengHost');
-  if(gh) gh.classList.toggle('hidden', theme !== 'guofeng');
   $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme === theme));
   updateMechaNav();
 }

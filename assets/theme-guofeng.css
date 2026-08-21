@@ -1,8 +1,8 @@
 /* =========================================================
  * 古风国潮主题 · 木质卷轴 + 牌匾 + 令牌导航
  * 视觉：深红木纹、宣纸卷轴、金漆牌匾、铜币点缀
- * 依赖：assets/img/skins/guofeng-bg.jpg（可选背景）
- *        assets/img/skins/guofeng-host.png（右下角门童/小二，透明底，可选）
+ * 依赖：assets/img/skins/guofeng-bg.jpg（整合背景图：屋檐+卷轴+小童）
+ *        assets/img/skins/guofeng-title.png（顶部牌匾条，透明底）
  * ========================================================= */
 
 [data-theme="guofeng"] {
@@ -314,34 +314,34 @@
   box-shadow: var(--gf-shadow);
 }
 
-/* 右下角门童/小二人物装饰 */
-.guofeng-host {
-  position: fixed;
-  right: 8px;
-  bottom: 92px;
-  width: 110px;
-  height: 150px;
-  background: url('img/skins/guofeng-host.png') right bottom / contain no-repeat;
-  z-index: 40;
-  pointer-events: none;
-}
-
 /* =========================================================
- * 背景图精简版（无牌匾）布局适配
- * 标题用代码绘制的牌匾，文字绝对可控居中；
- * 主内容落入背景图的宣纸卷轴区；令牌导航贴底部木槽。
+ * 整合背景图布局适配
+ * 背景图已含屋檐、牌匾空位、宣纸卷轴、小童、灯笼、铜钱；
+ * header 使用独立牌匾条图片，标题文字居中；
+ * 主内容直接落在背景图白色宣纸上。
  * ========================================================= */
 [data-theme="guofeng"] body.has-guofeng-bg .stepper { display: none; }
 
-/* 顶部代码牌匾：保持默认 header 样式，微调与背景图屋檐的间距 */
+/* 顶部图片牌匾：固定覆盖在背景图牌匾空位上（fixed 不随滚动移动） */
 [data-theme="guofeng"] body.has-guofeng-bg header {
-  position: relative;
-  z-index: 30;
-  margin-top: 14px;
-  margin-bottom: 0;
-  height: 96px;
+  position: fixed;
+  top: 248px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  height: 150px;
+  margin: 0; padding: 0;
+  background: transparent url('img/skins/guofeng-title.png') center / contain no-repeat;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  z-index: 30;
 }
+[data-theme="guofeng"] body.has-guofeng-bg header::before,
+[data-theme="guofeng"] body.has-guofeng-bg header::after { display: none; }
 [data-theme="guofeng"] body.has-guofeng-bg header .brand {
   flex: 1;
   width: 100%;
@@ -350,38 +350,68 @@
   justify-content: center;
   gap: 0;
 }
-[data-theme="guofeng"] body.has-guofeng-bg header .logo { font-size: 22px; line-height: 1; }
+[data-theme="guofeng"] body.has-guofeng-bg header .logo { display: none; }
 [data-theme="guofeng"] body.has-guofeng-bg header .title {
   display: block;
   width: 100%;
   text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.65);
 }
 
-/* 主内容区：透明，避开顶部屋檐与底部木槽，落入卷轴 */
+/* 主内容区：直接落在背景图白色宣纸上 */
 [data-theme="guofeng"] body.has-guofeng-bg #view {
   position: relative;
-  padding: 500px 24px 290px;
+  padding: 480px 34px 360px;
   background: transparent;
 }
 [data-theme="guofeng"] body.has-guofeng-bg #view::before,
 [data-theme="guofeng"] body.has-guofeng-bg #view::after { display: none; }
 
+/* 卡片在宣纸上去掉明显边框，仅留微弱阴影 */
 [data-theme="guofeng"] body.has-guofeng-bg .card {
-  background:
-    linear-gradient(180deg, rgba(247,241,227,0.94) 0%, rgba(244,236,216,0.94) 100%);
-  border: 1px solid rgba(212,168,75,0.4);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 12px 0;
+  color: var(--gf-ink);
 }
 [data-theme="guofeng"] body.has-guofeng-bg .card::before { display: none; }
 
+/* 标题/提示文字直接写在宣纸上 */
+[data-theme="guofeng"] body.has-guofeng-bg h2,
+[data-theme="guofeng"] body.has-guofeng-bg h3 {
+  color: var(--gf-red);
+  border-left: 4px solid var(--gf-gold);
+  padding-left: 10px;
+}
+[data-theme="guofeng"] body.has-guofeng-bg .hint {
+  background: rgba(244,236,216,0.55);
+}
+
+/* 输入框/文本域：融入宣纸 */
 [data-theme="guofeng"] body.has-guofeng-bg textarea,
 [data-theme="guofeng"] body.has-guofeng-bg input,
 [data-theme="guofeng"] body.has-guofeng-bg select {
-  background: rgba(250,246,237,0.95);
+  background: rgba(250,246,237,0.7);
+  border: 1px solid rgba(166,50,50,0.25);
+}
+[data-theme="guofeng"] body.has-guofeng-bg textarea:focus,
+[data-theme="guofeng"] body.has-guofeng-bg input:focus,
+[data-theme="guofeng"] body.has-guofeng-bg select:focus {
+  border-color: var(--gf-red);
+  background: rgba(250,246,237,0.9);
 }
 
-/* 设置按钮保持原位，但加个暗底防被背景图浅色干扰 */
+/* 设置按钮浮于右上角屋檐区 */
 [data-theme="guofeng"] body.has-guofeng-bg #btnSettings {
+  position: fixed;
+  top: 16px;
+  right: 14px;
+  z-index: 60;
   background: rgba(74,44,31,0.9);
   border: 1px solid rgba(212,168,75,0.5);
   border-radius: 12px;
@@ -401,12 +431,4 @@
   background:
     linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
   border: 1px solid rgba(212,168,75,0.45);
-}
-
-/* 门童：贴右侧，避开底部木槽 */
-[data-theme="guofeng"] body.has-guofeng-bg .guofeng-host {
-  right: 0;
-  bottom: 280px;
-  width: 130px;
-  height: 220px;
 }
