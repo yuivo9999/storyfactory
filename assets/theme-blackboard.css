@@ -1,0 +1,83 @@
+/* =========================================================
+ * 主题：3D 黑板（粉笔教室）· 仅 [data-theme="blackboard"] 下生效
+ * 3D 背景由 assets/blackboard3d.js（three.js Toon 光影）注入到 #bg3d
+ * 本文件负责卡片/文字的粉笔黑板质感 + 步骤切换级联动画
+ * ========================================================= */
+[data-theme="blackboard"]{
+  --bg:#10151c; --panel:rgba(19,53,42,.92); --panel2:rgba(12,36,27,.92);
+  --line:rgba(255,255,255,.35); --txt:#eafaf2; --sub:#9be8c8; --muted:#6f9c86;
+  --accent:#ffd27f; --accent2:#ffd27f; --ok:#7fe3b0; --warn:#ffd27f;
+  --chalk:#f3fbf6;
+}
+[data-theme="blackboard"] body{
+  background:#10151c;
+  font-family:"KaiTi","STKaiti","PingFang SC",serif;
+  color:var(--chalk);
+}
+/* 3D 背景容器（blackboard3d.js 注入 canvas） */
+[data-theme="blackboard"] #bg3d{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+}
+[data-theme="blackboard"] #app{ position:relative; z-index:1; }
+[data-theme="blackboard"] .topbar{
+  background:rgba(16,21,28,.55); backdrop-filter:blur(2px); border-bottom:1px solid rgba(255,255,255,.25);
+}
+[data-theme="blackboard"] .topbar .title{ color:var(--chalk); text-shadow:0 2px 6px rgba(0,0,0,.6); }
+[data-theme="blackboard"] .icon-btn{ color:var(--chalk); }
+/* 卡片 = 粉笔黑板（墨绿底 + 粉笔虚线内框 + 木框阴影） */
+[data-theme="blackboard"] .card{
+  background:linear-gradient(180deg,#16392c,#0f2a20);
+  border:10px solid #6e4a2b; border-radius:6px;
+  box-shadow:0 10px 26px rgba(0,0,0,.55), inset 0 0 0 3px rgba(255,255,255,.14);
+  color:var(--chalk);
+  position:relative;
+}
+[data-theme="blackboard"] .card::before{
+  content:""; position:absolute; inset:6px; border:2px dashed rgba(255,255,255,.28); pointer-events:none; border-radius:3px;
+}
+[data-theme="blackboard"] .card h3{ color:#fff; text-shadow:0 1px 0 rgba(0,0,0,.4); }
+[data-theme="blackboard"] .sub{ color:var(--sub); }
+[data-theme="blackboard"] .pill{ background:#0c241b; border:1px solid rgba(255,255,255,.4); color:#ffd27f; }
+[data-theme="blackboard"] .tag-ok{ color:#7fe3b0; border-color:#7fe3b0; }
+[data-theme="blackboard"] .tag-warn{ color:#ffd27f; border-color:#ffd27f; }
+/* 粉笔按钮 */
+[data-theme="blackboard"] .btn{
+  background:#13352a; color:#fff; border:2px solid rgba(255,255,255,.6); border-radius:8px;
+  box-shadow:0 4px 0 #2b1c10; font-weight:700;
+}
+[data-theme="blackboard"] .btn:active{ transform:translateY(3px); box-shadow:0 1px 0 #2b1c10; }
+[data-theme="blackboard"] .btn.primary{ background:#7a4f2a; border-color:#ffd27f; color:#fff; }
+[data-theme="blackboard"] .btn.ghost{ background:transparent; }
+/* 粉笔输入 */
+[data-theme="blackboard"] textarea,
+[data-theme="blackboard"] input,
+[data-theme="blackboard"] select{
+  background:rgba(12,36,27,.85); border:2px solid rgba(255,255,255,.5); color:#fff;
+  border-radius:6px; font-family:"KaiTi","STKaiti",serif;
+}
+[data-theme="blackboard"] .stepper .chip{ border:1px solid rgba(255,255,255,.4); background:#0c241b; color:#9be8c8; }
+[data-theme="blackboard"] .stepper .chip.active{ background:#ffd27f; color:#1a1205; border-color:#ffd27f; }
+[data-theme="blackboard"] .stepper .chip.done{ color:#7fe3b0; border-color:#7fe3b0; }
+[data-theme="blackboard"] .tabbar{ background:rgba(16,21,28,.6); backdrop-filter:blur(2px); border-top:1px solid rgba(255,255,255,.25); }
+[data-theme="blackboard"] .tab{ color:#9be8c8; }
+[data-theme="blackboard"] .tab.active{ color:#ffd27f; }
+[data-theme="blackboard"] .modal-panel{ background:#16392c; border:8px solid #6e4a2b; border-radius:8px; color:var(--chalk); }
+[data-theme="blackboard"] .modal-panel::before{ content:""; position:absolute; inset:5px; border:2px dashed rgba(255,255,255,.25); pointer-events:none; border-radius:4px; }
+[data-theme="blackboard"] .copy{ background:#0c241b; border:1px solid rgba(255,255,255,.5); color:#ffd27f; border-radius:6px; }
+[data-theme="blackboard"] .subcard{ background:rgba(12,36,27,.8); border:1px dashed rgba(255,255,255,.4); border-radius:6px; }
+[data-theme="blackboard"] .shot{ background:linear-gradient(180deg,#16392c,#0f2a20); border:6px solid #6e4a2b; border-radius:6px; box-shadow:0 8px 20px rgba(0,0,0,.5); }
+[data-theme="blackboard"] .shot .no{ color:#ffd27f; }
+[data-theme="blackboard"] .theme-box{ border-top:1px dashed rgba(255,255,255,.4); }
+[data-theme="blackboard"] .hint{ color:#6f9c86; }
+[data-theme="blackboard"] .toast{ font-family:"KaiTi","STKaiti",serif; }
+
+/* 步骤切换级联动画：切到新步骤时，视图从上方“拉下”一块新黑板，旧视图下移露出底部一截 */
+[data-theme="blackboard"] #view{
+  transform-origin:top center;
+  animation:cascadeDrop .42s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes cascadeDrop{
+  0%{ transform:translateY(-26px) scale(.99); opacity:0; filter:blur(1px); }
+  100%{ transform:translateY(0) scale(1); opacity:1; filter:none; }
+}
+[data-theme="blackboard"] .tabbar{ box-shadow:0 -6px 18px rgba(0,0,0,.4); }

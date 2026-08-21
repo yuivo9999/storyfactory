@@ -36,9 +36,10 @@ body{
 .muted{color:var(--muted);font-size:12px}
 .sub{color:var(--sub);font-size:13px}
 
-textarea,input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;font-size:14px;font-family:inherit;resize:vertical}
+textarea,input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;font-size:14px;font-family:inherit;resize:vertical}
 textarea{min-height:90px;line-height:1.6}
-textarea:focus,input:focus{outline:none;border-color:var(--accent2)}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239aa3b2' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent2)}
 label.field{display:block;margin-bottom:12px}
 label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px}
 
@@ -96,6 +97,13 @@ label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px
 .modal-head h3{margin:0;font-size:17px}
 .modal-actions{display:flex;gap:10px;margin-top:6px}
 .modal-actions .btn{flex:1}
+
+/* 主题切换（在设置弹窗里） */
+.theme-box{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px}
+.theme-box h4{margin:0 0 10px;font-size:13px;color:var(--sub);font-weight:600}
+.theme-btns{display:flex;gap:8px;flex-wrap:wrap}
+.theme-btns .btn.theme{flex:1 1 auto;min-width:90px;font-size:13px;padding:10px 8px;background:var(--panel2);border-color:var(--line);text-decoration:none}
+.theme-btns .btn.theme.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* toast */
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:99;max-width:80%;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.4)}

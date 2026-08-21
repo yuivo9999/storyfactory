@@ -55,6 +55,37 @@ function getCfg(){
 }
 function saveCfg(cfg){ localStorage.setItem(KEY_CFG, JSON.stringify(cfg)); }
 
+/* ---------- 主题切换（单页内深色 / 3D 黑板 / 热血 FC） ---------- */
+const THEMES = ['dark','blackboard','retro'];
+let bbLoaded = false;
+function ensureBlackboard(){
+  if(bbLoaded) return Promise.resolve();
+  return new Promise((res)=>{
+    const s = document.createElement('script');
+    s.src = 'assets/blackboard3d.js';
+    s.onload = ()=>{ bbLoaded = true; res(); };
+    s.onerror = ()=>{ res(); }; // 失败也不阻塞，内容仍可用
+    document.head.appendChild(s);
+  });
+}
+function applyTheme(theme){
+  if(THEMES.indexOf(theme) < 0) theme = 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  const c = getCfg(); c.theme = theme; saveCfg(c);
+  if(theme === 'blackboard'){
+    ensureBlackboard().then(()=>{ if(window.Blackboard3D) window.Blackboard3D.start(); });
+  }else if(window.Blackboard3D){
+    window.Blackboard3D.stop();
+  }
+  $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme === theme));
+}
+function restartCascade(){
+  // 3D 黑板主题下，每次切换步骤重放“拉下新黑板”动画
+  if(document.documentElement.getAttribute('data-theme') !== 'blackboard') return;
+  const v = $('#view'); if(!v) return;
+  v.style.animation = 'none'; void v.offsetWidth; v.style.animation = '';
+}
+
 function loadState(){
   try{
     const s = JSON.parse(localStorage.getItem(KEY_STATE));
@@ -72,7 +103,7 @@ async function callDeepSeek(system, user, {temperature=null, signal}={}){
   const base = (cfg.baseUrl || 'https://api.deepseek.com').replace(/\/+$/, '');
   const url = base + '/chat/completions';
   const body = {
-    model: cfg.model || 'deepseek-chat',
+    model: cfg.model || 'deepseek-v4-pro',
     messages: [{role:'system', content: system}, {role:'user', content: user}],
     temperature: (temperature==null ? (cfg.temperature ?? 0.7) : temperature),
     stream: false
@@ -163,6 +194,7 @@ function renderStepper(){
 }
 
 function render(){
+  restartCascade();
   renderStepper();
   $$('.tab').forEach(t=>t.classList.toggle('active', +t.dataset.step===currentStep));
   const v = $('#view');
@@ -518,14 +550,16 @@ function fillCfg(){
   const c = getCfg();
   $('#cfgKey').value = c.apiKey||'';
   $('#cfgBase').value = c.baseUrl||'';
-  $('#cfgModel').value = c.model||'';
+  const ms = $('#cfgModel');
+  ms.value = c.model || 'deepseek-v4-pro';
+  if(!ms.value) ms.value = 'deepseek-v4-pro'; // 兜底旧配置/未知模型
   $('#cfgTemp').value = (c.temperature==null?'':c.temperature);
 }
 function saveSettings(){
   const c = {
     apiKey: $('#cfgKey').value.trim(),
     baseUrl: $('#cfgBase').value.trim() || 'https://api.deepseek.com',
-    model: $('#cfgModel').value.trim() || 'deepseek-chat',
+    model: $('#cfgModel').value.trim() || 'deepseek-v4-pro',
     temperature: parseFloat($('#cfgTemp').value)
   };
   if(isNaN(c.temperature)) c.temperature = 0.7;
@@ -542,7 +576,14 @@ async function testConn(){
     const r = await callDeepSeek('你是测试助手，只回复「ok」。','你好');
     st.className='status ok'; st.textContent='连接成功：'+r.slice(0,20);
   }catch(e){
-    st.className='status err'; st.textContent='连接失败：'+e.message;
+    st.className='status err';
+    let msg = e.message;
+    if(/insufficient balance/i.test(msg)){
+      msg += '（账户余额不足，请去 DeepSeek 控制台充值，不是 Key 填错）';
+    }else if(/not found.*model/i.test(msg)){
+      msg += '（模型名不存在，请从下拉菜单选择官方模型）';
+    }
+    st.textContent='连接失败：'+msg;
   }
 }
 
@@ -551,15 +592,22 @@ async function testConn(){
  * ========================================================= */
 function init(){
   loadState();
+  // 应用已保存主题
+  const c = getCfg();
+  const theme = c.theme || 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  if(theme === 'blackboard'){ ensureBlackboard().then(()=>{ if(window.Blackboard3D) window.Blackboard3D.start(); }); }
+  $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme === theme));
   // 顶栏设置
   $('#btnSettings').onclick = openSettings;
   $$('[data-close]').forEach(b=> b.onclick = closeSettings);
   $('#btnCfgSave').onclick = saveSettings;
   $('#btnCfgTest').onclick = testConn;
+  // 主题按钮
+  $$('.theme-btns .theme').forEach(b=> b.onclick = ()=> applyTheme(b.dataset.theme));
   // 底部导航
   $$('.tab').forEach(t=> t.onclick = ()=>{ currentStep = +t.dataset.step; render(); window.scrollTo(0,0); });
   // 进入时若无 Key，自动弹设置
-  const c = getCfg();
   if(!c.apiKey) setTimeout(openSettings, 300);
   render();
 }
