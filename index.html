@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1115">
+<title>影视前期提示词生成器</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="app">
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🎬</span>
+      <span class="title">影视前期提示词生成器</span>
+    </div>
+    <button id="btnSettings" class="icon-btn" title="设置">⚙️</button>
+  </header>
+
+  <!-- 步骤指示 -->
+  <nav id="stepper" class="stepper"></nav>
+
+  <!-- 主内容 -->
+  <main id="view" class="view"></main>
+
+  <!-- 底部导航 -->
+  <nav class="tabbar">
+    <button class="tab" data-step="1"><span>📖</span>故事</button>
+    <button class="tab" data-step="2"><span>🧑</span>角色</button>
+    <button class="tab" data-step="3"><span>🏞️</span>场景</button>
+    <button class="tab" data-step="4"><span>🎞️</span>分镜</button>
+    <button class="tab" data-step="5"><span>📦</span>导出</button>
+  </nav>
+</div>
+
+<!-- 设置弹窗 -->
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-mask" data-close></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3>DeepSeek 配置</h3>
+      <button class="icon-btn" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span>API Key（仅存本机浏览器，不会上传任何第三方）</span>
+        <input id="cfgKey" type="password" placeholder="sk-..." autocomplete="off">
+      </label>
+      <label class="field">
+        <span>接口地址（默认官方，无需改）</span>
+        <input id="cfgBase" type="text" placeholder="https://api.deepseek.com">
+      </label>
+      <label class="field">
+        <span>模型名</span>
+        <input id="cfgModel" type="text" placeholder="deepseek-chat">
+      </label>
+      <label class="field">
+        <span>温度（0.1 严谨 ~ 1.0 发散，建议 0.7）</span>
+        <input id="cfgTemp" type="number" step="0.1" min="0" max="1" placeholder="0.7">
+      </label>
+      <p class="hint">本工具仅调用 DeepSeek 生成文字与提示词，不出图。图片请在「即梦」用提示词生成。</p>
+      <div class="modal-actions">
+        <button id="btnCfgTest" class="btn ghost">测试连接</button>
+        <button id="btnCfgSave" class="btn primary">保存</button>
+      </div>
+      <p id="cfgStatus" class="status"></p>
+    </div>
+  </div>
+</div>
+
+<!-- 轻提示 -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
