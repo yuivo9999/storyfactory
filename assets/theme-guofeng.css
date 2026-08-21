@@ -317,21 +317,20 @@
 /* =========================================================
  * 整合背景图布局适配
  * 背景图已含屋檐、牌匾空位、宣纸卷轴、小童、灯笼、铜钱；
- * header 使用独立牌匾条图片，标题文字居中；
- * 主内容直接落在背景图白色宣纸上。
+ * header 使用独立牌匾条图片，缩小并置顶；
+ * 其余内容遵循默认古风主题样式。
  * ========================================================= */
 [data-theme="guofeng"] body.has-guofeng-bg .stepper { display: none; }
 
-/* 顶部图片牌匾：固定覆盖在背景图牌匾空位上（fixed 不随滚动移动） */
+/* 顶部图片牌匾：固定置顶，尺寸约为原来的一半（用 calc 居中，避免 transform 影响内部 fixed 按钮的定位） */
 [data-theme="guofeng"] body.has-guofeng-bg header {
   position: fixed;
-  top: 248px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 560px;
-  height: 150px;
+  top: 60px;
+  left: calc(50% - 140px);
+  width: 280px;
+  height: 91px;
   margin: 0; padding: 0;
-  background: transparent url('img/skins/guofeng-title.png') center / contain no-repeat;
+  background: transparent url('img/skins/guofeng-title.png') center / 280px 91px no-repeat;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -362,49 +361,13 @@
   text-shadow: 0 2px 4px rgba(0,0,0,0.65);
 }
 
-/* 主内容区：直接落在背景图白色宣纸上 */
+/* 主内容区：默认主题样式，仅在顶部留出牌匾空间 */
 [data-theme="guofeng"] body.has-guofeng-bg #view {
-  position: relative;
-  padding: 480px 34px 360px;
+  padding: 170px 18px 290px;
   background: transparent;
 }
 [data-theme="guofeng"] body.has-guofeng-bg #view::before,
 [data-theme="guofeng"] body.has-guofeng-bg #view::after { display: none; }
-
-/* 卡片在宣纸上去掉明显边框，仅留微弱阴影 */
-[data-theme="guofeng"] body.has-guofeng-bg .card {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 12px 0;
-  color: var(--gf-ink);
-}
-[data-theme="guofeng"] body.has-guofeng-bg .card::before { display: none; }
-
-/* 标题/提示文字直接写在宣纸上 */
-[data-theme="guofeng"] body.has-guofeng-bg h2,
-[data-theme="guofeng"] body.has-guofeng-bg h3 {
-  color: var(--gf-red);
-  border-left: 4px solid var(--gf-gold);
-  padding-left: 10px;
-}
-[data-theme="guofeng"] body.has-guofeng-bg .hint {
-  background: rgba(244,236,216,0.55);
-}
-
-/* 输入框/文本域：融入宣纸 */
-[data-theme="guofeng"] body.has-guofeng-bg textarea,
-[data-theme="guofeng"] body.has-guofeng-bg input,
-[data-theme="guofeng"] body.has-guofeng-bg select {
-  background: rgba(250,246,237,0.7);
-  border: 1px solid rgba(166,50,50,0.25);
-}
-[data-theme="guofeng"] body.has-guofeng-bg textarea:focus,
-[data-theme="guofeng"] body.has-guofeng-bg input:focus,
-[data-theme="guofeng"] body.has-guofeng-bg select:focus {
-  border-color: var(--gf-red);
-  background: rgba(250,246,237,0.9);
-}
 
 /* 设置按钮浮于右上角屋檐区 */
 [data-theme="guofeng"] body.has-guofeng-bg #btnSettings {
