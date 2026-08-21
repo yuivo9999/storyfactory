@@ -56,7 +56,7 @@ function getCfg(){
 function saveCfg(cfg){ localStorage.setItem(KEY_CFG, JSON.stringify(cfg)); }
 
 /* ---------- 主题切换（单页内深色 / 3D 黑板 / 热血 FC） ---------- */
-const THEMES = ['dark','blackboard','mecha'];
+const THEMES = ['dark','blackboard','mecha','cyber','guofeng'];
 let bbLoaded = false;
 function ensureBlackboard(){
   if(bbLoaded) return Promise.resolve();
@@ -82,6 +82,14 @@ function applyTheme(theme){
   if(mtn) mtn.classList.toggle('hidden', theme !== 'mecha');
   // 机甲背景图类
   document.body.classList.toggle('has-mecha-bg', theme === 'mecha');
+  // 赛博朋克背景图类 + 手柄底座
+  document.body.classList.toggle('has-cyber-bg', theme === 'cyber');
+  const cp = $('#cyberPad');
+  if(cp) cp.classList.toggle('hidden', theme !== 'cyber');
+  // 古风国潮背景图类 + 小二人物
+  document.body.classList.toggle('has-guofeng-bg', theme === 'guofeng');
+  const gh = $('#guofengHost');
+  if(gh) gh.classList.toggle('hidden', theme !== 'guofeng');
   $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme === theme));
   updateMechaNav();
 }
@@ -222,9 +230,17 @@ function render(){
 }
 
 /* ---------- P1 故事 ---------- */
+const CYBER_HOME_GRID = `
+  <div class="cyber-home-grid">
+    <button class="cyber-card-btn purple" data-step="1"><span class="ico">📖</span><span class="lab">故事</span><span class="sub">输入构想并生成章节</span></button>
+    <button class="cyber-card-btn cyan" data-step="2"><span class="ico">🧑</span><span class="lab">角色</span><span class="sub">生成角色定妆提示词</span></button>
+    <button class="cyber-card-btn pink" data-step="3"><span class="ico">🏞️</span><span class="lab">场景</span><span class="sub">生成场景即梦提示词</span></button>
+    <button class="cyber-card-btn orange" data-step="4"><span class="ico">🎞️</span><span class="lab">分镜</span><span class="sub">生成视频分镜文字</span></button>
+  </div>`;
+
 function viewStory(){
   if(!state.outline){
-    return `
+    return CYBER_HOME_GRID + `
     <div class="card">
       <h3>① 输入故事构想</h3>
       <p class="sub">用几句话描述你的点子（世界观、主角、核心冲突都行）。AI 会扩写成完整故事大纲与章节。</p>
@@ -422,6 +438,9 @@ function buildMarkdown(){
 function bindView(){
   // 复制按钮（事件委托）
   $$('[data-copy]').forEach(b=> b.onclick = ()=> copyText(b.getAttribute('data-copy')) );
+
+  // 赛博朋克首页入口卡片
+  $$('.cyber-home-grid [data-step]').forEach(b=> b.onclick = ()=>{ currentStep = +b.dataset.step; render(); window.scrollTo(0,0); });
 
   // P1
   const idea = $('#ideaInput'); if(idea){

@@ -1,0 +1,412 @@
+/* =========================================================
+ * 古风国潮主题 · 木质卷轴 + 牌匾 + 令牌导航
+ * 视觉：深红木纹、宣纸卷轴、金漆牌匾、铜币点缀
+ * 依赖：assets/img/skins/guofeng-bg.jpg（可选背景）
+ *        assets/img/skins/guofeng-host.png（右下角门童/小二，透明底，可选）
+ * ========================================================= */
+
+[data-theme="guofeng"] {
+  --gf-bg: #1f1410;
+  --gf-wood: #4a2c1f;
+  --gf-wood-light: #6d432f;
+  --gf-wood-dark: #2e1a11;
+  --gf-paper: #f4ecd8;
+  --gf-paper-dim: #e8dfc8;
+  --gf-gold: #d4a84b;
+  --gf-gold-light: #f5d78e;
+  --gf-red: #a63232;
+  --gf-ink: #2b2118;
+  --gf-dim: #7d6e5c;
+  --gf-line: rgba(212, 168, 75, 0.35);
+  --gf-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  --gf-inset: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* 背景：深红木纹（代码兜底）或用户提供的背景图 */
+[data-theme="guofeng"] body {
+  color: var(--gf-ink);
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 32px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 120px),
+    linear-gradient(180deg, #2e1a11 0%, #4a2c1f 50%, #1f1410 100%);
+}
+[data-theme="guofeng"] body.has-guofeng-bg {
+  background:
+    linear-gradient(180deg, rgba(31,20,16,0.78) 0%, rgba(31,20,16,0.55) 40%, rgba(31,20,16,0.82) 100%),
+    url('img/skins/guofeng-bg.jpg') center top / cover no-repeat fixed;
+}
+
+/* 顶层容器 */
+[data-theme="guofeng"] #app {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 顶部标题牌：金漆牌匾 */
+[data-theme="guofeng"] header {
+  position: relative;
+  background:
+    linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
+  border: 2px solid var(--gf-gold);
+  border-radius: 16px;
+  box-shadow:
+    var(--gf-inset),
+    0 0 0 2px #2e1a11,
+    0 0 18px rgba(212,168,75,0.25),
+    var(--gf-shadow);
+  margin: 14px 12px 10px;
+  padding: 12px 16px;
+}
+[data-theme="guofeng"] header::before,
+[data-theme="guofeng"] header::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  width: 22px;
+  height: 22px;
+  background: radial-gradient(circle at 35% 35%, #f5d78e, #b88a2a);
+  border: 2px solid #5c3826;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.35);
+}
+[data-theme="guofeng"] header::before { left: 14px; }
+[data-theme="guofeng"] header::after { right: 14px; }
+[data-theme="guofeng"] header .title {
+  color: var(--gf-gold-light);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 3px rgba(0,0,0,0.55), 0 0 8px rgba(212,168,75,0.35);
+}
+[data-theme="guofeng"] header .logo {
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+}
+[data-theme="guofeng"] header .icon-btn {
+  background: rgba(212,168,75,0.12);
+  border: 1px solid rgba(212,168,75,0.45);
+  border-radius: 10px;
+  color: var(--gf-gold-light);
+  box-shadow: 0 0 8px rgba(212,168,75,0.15);
+}
+
+/* 步骤条：改成横向木牌 */
+[data-theme="guofeng"] .stepper {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 4px;
+}
+[data-theme="guofeng"] .stepper .step {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
+  border: 1px solid rgba(212,168,75,0.35);
+  color: var(--gf-gold);
+  font-size: 12px;
+  text-align: center;
+  box-shadow: var(--gf-inset), 0 2px 6px rgba(0,0,0,0.3);
+}
+[data-theme="guofeng"] .stepper .step.active {
+  background: linear-gradient(180deg, #a63232 0%, #7a2626 100%);
+  color: #fff;
+  border-color: var(--gf-gold-light);
+  box-shadow: 0 0 10px rgba(212,168,75,0.25);
+}
+
+/* 主内容：卷轴 */
+[data-theme="guofeng"] #view {
+  position: relative;
+  padding: 24px 18px 140px;
+}
+[data-theme="guofeng"] #view::before,
+[data-theme="guofeng"] #view::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background:
+    linear-gradient(180deg, #5c3826 0%, #3d2418 50%, #2e1a11 100%);
+  border-top: 1px solid rgba(212,168,75,0.3);
+  border-bottom: 1px solid rgba(0,0,0,0.35);
+  box-shadow: var(--gf-shadow);
+}
+[data-theme="guofeng"] #view::before { top: 0; border-radius: 6px 6px 0 0; }
+[data-theme="guofeng"] #view::after  { bottom: 110px; border-radius: 0 0 6px 6px; }
+[data-theme="guofeng"] .card {
+  position: relative;
+  background:
+    linear-gradient(180deg, #f7f1e3 0%, #f4ecd8 100%);
+  border: 1px solid #d9cbb0;
+  border-radius: 4px;
+  box-shadow: inset 0 0 30px rgba(139, 119, 89, 0.08), 0 4px 12px rgba(0,0,0,0.25);
+  padding: 16px;
+  margin-bottom: 14px;
+  color: var(--gf-ink);
+}
+[data-theme="guofeng"] .card::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(139,119,89,0.25);
+  border-radius: 2px;
+  pointer-events: none;
+}
+[data-theme="guofeng"] h2, [data-theme="guofeng"] h3 {
+  color: var(--gf-red);
+  border-left: 4px solid var(--gf-gold);
+  padding-left: 10px;
+  text-shadow: none;
+}
+[data-theme="guofeng"] .hint {
+  color: var(--gf-dim);
+  background: rgba(244,236,216,0.7);
+  border-left-color: var(--gf-gold);
+}
+
+/* 输入区：宣纸 */
+[data-theme="guofeng"] textarea,
+[data-theme="guofeng"] input,
+[data-theme="guofeng"] select {
+  background: #faf6ed;
+  border: 1px solid #c9b896;
+  color: var(--gf-ink);
+  border-radius: 8px;
+  box-shadow: inset 0 2px 6px rgba(139,119,89,0.12);
+}
+[data-theme="guofeng"] textarea::placeholder,
+[data-theme="guofeng"] input::placeholder {
+  color: #9e8f79;
+}
+[data-theme="guofeng"] textarea:focus,
+[data-theme="guofeng"] input:focus,
+[data-theme="guofeng"] select:focus {
+  border-color: var(--gf-gold);
+  box-shadow: 0 0 10px rgba(212,168,75,0.2), inset 0 2px 6px rgba(139,119,89,0.12);
+  outline: none;
+}
+
+/* 按钮：木牌 */
+[data-theme="guofeng"] .btn {
+  border: none;
+  border-radius: 12px;
+  color: var(--gf-gold-light);
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
+  box-shadow:
+    var(--gf-inset),
+    0 4px 0 #2e1a11,
+    0 6px 10px rgba(0,0,0,0.35);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  position: relative;
+  top: 0;
+  transition: top .08s ease, box-shadow .08s ease;
+}
+[data-theme="guofeng"] .btn:active {
+  top: 3px;
+  box-shadow:
+    var(--gf-inset),
+    0 1px 0 #2e1a11,
+    0 2px 4px rgba(0,0,0,0.35);
+}
+[data-theme="guofeng"] .btn.primary {
+  background: linear-gradient(180deg, #b53a3a 0%, #7a2626 100%);
+  color: #fff;
+}
+[data-theme="guofeng"] .btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(212,168,75,0.5);
+  color: var(--gf-gold);
+  box-shadow: none;
+}
+
+/* 底部令牌导航 */
+[data-theme="guofeng"] .tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  padding: 8px 10px 18px;
+  background:
+    linear-gradient(180deg, #3d2418 0%, #2e1a11 100%);
+  border-top: 2px solid rgba(212,168,75,0.4);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.35);
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  z-index: 50;
+}
+[data-theme="guofeng"] .tabbar .tab {
+  width: 56px;
+  height: 76px;
+  padding: 8px 4px;
+  background:
+    linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
+  border: 1px solid rgba(212,168,75,0.4);
+  border-radius: 10px 10px 22px 22px;
+  color: var(--gf-gold);
+  font-size: 12px;
+  font-weight: 600;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow:
+    var(--gf-inset),
+    0 3px 0 #1f1410,
+    0 4px 8px rgba(0,0,0,0.3);
+}
+[data-theme="guofeng"] .tabbar .tab.active {
+  color: #fff;
+  background: linear-gradient(180deg, #a63232 0%, #7a2626 100%);
+  border-color: var(--gf-gold-light);
+  box-shadow: 0 0 12px rgba(212,168,75,0.25);
+}
+[data-theme="guofeng"] .tabbar .tab span {
+  font-size: 20px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.4));
+}
+
+/* 弹窗 */
+[data-theme="guofeng"] .modal {
+  background: rgba(31, 20, 16, 0.92);
+}
+[data-theme="guofeng"] .modal-panel {
+  background:
+    linear-gradient(180deg, #f7f1e3 0%, #f4ecd8 100%);
+  border: 2px solid var(--gf-gold);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 2px #2e1a11,
+    0 0 24px rgba(212,168,75,0.25),
+    var(--gf-shadow);
+}
+[data-theme="guofeng"] .modal-head {
+  border-bottom: 1px solid rgba(212,168,75,0.25);
+}
+[data-theme="guofeng"] .modal-head h3 {
+  color: var(--gf-red);
+}
+
+/* 角色/场景/分镜小卡片 */
+[data-theme="guofeng"] .char-card,
+[data-theme="guofeng"] .scene-card,
+[data-theme="guofeng"] .shot-card {
+  background: #faf6ed;
+  border: 1px solid #d9cbb0;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+[data-theme="guofeng"] .char-card h4 {
+  color: var(--gf-red);
+}
+
+/* 状态条 */
+[data-theme="guofeng"] .status.ok { color: #4a7c31; }
+[data-theme="guofeng"] .status.err { color: #a63232; }
+
+/* toast */
+[data-theme="guofeng"] #toast {
+  background: rgba(74, 44, 31, 0.96);
+  border: 1px solid var(--gf-gold);
+  color: var(--gf-gold-light);
+  box-shadow: var(--gf-shadow);
+}
+
+/* 右下角门童/小二人物装饰 */
+.guofeng-host {
+  position: fixed;
+  right: 8px;
+  bottom: 92px;
+  width: 110px;
+  height: 150px;
+  background: url('img/skins/guofeng-host.png') right bottom / contain no-repeat;
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* =========================================================
+ * 背景图精简版（无牌匾）布局适配
+ * 标题用代码绘制的牌匾，文字绝对可控居中；
+ * 主内容落入背景图的宣纸卷轴区；令牌导航贴底部木槽。
+ * ========================================================= */
+[data-theme="guofeng"] body.has-guofeng-bg .stepper { display: none; }
+
+/* 顶部代码牌匾：保持默认 header 样式，微调与背景图屋檐的间距 */
+[data-theme="guofeng"] body.has-guofeng-bg header {
+  position: relative;
+  z-index: 30;
+  margin-top: 14px;
+  margin-bottom: 0;
+  height: 96px;
+  align-items: center;
+}
+[data-theme="guofeng"] body.has-guofeng-bg header .brand {
+  flex: 1;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+[data-theme="guofeng"] body.has-guofeng-bg header .logo { font-size: 22px; line-height: 1; }
+[data-theme="guofeng"] body.has-guofeng-bg header .title {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+/* 主内容区：透明，避开顶部屋檐与底部木槽，落入卷轴 */
+[data-theme="guofeng"] body.has-guofeng-bg #view {
+  position: relative;
+  padding: 500px 24px 290px;
+  background: transparent;
+}
+[data-theme="guofeng"] body.has-guofeng-bg #view::before,
+[data-theme="guofeng"] body.has-guofeng-bg #view::after { display: none; }
+
+[data-theme="guofeng"] body.has-guofeng-bg .card {
+  background:
+    linear-gradient(180deg, rgba(247,241,227,0.94) 0%, rgba(244,236,216,0.94) 100%);
+  border: 1px solid rgba(212,168,75,0.4);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}
+[data-theme="guofeng"] body.has-guofeng-bg .card::before { display: none; }
+
+[data-theme="guofeng"] body.has-guofeng-bg textarea,
+[data-theme="guofeng"] body.has-guofeng-bg input,
+[data-theme="guofeng"] body.has-guofeng-bg select {
+  background: rgba(250,246,237,0.95);
+}
+
+/* 设置按钮保持原位，但加个暗底防被背景图浅色干扰 */
+[data-theme="guofeng"] body.has-guofeng-bg #btnSettings {
+  background: rgba(74,44,31,0.9);
+  border: 1px solid rgba(212,168,75,0.5);
+  border-radius: 12px;
+  color: var(--gf-gold-light);
+  box-shadow: 0 0 10px rgba(212,168,75,0.2);
+}
+
+/* 底部令牌导航：透明浮在背景图木槽上 */
+[data-theme="guofeng"] body.has-guofeng-bg .tabbar {
+  background: transparent;
+  border-top: none;
+  box-shadow: none;
+  padding: 0 10px 26px;
+  bottom: 0;
+}
+[data-theme="guofeng"] body.has-guofeng-bg .tabbar .tab {
+  background:
+    linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
+  border: 1px solid rgba(212,168,75,0.45);
+}
+
+/* 门童：贴右侧，避开底部木槽 */
+[data-theme="guofeng"] body.has-guofeng-bg .guofeng-host {
+  right: 0;
+  bottom: 280px;
+  width: 130px;
+  height: 220px;
+}

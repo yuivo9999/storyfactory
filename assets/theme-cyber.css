@@ -1,0 +1,318 @@
+/* =========================================================
+ * 赛博朋克霓虹游戏手柄主题
+ * 视觉：深紫/藏青/黑色霓虹背景 + 斜角发光卡片 + 底部手柄导航
+ * 依赖：assets/img/skins/cyber-pad.png（透明底手柄底座，必需）
+ *        assets/img/skins/cyber-bg.jpg（可选背景纹理）
+ * ========================================================= */
+
+[data-theme="cyber"] {
+  --cy-bg: #080614;
+  --cy-panel: rgba(16, 14, 34, 0.82);
+  --cy-purple: #a855f7;
+  --cy-cyan: #22d3ee;
+  --cy-pink: #f472b6;
+  --cy-orange: #fb923c;
+  --cy-text: #e6e6ff;
+  --cy-dim: #9ca3af;
+  --cy-line: rgba(168, 85, 247, 0.35);
+  --cy-glow-purple: 0 0 12px rgba(168, 85, 247, 0.55), 0 0 24px rgba(168, 85, 247, 0.25);
+  --cy-glow-cyan: 0 0 12px rgba(34, 211, 238, 0.55), 0 0 24px rgba(34, 211, 238, 0.25);
+  --cy-glow-pink: 0 0 12px rgba(244, 114, 182, 0.55), 0 0 24px rgba(244, 114, 182, 0.25);
+  --cy-glow-orange: 0 0 12px rgba(251, 146, 60, 0.55), 0 0 24px rgba(251, 146, 60, 0.25);
+}
+
+/* 背景：可选纹理或代码兜底 */
+[data-theme="cyber"] body {
+  color: var(--cy-text);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(88, 28, 135, 0.22), transparent 55%),
+    radial-gradient(ellipse at 80% 30%, rgba(34, 211, 238, 0.10), transparent 40%),
+    radial-gradient(ellipse at 20% 70%, rgba(244, 114, 182, 0.10), transparent 40%),
+    linear-gradient(180deg, #0a0818 0%, #080614 50%, #05040a 100%);
+}
+[data-theme="cyber"] body.has-cyber-bg {
+  background:
+    linear-gradient(180deg, rgba(8,6,20,0.82) 0%, rgba(8,6,20,0.65) 40%, rgba(8,6,20,0.88) 100%),
+    url('img/skins/cyber-bg.jpg') center top / cover no-repeat fixed;
+}
+
+/* 全局网格纹理叠加 */
+[data-theme="cyber"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(168,85,247,0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168,85,247,0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* 顶层容器 */
+[data-theme="cyber"] #app {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 顶部标题牌（金属框 + 霓虹底） */
+[data-theme="cyber"] header {
+  background:
+    linear-gradient(180deg, rgba(30,27,52,0.95) 0%, rgba(20,18,38,0.95) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 18px rgba(168, 85, 247, 0.25);
+  margin: 12px 12px 8px;
+  padding: 12px 16px;
+}
+[data-theme="cyber"] header h1 {
+  color: #fff;
+  font-size: 18px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 10px rgba(168,85,247,0.8), 0 0 20px rgba(168,85,247,0.4);
+}
+[data-theme="cyber"] header .icon-btn {
+  background: rgba(168,85,247,0.12);
+  border: 1px solid rgba(168,85,247,0.35);
+  border-radius: 10px;
+  color: var(--cy-cyan);
+  box-shadow: 0 0 8px rgba(168,85,247,0.2);
+}
+
+/* 步骤条：在 cyber 主题下隐藏默认条，改由首页入口卡片替代 */
+[data-theme="cyber"] .stepper {
+  display: none;
+}
+
+/* 首页入口卡片网格：默认隐藏，仅在赛博朋克主题下显示 */
+.cyber-home-grid {
+  display: none;
+}
+[data-theme="cyber"] .cyber-home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 12px 14px 8px;
+}
+[data-theme="cyber"] .cyber-card-btn {
+  position: relative;
+  min-height: 110px;
+  padding: 16px 12px;
+  border: none;
+  background: rgba(20, 18, 42, 0.72);
+  color: #fff;
+  text-align: left;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform .12s ease, filter .12s ease;
+}
+[data-theme="cyber"] .cyber-card-btn:active { transform: scale(0.97); }
+[data-theme="cyber"] .cyber-card-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px, 11px 12px, 11px 1px, calc(100% - 1px) 1px, calc(100% - 1px) calc(100% - 12px), calc(100% - 12px) calc(100% - 1px), 1px calc(100% - 1px), 1px 11px, 11px 11px);
+  background: linear-gradient(135deg, var(--c1), var(--c2));
+  z-index: -1;
+}
+[data-theme="cyber"] .cyber-card-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: var(--glow);
+  opacity: 0.45;
+  z-index: -1;
+}
+[data-theme="cyber"] .cyber-card-btn.purple { --c1: #a855f7; --c2: #7c3aed; --glow: var(--cy-glow-purple); }
+[data-theme="cyber"] .cyber-card-btn.cyan   { --c1: #22d3ee; --c2: #0ea5e9; --glow: var(--cy-glow-cyan); }
+[data-theme="cyber"] .cyber-card-btn.pink   { --c1: #f472b6; --c2: #db2777; --glow: var(--cy-glow-pink); }
+[data-theme="cyber"] .cyber-card-btn.orange { --c1: #fb923c; --c2: #ea580c; --glow: var(--cy-glow-orange); }
+
+[data-theme="cyber"] .cyber-card-btn .ico {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border: 1px dashed rgba(255,255,255,0.35);
+  border-radius: 8px;
+  font-size: 18px;
+  background: rgba(0,0,0,0.15);
+}
+[data-theme="cyber"] .cyber-card-btn .lab {
+  font-size: 17px; font-weight: 700; letter-spacing: 1px;
+  text-shadow: 0 0 8px currentColor;
+}
+[data-theme="cyber"] .cyber-card-btn .sub {
+  font-size: 11px; color: var(--cy-dim); line-height: 1.35;
+}
+
+/* 主内容卡片 */
+[data-theme="cyber"] #view {
+  padding: 0 14px 200px;
+}
+[data-theme="cyber"] .card {
+  background: var(--cy-panel);
+  border: 1px dashed rgba(168, 85, 247, 0.45);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 22px rgba(168, 85, 247, 0.18);
+  backdrop-filter: blur(6px);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+[data-theme="cyber"] h2, [data-theme="cyber"] h3 {
+  color: #fff;
+  border-left: 4px solid var(--cy-cyan);
+  padding-left: 10px;
+  text-shadow: 0 0 8px rgba(34,211,238,0.45);
+}
+[data-theme="cyber"] .hint {
+  color: var(--cy-dim);
+  border-left-color: var(--cy-purple);
+}
+
+/* 输入框/文本域 */
+[data-theme="cyber"] textarea,
+[data-theme="cyber"] input,
+[data-theme="cyber"] select {
+  background: rgba(8, 6, 20, 0.7);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: var(--cy-text);
+  border-radius: 10px;
+  box-shadow: inset 0 0 10px rgba(168,85,247,0.08);
+}
+[data-theme="cyber"] textarea:focus,
+[data-theme="cyber"] input:focus,
+[data-theme="cyber"] select:focus {
+  border-color: var(--cy-cyan);
+  box-shadow: 0 0 12px rgba(34,211,238,0.25), inset 0 0 10px rgba(168,85,247,0.08);
+}
+
+/* 按钮 */
+[data-theme="cyber"] .btn {
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  box-shadow: 0 0 16px rgba(168,85,247,0.35);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+[data-theme="cyber"] .btn.primary {
+  background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+  box-shadow: 0 0 18px rgba(34,211,238,0.35);
+}
+[data-theme="cyber"] .btn.ghost {
+  background: transparent;
+  border: 1px solid rgba(168,85,247,0.45);
+  box-shadow: none;
+  color: var(--cy-cyan);
+}
+[data-theme="cyber"] .btn:active { transform: scale(0.98); }
+
+/* 底部 Tab 栏：在 cyber 主题下改为浮在手柄上方的文字条 */
+[data-theme="cyber"] .tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  padding: 0 14px 18px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  z-index: 50;
+  pointer-events: none; /* 手柄图本身不可点，文字按钮可点 */
+}
+[data-theme="cyber"] .tabbar .tab {
+  pointer-events: auto;
+  background: rgba(16, 14, 34, 0.85);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  border-radius: 50px;
+  padding: 7px 12px;
+  color: var(--cy-dim);
+  font-size: 12px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 0 10px rgba(168,85,247,0.15);
+  flex-direction: row;
+  gap: 5px;
+}
+[data-theme="cyber"] .tabbar .tab.active {
+  color: #fff;
+  border-color: var(--cy-cyan);
+  box-shadow: var(--cy-glow-cyan);
+}
+
+/* 手柄底座图 */
+[data-theme="cyber"] .cyber-pad {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  height: 170px;
+  background: url('img/skins/cyber-pad.png') center bottom / contain no-repeat;
+  z-index: 48;
+  pointer-events: none;
+}
+
+/* 返回首页小箭头（cyber 主题内容页用） */
+[data-theme="cyber"] .cyber-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--cy-cyan);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+/* 角色/场景/分镜的小卡片 */
+[data-theme="cyber"] .char-card,
+[data-theme="cyber"] .scene-card,
+[data-theme="cyber"] .shot-card {
+  background: rgba(20, 18, 42, 0.65);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 0 14px rgba(168,85,247,0.1);
+}
+[data-theme="cyber"] .char-card h4 {
+  color: var(--cy-cyan);
+}
+
+/* 弹窗 */
+[data-theme="cyber"] .modal {
+  background: rgba(8, 6, 20, 0.92);
+}
+[data-theme="cyber"] .modal-content {
+  background: rgba(22, 19, 46, 0.96);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: 18px;
+  box-shadow: var(--cy-glow-purple);
+}
+
+/* 状态条 */
+[data-theme="cyber"] .status.ok { color: #34d399; text-shadow: 0 0 8px rgba(52,211,153,0.5); }
+[data-theme="cyber"] .status.err { color: #f87171; text-shadow: 0 0 8px rgba(248,113,113,0.5); }
+
+/* toast */
+[data-theme="cyber"] #toast {
+  background: rgba(22, 19, 46, 0.96);
+  border: 1px solid var(--cy-cyan);
+  color: #fff;
+  box-shadow: var(--cy-glow-cyan);
+}
