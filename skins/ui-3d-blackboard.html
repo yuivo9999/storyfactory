@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>3D 黑板分镜工作流 · 影视前期资产生成器</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#0b0f14;
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif; color:#e8eef5; }
+  #scene { position:fixed; inset:0; }
+  /* 顶部 HUD */
+  #hud { position:fixed; top:0; left:0; right:0; display:flex; align-items:center;
+    gap:10px; padding:14px 16px; pointer-events:none; z-index:5;
+    background:linear-gradient(180deg, rgba(0,0,0,.55), transparent); }
+  #hud .phase { font-size:15px; font-weight:700; letter-spacing:.5px;
+    text-shadow:0 2px 6px rgba(0,0,0,.8); }
+  #hud .step { font-size:12px; opacity:.8; margin-left:auto;
+    text-shadow:0 2px 6px rgba(0,0,0,.8); }
+  /* 底部控制条 */
+  #bar { position:fixed; bottom:0; left:0; right:0; z-index:5;
+    display:flex; gap:12px; padding:16px; justify-content:center;
+    background:linear-gradient(0deg, rgba(0,0,0,.6), transparent); }
+  button.ctrl { pointer-events:auto; cursor:pointer; border:none; border-radius:12px;
+    padding:13px 22px; font-size:15px; font-weight:700; color:#0b0f14;
+    background:linear-gradient(180deg,#ffe9a8,#ffc24d); box-shadow:0 6px 0 #b9821f, 0 10px 18px rgba(0,0,0,.4);
+    transition:transform .08s, box-shadow .08s; }
+  button.ctrl:active { transform:translateY(4px); box-shadow:0 2px 0 #b9821f, 0 6px 12px rgba(0,0,0,.4); }
+  button.ctrl.ghost { background:linear-gradient(180deg,#3a4655,#28323f); color:#e8eef5;
+    box-shadow:0 6px 0 #161d25, 0 10px 18px rgba(0,0,0,.4); }
+  button.ctrl:disabled { opacity:.35; filter:grayscale(.6); }
+  #hint { position:fixed; left:50%; transform:translateX(-50%); bottom:78px; z-index:5;
+    font-size:12px; opacity:.7; text-shadow:0 2px 6px rgba(0,0,0,.9); }
+  #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    z-index:9; background:#0b0f14; font-size:15px; color:#9fb0c3; }
+</style>
+</head>
+<body>
+  <div id="scene"></div>
+  <div id="hud">
+    <span class="phase" id="phaseName">影视前期 · 黑板工作流</span>
+    <span class="step" id="stepInfo"></span>
+  </div>
+  <div id="hint">拖动可旋转视角 · 点「下一步」拉下新黑板</div>
+  <div id="bar">
+    <button class="ctrl ghost" id="prevBtn" disabled>← 上一步</button>
+    <button class="ctrl" id="nextBtn">下一步 →</button>
+  </div>
+  <div id="loading">正在搭建 3D 教室…</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script>
+  (function(){
+    const STEPS = [
+      { title:"① 故事构想", sub:"一句话种子",
+        lines:["· 用户输入几句话的构想","· 例：一个外卖员意外卷入","　城市地下赛车组织的故事","· 目标：确定基调与核心冲突"] },
+      { title:"② 故事章节", sub:"大纲 + 正文",
+        lines:["· AI 生成故事大纲（JSON）","· 逐章生成正文，可编辑确认","· 章节：相遇→入局→背叛","　→高潮→收束","· 角色命运线逐步铺开"] },
+      { title:"③ 角色定妆卡", sub:"即梦提示词",
+        lines:["· 抽取主要角色设定","· 生成 7 组即梦提示词","　定妆图 / 三视图 / 表情","　服饰 / 道具 / 配色 / 材质","· 先出一张定妆图作锚点"] },
+      { title:"④ 场景提示词", sub:"即梦提示词",
+        lines:["· 抽取关键场景：","　深夜街巷 / 地下车库","　霓虹天台 / 雨夜高架","· 每景生成即梦出图提示词","· 统一光影与色调基调"] },
+      { title:"⑤ 分镜文字", sub:"视频分镜表",
+        lines:["· 结构化分镜（镜号/景别）","· 运镜 / 画面描述 / 对白","· 每镜出图提示词","· 连续性锚点保证角色一致","· 导出 Markdown 交即梦出图"] },
+    ];
+
+    const container = document.getElementById('scene');
+    const renderer = new THREE.WebGLRenderer({ antialias:true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    container.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x10151c);
+    scene.fog = new THREE.Fog(0x10151c, 9, 18);
+
+    const camera = new THREE.PerspectiveCamera(46, window.innerWidth/window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0.2, 6.2);
+
+    // ---- 游戏化卡通光影（Toon / 赛璐璐）----
+    function toonGradient(){
+      const c = document.createElement('canvas'); c.width=4; c.height=1;
+      const g = c.getContext('2d');
+      [70,140,205,255].forEach((s,i)=>{ g.fillStyle=`rgb(${s},${s},${s})`; g.fillRect(i,0,1,1); });
+      const t = new THREE.CanvasTexture(c);
+      t.minFilter = THREE.NearestFilter; t.magFilter = THREE.NearestFilter; t.generateMipmaps=false;
+      return t;
+    }
+    const grad = toonGradient();
+
+    // 灯光：主光(左上暖白) + 补光(右冷蓝) + 环境，制造分层卡通明暗
+    scene.add(new THREE.AmbientLight(0x4a5568, 0.55));
+    const key = new THREE.DirectionalLight(0xfff2d8, 1.15); key.position.set(-5,6,5); scene.add(key);
+    const fill = new THREE.DirectionalLight(0x7fa6ff, 0.5); fill.position.set(6,1,4); scene.add(fill);
+    const rim = new THREE.PointLight(0xffd27f, 0.6, 30); rim.position.set(0,3,4); scene.add(rim);
+
+    // ---- 墙面（教室墙）----
+    const wallMat = new THREE.MeshToonMaterial({ color:0xd9c9a3, gradientMap:grad });
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(20,12), wallMat);
+    wall.position.set(0,0,-0.6); scene.add(wall);
+    // 墙裙（下半截深一点的墙）
+    const skirt = new THREE.Mesh(new THREE.PlaneGeometry(20,3),
+      new THREE.MeshToonMaterial({ color:0xb59b6e, gradientMap:grad }));
+    skirt.position.set(0,-3.0,-0.59); scene.add(skirt);
+    // 窗（右侧亮块，增强教室感）
+    const win = new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.4),
+      new THREE.MeshBasicMaterial({ color:0xbfe3ff }));
+    win.position.set(5.2,1.4,-0.55); scene.add(win);
+    const winFrame = new THREE.Mesh(new THREE.BoxGeometry(3.5,2.7,0.12),
+      new THREE.MeshToonMaterial({ color:0xf2efe6, gradientMap:grad }));
+    winFrame.position.set(5.2,1.4,-0.62); scene.add(winFrame);
+    // 地板
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(20,10),
+      new THREE.MeshToonMaterial({ color:0x8a6f4a, gradientMap:grad }));
+    floor.rotation.x = -Math.PI/2; floor.position.set(0,-4.5,-0.6); scene.add(floor);
+
+    // ---- 绘制黑板贴图（CanvasTexture）----
+    function makeBoardTexture(step, idx, total){
+      const W=1024,H=768;
+      const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+      const x=cv.getContext('2d');
+      // 墨绿黑板底 + 粉笔噪点
+      x.fillStyle='#13352a'; x.fillRect(0,0,W,H);
+      x.globalAlpha=0.05;
+      for(let i=0;i<1400;i++){ x.fillStyle=Math.random()>0.5?'#ffffff':'#0c241b';
+        x.fillRect(Math.random()*W, Math.random()*H, 2,2); }
+      x.globalAlpha=1;
+      // 粉笔内框
+      x.strokeStyle='rgba(255,255,255,.55)'; x.lineWidth=4; x.setLineDash([14,10]);
+      x.strokeRect(34,34,W-68,H-68); x.setLineDash([]);
+      // 标题
+      x.fillStyle='#fdfdfd'; x.textAlign='left';
+      x.shadowColor='rgba(255,255,255,.35)'; x.shadowBlur=10;
+      x.font='bold 70px "KaiTi","STKaiti",serif';
+      x.fillText(step.title, 70, 130);
+      x.shadowBlur=0;
+      x.fillStyle='rgba(180,255,220,.85)'; x.font='28px "KaiTi","STKaiti",serif';
+      x.fillText('▍'+step.sub+'　（'+ (idx+1) +' / '+total+'）', 72, 178);
+      // 分隔线
+      x.strokeStyle='rgba(255,255,255,.25)'; x.lineWidth=2;
+      x.beginPath(); x.moveTo(70,205); x.lineTo(W-70,205); x.stroke();
+      // 内容
+      x.fillStyle='#eafaf2'; x.font='40px "KaiTi","STKaiti",serif';
+      let y=270; step.lines.forEach(l=>{ x.fillText(l, 78, y); y+=66; });
+      // 底部露出条：步骤编号 + 标题（旧黑板露出时可见）
+      x.fillStyle='rgba(255,194,77,.95)'; x.fillRect(0,H-58,W,58);
+      x.fillStyle='#1a1205'; x.font='bold 40px "KaiTi","STKaiti",serif';
+      x.fillText(step.title+'　·　已完成', 40, H-16);
+      const t=new THREE.CanvasTexture(cv);
+      t.anisotropy=4; return t;
+    }
+
+    // ---- 创建一块黑板（组：木框 + 板面 + 粉笔槽）----
+    function makeBoard(step, idx, total){
+      const g = new THREE.Group();
+      const boardW=4.4, boardH=3.0;
+      // 木框
+      const frameMat = new THREE.MeshToonMaterial({ color:0x6e4a2b, gradientMap:grad });
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(boardW+0.32, boardH+0.32, 0.18), frameMat);
+      g.add(frame);
+      // 板面（始终可读，用 Basic）
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(boardW, boardH),
+        new THREE.MeshBasicMaterial({ map: makeBoardTexture(step, idx, total) }));
+      face.position.z = 0.11; g.add(face);
+      // 粉笔槽
+      const tray = new THREE.Mesh(new THREE.BoxGeometry(boardW+0.4, 0.22, 0.3),
+        new THREE.MeshToonMaterial({ color:0x553619, gradientMap:grad }));
+      tray.position.set(0, -(boardH/2)-0.18, 0.12); g.add(tray);
+      // 角钉
+      const nailMat=new THREE.MeshToonMaterial({color:0x2b2b2b,gradientMap:grad});
+      [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sy])=>{
+        const n=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,12),nailMat);
+        n.position.set(sx*(boardW/2+0.05), sy*(boardH/2+0.05), 0.2); g.add(n);
+      });
+      g.userData.targetY = idx*0.16; // 越新越靠上，露出旧板底部
+      g.position.y = g.userData.targetY + 5.0; // 初始在屏幕上方（待下拉）
+      g.position.z = idx*0.06;
+      return g;
+    }
+
+    const boards = [];
+    let current = -1;
+
+    function addStep(){
+      if(current >= STEPS.length-1) return;
+      current++;
+      const b = makeBoard(STEPS[current], current, STEPS.length);
+      scene.add(b); boards.push(b);
+      updateHud();
+    }
+    function removeStep(){
+      if(current < 0) return;
+      const b = boards.pop(); current--;
+      // 向上滑出后移除
+      b.userData.targetY = b.position.y + 6;
+      b.userData.remove = true;
+      scene._toRemove = scene._toRemove || [];
+      scene._toRemove.push(b);
+      updateHud();
+    }
+    function updateHud(){
+      const s = STEPS[current] || STEPS[0];
+      document.getElementById('phaseName').textContent = '影视前期 · 黑板工作流';
+      document.getElementById('stepInfo').textContent =
+        current<0 ? '尚未开始' : (s.title + '　' + (current+1) + '/' + STEPS.length);
+      document.getElementById('prevBtn').disabled = current<0;
+      document.getElementById('nextBtn').disabled = current>=STEPS.length-1;
+    }
+
+    // ---- 交互：拖动旋转 ----
+    let dragging=false, px=0, py=0, rotY=0, rotX=0, tRotY=0, tRotX=0;
+    const dom=renderer.domElement;
+    dom.addEventListener('pointerdown',e=>{ dragging=true; px=e.clientX; py=e.clientY; });
+    window.addEventListener('pointerup',()=>dragging=false);
+    window.addEventListener('pointermove',e=>{
+      if(!dragging) return;
+      tRotY += (e.clientX-px)*0.005; tRotX += (e.clientY-py)*0.005;
+      tRotX = Math.max(-0.25, Math.min(0.25, tRotX));
+      px=e.clientX; py=e.clientY;
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', addStep);
+    document.getElementById('prevBtn').addEventListener('click', removeStep);
+
+    // ---- 渲染循环 ----
+    function animate(){
+      requestAnimationFrame(animate);
+      rotY += (tRotY-rotY)*0.08; rotX += (tRotX-rotX)*0.08;
+      scene.children.forEach(o=>{
+        if(o.userData && o.userData.targetY!==undefined){
+          o.position.y += (o.userData.targetY - o.position.y)*0.12;
+        }
+      });
+      if(scene._toRemove){
+        scene._toRemove = scene._toRemove.filter(b=>{
+          b.position.y += (b.userData.targetY - b.position.y)*0.12;
+          if(b.position.y > b.userData.targetY-0.3){ scene.remove(b); return false; }
+          return true;
+        });
+      }
+      // 轻微环绕 + 拖拽旋转
+      const t = performance.now()*0.0002;
+      camera.position.x = Math.sin(t)*0.4 + rotY*2.2;
+      camera.position.y = 0.2 - rotX*2.0;
+      camera.lookAt(0, 0.2, 0);
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', ()=>{
+      camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    document.getElementById('loading').style.display='none';
+    updateHud();
+    animate();
+    // 自动展开前两步，方便直接看效果
+    setTimeout(addStep, 400);
+    setTimeout(addStep, 1200);
+  })();
+  </script>
+</body>
+</html>
