@@ -6,8 +6,11 @@
 <meta name="theme-color" content="#0f1115">
 <title>影视前期提示词生成器</title>
 <link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/theme-retro.css">
+<link rel="stylesheet" href="assets/theme-blackboard.css">
 </head>
 <body>
+<div id="bg3d"></div>
 <div id="app">
   <!-- 顶栏 -->
   <header class="topbar">
@@ -52,14 +55,29 @@
         <input id="cfgBase" type="text" placeholder="https://api.deepseek.com">
       </label>
       <label class="field">
-        <span>模型名</span>
-        <input id="cfgModel" type="text" placeholder="deepseek-chat">
+        <span>模型名（官方当前提供 3 个 V4 模型）</span>
+        <select id="cfgModel">
+          <option value="deepseek-v4-pro" selected>deepseek-v4-pro（质量最高，推荐）</option>
+          <option value="deepseek-v4-flash">deepseek-v4-flash（最快/最便宜）</option>
+          <option value="deepseek-v4-flash-vision-exp">deepseek-v4-flash-vision-exp（带视觉，本工具用不上）</option>
+        </select>
       </label>
       <label class="field">
         <span>温度（0.1 严谨 ~ 1.0 发散，建议 0.7）</span>
         <input id="cfgTemp" type="number" step="0.1" min="0" max="1" placeholder="0.7">
       </label>
       <p class="hint">本工具仅调用 DeepSeek 生成文字与提示词，不出图。图片请在「即梦」用提示词生成。</p>
+
+      <div class="theme-box">
+        <h4>🎨 界面主题（实时切换，无需换页）</h4>
+        <div class="theme-btns">
+          <button type="button" class="btn theme" data-theme="dark">🌙 默认深色</button>
+          <button type="button" class="btn theme" data-theme="blackboard">🎮 3D 黑板</button>
+          <button type="button" class="btn theme" data-theme="retro">🕹️ 热血 FC</button>
+        </div>
+        <p class="hint">选择后即时生效并保存到本机；3D 黑板为 three.js 教室背景，热血 FC 为 NES 像素风。</p>
+      </div>
+
       <div class="modal-actions">
         <button id="btnCfgTest" class="btn ghost">测试连接</button>
         <button id="btnCfgSave" class="btn primary">保存</button>
