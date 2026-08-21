@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0f1115">
 <title>影视前期提示词生成器</title>
 <link rel="stylesheet" href="assets/style.css">
-<link rel="stylesheet" href="assets/theme-retro.css">
+<link rel="stylesheet" href="assets/theme-mecha.css">
 <link rel="stylesheet" href="assets/theme-blackboard.css">
 </head>
 <body>
@@ -23,6 +23,15 @@
 
   <!-- 步骤指示 -->
   <nav id="stepper" class="stepper"></nav>
+
+  <!-- 机甲主题专用顶部胶囊导航 -->
+  <nav id="mechaTopNav" class="mecha-top-nav">
+    <button class="cap" data-step="1">故事构想</button>
+    <button class="cap" data-step="2">角色提示词</button>
+    <button class="cap" data-step="3">场景提示词</button>
+    <button class="cap" data-step="4">分镜文字</button>
+    <button class="cap" data-export>导出资产包</button>
+  </nav>
 
   <!-- 主内容 -->
   <main id="view" class="view"></main>
@@ -73,9 +82,9 @@
         <div class="theme-btns">
           <button type="button" class="btn theme" data-theme="dark">🌙 默认深色</button>
           <button type="button" class="btn theme" data-theme="blackboard">🎮 3D 黑板</button>
-          <button type="button" class="btn theme" data-theme="retro">🕹️ 热血 FC</button>
+          <button type="button" class="btn theme" data-theme="mecha">🦾 机甲科幻</button>
         </div>
-        <p class="hint">选择后即时生效并保存到本机；3D 黑板为 three.js 教室背景，热血 FC 为 NES 像素风。</p>
+        <p class="hint">选择后即时生效并保存到本机；3D 黑板为 three.js 教室背景，机甲科幻为黑金青绿工业金属风。</p>
       </div>
 
       <div class="modal-actions">
