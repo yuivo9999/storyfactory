@@ -56,7 +56,7 @@ function getCfg(){
 function saveCfg(cfg){ localStorage.setItem(KEY_CFG, JSON.stringify(cfg)); }
 
 /* ---------- 主题切换（单页内深色 / 3D 黑板 / 热血 FC） ---------- */
-const THEMES = ['dark','blackboard','retro'];
+const THEMES = ['dark','blackboard','mecha'];
 let bbLoaded = false;
 function ensureBlackboard(){
   if(bbLoaded) return Promise.resolve();
@@ -77,7 +77,13 @@ function applyTheme(theme){
   }else if(window.Blackboard3D){
     window.Blackboard3D.stop();
   }
+  // 机甲主题顶部胶囊导航显隐
+  const mtn = $('#mechaTopNav');
+  if(mtn) mtn.classList.toggle('hidden', theme !== 'mecha');
+  // 机甲背景图类
+  document.body.classList.toggle('has-mecha-bg', theme === 'mecha');
   $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme === theme));
+  updateMechaNav();
 }
 function restartCascade(){
   // 3D 黑板主题下，每次切换步骤重放“拉下新黑板”动画
@@ -193,9 +199,18 @@ function renderStepper(){
   }).join('');
 }
 
+function updateMechaNav(){
+  const mtn = $('#mechaTopNav'); if(!mtn) return;
+  $$('.cap', mtn).forEach(c=>{
+    const n = c.dataset.step ? +c.dataset.step : null;
+    c.classList.toggle('active', n && n === currentStep);
+  });
+}
+
 function render(){
   restartCascade();
   renderStepper();
+  updateMechaNav();
   $$('.tab').forEach(t=>t.classList.toggle('active', +t.dataset.step===currentStep));
   const v = $('#view');
   if(currentStep===1) v.innerHTML = viewStory();
@@ -592,12 +607,9 @@ async function testConn(){
  * ========================================================= */
 function init(){
   loadState();
-  // 应用已保存主题
+  // 应用已保存主题（统一走 applyTheme，保证 mecha nav 显隐等副作用一致）
   const c = getCfg();
-  const theme = c.theme || 'dark';
-  document.documentElement.setAttribute('data-theme', theme);
-  if(theme === 'blackboard'){ ensureBlackboard().then(()=>{ if(window.Blackboard3D) window.Blackboard3D.start(); }); }
-  $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme === theme));
+  applyTheme(c.theme || 'dark');
   // 顶栏设置
   $('#btnSettings').onclick = openSettings;
   $$('[data-close]').forEach(b=> b.onclick = closeSettings);
@@ -605,6 +617,15 @@ function init(){
   $('#btnCfgTest').onclick = testConn;
   // 主题按钮
   $$('.theme-btns .theme').forEach(b=> b.onclick = ()=> applyTheme(b.dataset.theme));
+  // 机甲主题顶部胶囊导航
+  const mtn = $('#mechaTopNav');
+  if(mtn){
+    $$('.cap', mtn).forEach(c=> c.onclick = ()=>{
+      if(c.dataset.export){ currentStep = 5; }
+      else { currentStep = +c.dataset.step; }
+      render(); window.scrollTo(0,0);
+    });
+  }
   // 底部导航
   $$('.tab').forEach(t=> t.onclick = ()=>{ currentStep = +t.dataset.step; render(); window.scrollTo(0,0); });
   // 进入时若无 Key，自动弹设置

@@ -1,0 +1,354 @@
+/* =========================================================
+ * 工业科幻 / 机甲金属主题
+ * 取代原先热血 FC 主题
+ * 配色：深灰金属 + 橙金高光 + 青绿指示灯
+ * 背景图：assets/img/skins/mecha-bg.jpg（可选，无则自动降级为 CSS 渐变）
+ * ========================================================= */
+
+/* ---------- 设计令牌 ---------- */
+[data-theme="mecha"] {
+  --m-bg: #07080a;
+  --m-panel: #111418;
+  --m-panel-2: #0a0c0e;
+  --m-metal-1: #2c3038;
+  --m-metal-2: #1e2228;
+  --m-metal-3: #15181c;
+  --m-border: #3a4048;
+  --m-border-light: #4f5660;
+  --m-gold: #f5b041;
+  --m-gold-dark: #c7841f;
+  --m-gold-light: #ffe08a;
+  --m-green: #00e676;
+  --m-green-dim: #00b248;
+  --m-green-glow: rgba(0, 230, 118, 0.28);
+  --m-text: #e8eaed;
+  --m-text-dim: #9aa0a6;
+  --m-radius: 12px;
+}
+
+/* ---------- 全局背景（无 mecha-bg.jpg 时降级） ---------- */
+[data-theme="mecha"] body {
+  color: var(--m-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  /* 第 1-2 层：若有 mecha-bg.jpg 则显示并压暗；无则自动跳过，由后面渐变兜底 */
+  background:
+    linear-gradient(180deg, rgba(7,8,10,0.72) 0%, rgba(7,8,10,0.55) 50%, rgba(7,8,10,0.88) 100%),
+    url('img/skins/mecha-bg.jpg') center top / cover no-repeat fixed,
+    radial-gradient(ellipse at 50% 0%, rgba(245,176,65,0.06), transparent 50%),
+    linear-gradient(180deg, #0c0e12 0%, #07080a 40%, #07080a 100%);
+}
+
+[data-theme="mecha"] #app { background: transparent; }
+
+/* ---------- 顶栏 ---------- */
+[data-theme="mecha"] .topbar {
+  background: linear-gradient(180deg, #1a1e24 0%, #12151a 100%);
+  border-bottom: 1px solid var(--m-border);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.55);
+}
+[data-theme="mecha"] .topbar .title {
+  color: var(--m-gold-light);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(245,176,65,0.35);
+  letter-spacing: 0.5px;
+}
+[data-theme="mecha"] .topbar .logo {
+  filter: drop-shadow(0 0 6px rgba(245,176,65,0.45));
+}
+[data-theme="mecha"] #btnSettings {
+  background: linear-gradient(180deg, #2c323a, #1e2329);
+  border: 1px solid var(--m-border);
+  border-radius: 8px;
+  color: var(--m-text-dim);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* ---------- 机甲顶部胶囊导航（仅 mecha 主题显示） ---------- */
+.mecha-top-nav { display: none; }
+[data-theme="mecha"] .mecha-top-nav {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  background: linear-gradient(180deg, rgba(17,20,24,0.95), rgba(17,20,24,0.82));
+  border-bottom: 1px solid var(--m-border);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+[data-theme="mecha"] .mecha-top-nav::-webkit-scrollbar { display: none; }
+
+.mecha-top-nav .cap {
+  flex: 1 0 auto;
+  min-width: 76px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--m-border);
+  background: linear-gradient(180deg, #252a31, #16191e);
+  color: var(--m-text-dim);
+  font-size: 13px;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 2px 5px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.mecha-top-nav .cap:active { transform: scale(0.97); }
+
+.mecha-top-nav .cap.active {
+  background: linear-gradient(180deg, var(--m-gold), var(--m-gold-dark));
+  color: #1a1200;
+  border-color: var(--m-gold-light);
+  font-weight: 800;
+  box-shadow: 0 0 14px rgba(245,176,65,0.38);
+}
+
+/* 原步骤条在 mecha 下隐藏 */
+[data-theme="mecha"] .stepper { display: none; }
+
+/* ---------- 主内容区 ---------- */
+[data-theme="mecha"] .view {
+  padding: 12px 14px calc(70px + 12px);
+}
+
+/* ---------- 金属卡片面板 ---------- */
+[data-theme="mecha"] .card {
+  background: linear-gradient(180deg, #15191e, #0d1013);
+  border: 1px solid var(--m-border);
+  border-radius: var(--m-radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 8px 26px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(0,0,0,0.35);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+/* 顶部青绿指示灯条 */
+[data-theme="mecha"] .card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 5%, var(--m-green) 50%, transparent 95%);
+  opacity: 0.55;
+}
+
+/* 四角铆钉 */
+[data-theme="mecha"] .card::after,
+[data-theme="mecha"] .card .rivet-bl,
+[data-theme="mecha"] .card .rivet-br { display: none; }
+
+/* 用额外的铆钉元素（JS 可添加，纯 CSS 用背景点阵代替） */
+[data-theme="mecha"] .card {
+  background-image:
+    radial-gradient(circle at 12px 12px, #6a7078 0, #2c3038 3px, transparent 4px),
+    radial-gradient(circle at calc(100% - 12px) 12px, #6a7078 0, #2c3038 3px, transparent 4px),
+    radial-gradient(circle at 12px calc(100% - 12px), #6a7078 0, #2c3038 3px, transparent 4px),
+    radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), #6a7078 0, #2c3038 3px, transparent 4px);
+}
+
+[data-theme="mecha"] .card h3 {
+  color: var(--m-text);
+  text-shadow: 0 0 6px rgba(255,255,255,0.06);
+}
+[data-theme="mecha"] .card .sub {
+  color: var(--m-text-dim);
+}
+
+/* ---------- 按钮 ---------- */
+[data-theme="mecha"] .btn {
+  border-radius: 8px;
+  border: 1px solid var(--m-border-light);
+  background: linear-gradient(180deg, #2c323a, #1e2329);
+  color: var(--m-text);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 3px 6px rgba(0,0,0,0.3);
+  position: relative;
+  font-weight: 600;
+  transition: transform .1s ease;
+}
+[data-theme="mecha"] .btn:active { transform: translateY(1px); }
+
+[data-theme="mecha"] .btn.primary {
+  background: linear-gradient(180deg, var(--m-gold), var(--m-gold-dark));
+  color: #1a1200;
+  border-color: var(--m-gold-light);
+  box-shadow: 0 0 14px rgba(245,176,65,0.32);
+}
+[data-theme="mecha"] .btn.ghost {
+  background: transparent;
+  border-color: var(--m-border);
+  color: var(--m-text-dim);
+}
+
+/* 设置弹窗里的主题按钮 */
+[data-theme="mecha"] .theme-btns .btn.theme {
+  background: linear-gradient(180deg, #252a31, #16191e);
+  border-color: var(--m-border);
+  color: var(--m-text-dim);
+}
+[data-theme="mecha"] .theme-btns .btn.theme.active {
+  background: linear-gradient(180deg, var(--m-green), var(--m-green-dim));
+  color: #001a0a;
+  border-color: var(--m-green);
+  box-shadow: 0 0 12px var(--m-green-glow);
+}
+
+/* ---------- 输入框 / 文本域 ---------- */
+[data-theme="mecha"] textarea,
+[data-theme="mecha"] input,
+[data-theme="mecha"] select {
+  background: rgba(6,8,10,0.65);
+  border: 1px solid #334033;
+  color: var(--m-green);
+  border-radius: 8px;
+  box-shadow: inset 0 2px 7px rgba(0,0,0,0.5), 0 0 8px rgba(0,230,118,0.04);
+  font-family: inherit;
+}
+[data-theme="mecha"] textarea::placeholder,
+[data-theme="mecha"] input::placeholder {
+  color: #5a6a5a;
+}
+[data-theme="mecha"] textarea:focus,
+[data-theme="mecha"] input:focus,
+[data-theme="mecha"] select:focus {
+  border-color: var(--m-green);
+  box-shadow: 0 0 12px var(--m-green-glow);
+  outline: none;
+}
+
+/* ---------- 标签 / 状态 ---------- */
+[data-theme="mecha"] .pill {
+  background: rgba(42,48,56,0.8);
+  border: 1px solid var(--m-border);
+  color: var(--m-text-dim);
+  border-radius: 999px;
+}
+[data-theme="mecha"] .pill.tag-ok {
+  background: rgba(0,230,118,0.12);
+  border-color: var(--m-green-dim);
+  color: var(--m-green);
+}
+[data-theme="mecha"] .pill.tag-warn {
+  background: rgba(245,176,65,0.12);
+  border-color: var(--m-gold-dark);
+  color: var(--m-gold-light);
+}
+
+[data-theme="mecha"] .status.ok { color: var(--m-green); }
+[data-theme="mecha"] .status.err { color: #ff5252; text-shadow: 0 0 8px rgba(255,82,82,0.25); }
+
+/* ---------- 子卡片（角色/场景/分镜内的内嵌面板） ---------- */
+[data-theme="mecha"] .subcard {
+  background: rgba(6,9,11,0.55);
+  border: 1px solid #2a3330;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.35);
+}
+[data-theme="mecha"] .subcard .lbl {
+  color: var(--m-gold-light);
+  border-bottom: 1px solid #2a3330;
+}
+[data-theme="mecha"] .subcard .prompt-text {
+  color: #c8e6c9;
+}
+[data-theme="mecha"] .subcard .copy {
+  background: rgba(0,230,118,0.1);
+  border: 1px solid var(--m-green-dim);
+  color: var(--m-green);
+  border-radius: 6px;
+}
+[data-theme="mecha"] .subcard .copy:hover {
+  background: rgba(0,230,118,0.2);
+  box-shadow: 0 0 8px var(--m-green-glow);
+}
+
+/* ---------- 分镜条目 ---------- */
+[data-theme="mecha"] .shot {
+  background: linear-gradient(180deg, #12161a, #0b0d10);
+  border: 1px solid var(--m-border);
+  border-left: 3px solid var(--m-green);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+[data-theme="mecha"] .shot .no {
+  color: var(--m-gold-light);
+  background: rgba(245,176,65,0.1);
+  border: 1px solid var(--m-gold-dark);
+  border-radius: 6px;
+}
+
+/* ---------- 底部导航 ---------- */
+[data-theme="mecha"] .tabbar {
+  background: linear-gradient(180deg, #181c22, #101318);
+  border-top: 1px solid var(--m-border);
+  box-shadow: 0 -6px 20px rgba(0,0,0,0.55);
+}
+[data-theme="mecha"] .tab {
+  color: var(--m-text-dim);
+  position: relative;
+  transition: color .15s ease;
+}
+[data-theme="mecha"] .tab span {
+  filter: grayscale(0.35);
+  transition: filter .15s ease;
+}
+[data-theme="mecha"] .tab.active {
+  color: var(--m-gold-light);
+}
+[data-theme="mecha"] .tab.active span {
+  filter: grayscale(0) drop-shadow(0 0 6px rgba(245,176,65,0.4));
+}
+[data-theme="mecha"] .tab.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 22%; right: 22%;
+  height: 2px;
+  background: var(--m-gold);
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 0 8px var(--m-gold);
+}
+
+/* ---------- 设置弹窗 ---------- */
+[data-theme="mecha"] .modal-panel {
+  background: linear-gradient(180deg, #181c22, #0e1114);
+  border: 1px solid var(--m-border-light);
+  border-radius: 14px;
+  box-shadow: 0 18px 52px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+[data-theme="mecha"] .modal-head {
+  border-bottom: 1px solid var(--m-border);
+  color: var(--m-gold-light);
+}
+[data-theme="mecha"] .modal-head h3 {
+  text-shadow: 0 0 8px rgba(245,176,65,0.25);
+}
+[data-theme="mecha"] .hint {
+  color: #7a828c;
+}
+
+/* ---------- Toast ---------- */
+[data-theme="mecha"] .toast {
+  background: rgba(17,20,24,0.95);
+  border: 1px solid var(--m-gold);
+  color: var(--m-gold-light);
+  box-shadow: 0 0 18px rgba(245,176,65,0.25);
+}
+
+/* ---------- 空状态 ---------- */
+[data-theme="mecha"] .center-empty {
+  color: var(--m-text-dim);
+  background: rgba(17,20,24,0.6);
+  border: 1px dashed var(--m-border);
+  border-radius: var(--m-radius);
+}
+
+/* ---------- 导出页大文本框 ---------- */
+[data-theme="mecha"] #exportArea {
+  background: rgba(6,8,10,0.5);
+  border-color: #2a3330;
+  color: #c8e6c9;
+}
