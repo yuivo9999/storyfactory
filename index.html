@@ -7,7 +7,9 @@
 <title>影视前期提示词生成器</title>
 <link rel="stylesheet" href="assets/style.css">
 <link rel="stylesheet" href="assets/theme-mecha.css">
-<link rel="stylesheet" href="assets/theme-blackboard.css">
+  <link rel="stylesheet" href="assets/theme-blackboard.css">
+  <link rel="stylesheet" href="assets/theme-cyber.css">
+  <link rel="stylesheet" href="assets/theme-guofeng.css">
 </head>
 <body>
 <div id="bg3d"></div>
@@ -44,6 +46,11 @@
     <button class="tab" data-step="4"><span>🎞️</span>分镜</button>
     <button class="tab" data-step="5"><span>📦</span>导出</button>
   </nav>
+
+  <!-- 赛博朋克主题：底部游戏手柄底座图 -->
+  <div id="cyberPad" class="cyber-pad hidden"></div>
+  <!-- 古风国潮主题：右下角小二/门童人物 -->
+  <div id="guofengHost" class="guofeng-host hidden"></div>
 </div>
 
 <!-- 设置弹窗 -->
@@ -83,8 +90,10 @@
           <button type="button" class="btn theme" data-theme="dark">🌙 默认深色</button>
           <button type="button" class="btn theme" data-theme="blackboard">🎮 3D 黑板</button>
           <button type="button" class="btn theme" data-theme="mecha">🦾 机甲科幻</button>
+          <button type="button" class="btn theme" data-theme="cyber">🕹️ 赛博朋克</button>
+          <button type="button" class="btn theme" data-theme="guofeng">🏮 古风国潮</button>
         </div>
-        <p class="hint">选择后即时生效并保存到本机；3D 黑板为 three.js 教室背景，机甲科幻为黑金青绿工业金属风。</p>
+        <p class="hint">选择后即时生效并保存到本机；3D 黑板为 three.js 教室背景，机甲科幻为黑金青绿工业金属风，赛博朋克为霓虹游戏手柄风，古风国潮为木质卷轴牌匾风。</p>
       </div>
 
       <div class="modal-actions">
