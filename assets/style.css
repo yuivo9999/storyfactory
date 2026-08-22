@@ -54,6 +54,7 @@ label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px
 .pill{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);color:var(--sub);margin:2px 4px 2px 0}
 .tag-ok{color:var(--ok);border-color:var(--ok)}
 .tag-warn{color:var(--warn);border-color:var(--warn)}
+.tag-env{color:var(--ok);border-color:var(--ok);background:color-mix(in srgb, var(--ok) 12%, transparent)}
 
 /* 复制按钮 */
 .copy{font-size:12px;padding:5px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);color:var(--accent2);cursor:pointer}
@@ -73,6 +74,29 @@ label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px
 .shot .no{font-weight:800;color:var(--accent)}
 .shot .meta{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
 .shot .meta .pill{background:var(--panel2)}
+
+/* 分镜按章节分组 */
+.board-ch{margin-bottom:14px}
+.board-ch-head{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  background:color-mix(in srgb, var(--accent) 14%, var(--panel));
+  border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin-bottom:10px;
+}
+.board-ch-title{font-size:14px; font-weight:800}
+.board-ch-stat{font-size:12px; color:var(--sub); white-space:nowrap}
+.board-concept{
+  background:var(--panel2); border:1px dashed var(--line); border-radius:10px;
+  padding:9px 12px; margin-bottom:10px; font-size:13px; color:var(--txt); line-height:1.7;
+}
+.board-concept b{color:var(--accent); font-weight:700}
+.shot .dur{display:inline-flex; align-items:center; gap:3px; font-size:12px; color:var(--sub)}
+.dur-input{
+  width:64px; min-height:auto; padding:3px 6px; font-size:13px; text-align:center;
+  background:var(--panel2); border:1px solid var(--line); color:var(--txt); border-radius:8px;
+}
+.dur-input:focus{border-color:var(--accent2); outline:none}
+.board-total{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap}
+.board-total b{color:var(--accent); font-size:15px; font-variant-numeric:tabular-nums}
 
 /* 状态/提示 */
 .status{font-size:13px;margin-top:10px;min-height:18px}
@@ -114,3 +138,131 @@ label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px
 @keyframes spin{to{transform:rotate(360deg)}}
 .center-empty{text-align:center;color:var(--muted);padding:40px 10px}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--accent2)}
+
+/* 字数统计角标（跨主题通用；古风浅底在 theme-guofeng.css 里覆盖变量） */
+.wc{
+  --wc-bg: rgba(255,255,255,.14);
+  --wc-fg: inherit;
+  --wc-border: rgba(255,255,255,.28);
+  display:inline-flex; align-items:baseline; gap:3px;
+  padding:1px 9px; border-radius:999px;
+  font-size:12px; line-height:1.5; font-variant-numeric:tabular-nums;
+  background:var(--wc-bg); color:var(--wc-fg);
+  border:1px solid var(--wc-border); white-space:nowrap;
+  vertical-align:middle; user-select:none; flex:0 0 auto;
+}
+.wc b{ font-weight:700; }
+.wc i{ font-style:normal; opacity:.75; font-size:11px; }
+
+/* 页面末尾：小说内容总字数浮条（固定浮于底部导航之上，bottom 由 JS 按 tabbar 高度动态设置） */
+.wc-total{position:fixed; left:0; right:0; bottom:0; max-width:560px; margin:0 auto; z-index:21; display:flex; justify-content:center; pointer-events:none}
+.wc-total.hidden{display:none}
+.wc-total .inner{background:var(--accent); color:#fff; font-size:12px; padding:7px 16px; border-radius:999px; box-shadow:0 6px 18px rgba(0,0,0,.4); display:inline-flex; gap:6px; align-items:baseline}
+.wc-total b{font-size:15px; font-variant-numeric:tabular-nums}
+.wc-total .brk{opacity:.85; font-size:11px}
+
+/* 右上角工具组（固定，跨主题一致）：规范 + 设置 */
+#topTools{position:fixed; top:10px; right:10px; z-index:60; display:flex; gap:8px; align-items:center}
+#topTools .icon-btn{
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--panel2); border:1px solid var(--line); color:var(--txt);
+  font-size:18px; padding:6px 10px; border-radius:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+#topTools .icon-btn:active{background:var(--panel)}
+#topTools .tb-lab{font-size:12px; font-weight:600; line-height:1}
+
+/* 创作规范弹层（点击 ⚖️ 展开；下拉式，仅作用于写小说） */
+.spec-panel{
+  position:fixed; top:54px; right:10px; z-index:61;
+  width:min(340px, calc(100vw - 20px));
+  background:var(--panel); color:var(--txt);
+  border:1px solid var(--line); border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+  padding:10px; overflow:hidden;
+}
+.spec-panel.hidden{display:none}
+.spec-head{display:flex; align-items:baseline; justify-content:space-between; gap:8px; padding:2px 4px 8px; border-bottom:1px solid var(--line); margin-bottom:6px}
+.spec-head .spec-note{font-size:11px; color:var(--sub)}
+.spec-row{
+  display:block; width:100%; text-align:left; cursor:pointer;
+  background:transparent; border:1px solid transparent; border-radius:10px;
+  padding:9px 10px; margin-bottom:4px; color:var(--txt);
+}
+.spec-row:hover{background:var(--panel2)}
+.spec-row .sr-title{font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px}
+.spec-row .sr-title .sr-check{margin-left:auto; color:var(--accent)}
+.spec-row .sr-desc{font-size:12px; color:var(--sub); margin-top:3px; line-height:1.45}
+.spec-row.active{border-color:var(--accent); background:color-mix(in srgb, var(--accent) 14%, var(--panel))}
+
+/* ---------- 沉浸式章节阅读浮层（跨主题，用 CSS 变量自动适配） ---------- */
+body.reader-lock{overflow:hidden}
+.reader{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center}
+.reader.hidden{display:none}
+.reader-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(2px)}
+.reader-panel{
+  position:relative; width:min(680px, calc(100vw - 24px)); height:calc(100vh - 48px);
+  max-height:88vh; display:flex; flex-direction:column;
+  background:var(--panel); color:var(--txt);
+  border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 18px 60px rgba(0,0,0,.55); overflow:hidden;
+  animation:readerIn .22s ease;
+}
+@keyframes readerIn{from{transform:translateY(24px);opacity:.5}to{transform:none;opacity:1}}
+.reader-head{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:14px 16px; border-bottom:1px solid var(--line);
+  background:var(--panel2); flex:0 0 auto;
+}
+.reader-title{font-size:16px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.reader-close{flex:0 0 auto}
+.reader-body{
+  flex:1; overflow-y:auto; padding:22px 24px 40px;
+  font-size:17px; line-height:2; letter-spacing:.3px;
+}
+.reader-body p{margin:0 0 1.1em; text-align:justify}
+.reader-body p:first-child::first-letter{font-size:1.5em; font-weight:700; color:var(--accent)}
+
+/* ---------- 角色筛选工具条 ---------- */
+.char-toolbar{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.char-search{min-height:40px}
+.char-jump,.char-filters select{min-height:40px}
+.char-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+.cf-age{display:flex;align-items:center;gap:6px}
+.cf-age .age-input{flex:1;min-width:0;padding:8px 10px;min-height:40px}
+.cf-age .age-sep{color:var(--sub);font-size:12px;flex:0 0 auto}
+.char-count{font-size:12px;color:var(--sub);text-align:right}
+
+/* 角色卡定位闪烁高亮 */
+@keyframes charFlash{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 3px var(--accent)}}
+.card.flash{animation:charFlash 1.6s ease}
+
+/* ---------- Tom Select 主题化（用 CSS 变量，5 主题自动适配） ---------- */
+.char-toolbar .ts-wrapper{width:100%}
+.char-toolbar .ts-wrapper .ts-control{
+  background:var(--panel2); border:1px solid var(--line); color:var(--txt);
+  border-radius:10px; min-height:40px; padding:6px 10px; box-shadow:none;
+}
+.char-toolbar .ts-wrapper .ts-control input{color:var(--txt); font-size:14px}
+.char-toolbar .ts-wrapper.focus .ts-control{border-color:var(--accent2)}
+.char-toolbar .ts-dropdown{
+  background:var(--panel); border:1px solid var(--line); color:var(--txt);
+  border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.4); z-index:90;
+}
+.char-toolbar .ts-dropdown .ts-dropdown-content{max-height:220px}
+.char-toolbar .ts-dropdown .option{color:var(--txt); font-size:13px; padding:7px 10px}
+.char-toolbar .ts-dropdown .option.active{background:var(--panel2)}
+.char-toolbar .ts-dropdown .option.selected{color:var(--accent)}
+.char-toolbar .ts-dropdown .optgroup-header{color:var(--sub); font-size:12px}
+.char-toolbar .ts-wrapper.multi .ts-control .item{
+  background:color-mix(in srgb, var(--accent) 18%, var(--panel2));
+  border:1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+  color:var(--txt); border-radius:8px; font-size:12px; padding:1px 8px; margin:2px;
+}
+.char-toolbar .ts-wrapper .ts-control .item .remove{color:var(--sub)}
+.char-toolbar .ts-wrapper .ts-control .clear-button{color:var(--sub); top:6px; right:4px}
+.char-toolbar .ts-wrapper.single .ts-control::after{
+  border-color:var(--sub) transparent transparent; border-width:5px 4px 0; margin-top:3px; right:10px;
+}
+.char-toolbar .ts-wrapper .dropdown-input-wrap{padding:4px}
+.char-toolbar .ts-wrapper .dropdown-input{background:var(--panel2); border:1px solid var(--line); color:var(--txt); border-radius:8px; font-size:13px}

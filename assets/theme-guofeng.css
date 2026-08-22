@@ -32,7 +32,6 @@
 }
 [data-theme="guofeng"] body.has-guofeng-bg {
   background:
-    linear-gradient(180deg, rgba(31,20,16,0.78) 0%, rgba(31,20,16,0.55) 40%, rgba(31,20,16,0.82) 100%),
     url('img/skins/guofeng-bg.jpg') center top / cover no-repeat fixed;
 }
 
@@ -302,6 +301,20 @@
   color: var(--gf-red);
 }
 
+/* 分镜按章节分组（古风：宣纸+墨字+金字边框） */
+[data-theme="guofeng"] .board-ch-head{
+  background: linear-gradient(180deg, #f7f1e3, #ede4cd);
+  border: 1px solid var(--gf-line); border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+[data-theme="guofeng"] .board-ch-title{ color: var(--gf-red) }
+[data-theme="guofeng"] .board-ch-stat{ color: var(--gf-dim) }
+[data-theme="guofeng"] .board-concept{
+  background: #faf6ed; border: 1px dashed #c9b896; color: var(--gf-ink);
+}
+[data-theme="guofeng"] .board-concept b{ color: var(--gf-red) }
+[data-theme="guofeng"] .board-total{ background: #faf6ed; color: var(--gf-ink); border-color: #d9cbb0 }
+
 /* 状态条 */
 [data-theme="guofeng"] .status.ok { color: #4a7c31; }
 [data-theme="guofeng"] .status.err { color: #a63232; }
@@ -369,18 +382,25 @@
 [data-theme="guofeng"] body.has-guofeng-bg #view::before,
 [data-theme="guofeng"] body.has-guofeng-bg #view::after { display: none; }
 
-/* 设置按钮浮于右上角屋檐区 */
-[data-theme="guofeng"] body.has-guofeng-bg #btnSettings {
-  position: fixed;
-  top: 16px;
-  right: 14px;
-  z-index: 60;
+/* 右上角工具组（规范 + 设置）浮于屋檐区，金边木牌风；#topTools 本身已由基础样式固定定位 */
+[data-theme="guofeng"] #topTools .icon-btn {
   background: rgba(74,44,31,0.9);
   border: 1px solid rgba(212,168,75,0.5);
   border-radius: 12px;
   color: var(--gf-gold-light);
   box-shadow: 0 0 10px rgba(212,168,75,0.2);
 }
+[data-theme="guofeng"] #specPanel {
+  background: linear-gradient(180deg, #f7f1e3 0%, #f4ecd8 100%);
+  color: var(--gf-ink);
+  border: 2px solid var(--gf-gold);
+  box-shadow: 0 0 0 2px #2e1a11, 0 10px 30px rgba(0,0,0,.4);
+}
+[data-theme="guofeng"] #specPanel .spec-note { color: var(--gf-dim); }
+[data-theme="guofeng"] #specPanel .spec-row .sr-desc { color: var(--gf-dim); }
+[data-theme="guofeng"] #specPanel .spec-row:hover { background: rgba(166,50,50,.10); }
+[data-theme="guofeng"] #specPanel .spec-row.active { border-color: var(--gf-red); background: rgba(166,50,50,.16); }
+[data-theme="guofeng"] #specPanel .spec-row .sr-check { color: var(--gf-red); }
 
 /* 底部令牌导航：透明浮在背景图木槽上 */
 [data-theme="guofeng"] body.has-guofeng-bg .tabbar {
@@ -394,4 +414,11 @@
   background:
     linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
   border: 1px solid rgba(212,168,75,0.45);
+}
+
+/* 古风浅底：字数角标改为深红棕字 + 淡红底，保证在宣纸/木纹上可读 */
+[data-theme="guofeng"] .wc{
+  --wc-bg: rgba(166,50,50,.12);
+  --wc-fg: #4a2c1f;
+  --wc-border: rgba(166,50,50,.4);
 }
