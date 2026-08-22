@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0f1115">
 <title>影视前期提示词生成器</title>
 <link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/vendor/tom-select/tom-select.css">
 <link rel="stylesheet" href="assets/theme-mecha.css">
   <link rel="stylesheet" href="assets/theme-blackboard.css">
   <link rel="stylesheet" href="assets/theme-cyber.css">
@@ -14,13 +15,27 @@
 <body>
 <div id="bg3d"></div>
 <div id="app">
+  <!-- 右上角工具组（固定，跨主题一致）：规范 + 设置 -->
+  <div id="topTools">
+    <button id="btnSpec" class="icon-btn" title="创作规范">⚖️<span class="tb-lab">规范</span></button>
+    <button id="btnSettings" class="icon-btn" title="设置">⚙️</button>
+  </div>
+
+  <!-- 创作规范弹层（点击 ⚖️ 展开，仅作用于写小说环节） -->
+  <div id="specPanel" class="spec-panel hidden">
+    <div class="spec-head">
+      <span>📐 创作规范</span>
+      <span class="spec-note">仅作用于「写小说」</span>
+    </div>
+    <div class="spec-list" id="specList"></div>
+  </div>
+
   <!-- 顶栏 -->
   <header class="topbar">
     <div class="brand">
       <span class="logo">🎬</span>
       <span class="title">影视前期提示词生成器</span>
     </div>
-    <button id="btnSettings" class="icon-btn" title="设置">⚙️</button>
   </header>
 
   <!-- 步骤指示 -->
@@ -37,6 +52,9 @@
 
   <!-- 主内容 -->
   <main id="view" class="view"></main>
+
+  <!-- 页面末尾：小说内容总字数（固定浮于底部导航之上） -->
+  <div id="wcTotal" class="wc-total hidden"></div>
 
   <!-- 底部导航 -->
   <nav class="tabbar">
@@ -106,6 +124,19 @@
 <!-- 轻提示 -->
 <div id="toast" class="toast hidden"></div>
 
+<!-- 沉浸式章节阅读浮层：点侧边空白 / ✕ / ESC 退出 -->
+<div id="readerOverlay" class="reader hidden">
+  <div class="reader-backdrop" data-reader-close></div>
+  <div class="reader-panel">
+    <div class="reader-head">
+      <div class="reader-title" id="readerTitle"></div>
+      <button class="icon-btn reader-close" data-reader-close title="退出阅读">✕</button>
+    </div>
+    <div class="reader-body" id="readerBody"></div>
+  </div>
+</div>
+
+<script src="assets/vendor/tom-select/tom-select.complete.min.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>
