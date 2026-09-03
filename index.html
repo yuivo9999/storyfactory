@@ -4,39 +4,125 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0f1115">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6f8">
 <title>影视前期提示词生成器</title>
-<link rel="stylesheet" href="assets/style.css">
-<link rel="stylesheet" href="assets/vendor/tom-select/tom-select.css">
-<link rel="stylesheet" href="assets/theme-mecha.css">
-  <link rel="stylesheet" href="assets/theme-blackboard.css">
-  <link rel="stylesheet" href="assets/theme-cyber.css">
-  <link rel="stylesheet" href="assets/theme-guofeng.css">
+<meta name="app-version" content="1.0.136">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="assets/style.css?v=150">
+<link rel="stylesheet" href="assets/vendor/nouislider/nouislider.min.css">
+  <link rel="stylesheet" href="assets/vendor/tom-select/tom-select.css">
+<link rel="stylesheet" href="assets/theme-light.css?v=3">
+<link rel="stylesheet" href="assets/theme-mecha.css?v=7">
+  <link rel="stylesheet" href="assets/theme-blackboard.css?v=3">
+<link rel="stylesheet" href="assets/theme-cyber.css?v=6">
+<link rel="stylesheet" href="assets/theme-guofeng.css?v=5">
+<link rel="stylesheet" href="assets/theme-aurora.css?v=1">
+<link rel="stylesheet" href="assets/theme-paper.css?v=3">
+<link rel="stylesheet" href="assets/style-polish.css?v=2">
 </head>
 <body>
 <div id="bg3d"></div>
 <div id="app">
-  <!-- 右上角工具组（固定，跨主题一致）：规范 + 设置 -->
-  <div id="topTools">
-    <button id="btnSpec" class="icon-btn" title="创作规范">⚖️<span class="tb-lab">规范</span></button>
-    <button id="btnSettings" class="icon-btn" title="设置">⚙️</button>
-  </div>
-
-  <!-- 创作规范弹层（点击 ⚖️ 展开，仅作用于写小说环节） -->
-  <div id="specPanel" class="spec-panel hidden">
-    <div class="spec-head">
-      <span>📐 创作规范</span>
-      <span class="spec-note">仅作用于「写小说」</span>
-    </div>
-    <div class="spec-list" id="specList"></div>
-  </div>
-
-  <!-- 顶栏 -->
+  <!-- 顶栏：两行布局（第一行功能入口 / 第二行品牌+模型信息） -->
   <header class="topbar">
-    <div class="brand">
-      <span class="logo">🎬</span>
-      <span class="title">影视前期提示词生成器</span>
+    <div class="tb-row tb-row-1">
+      <div class="tb-left">
+        <button id="btnHist" class="icon-btn" title="历史作品"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span class="tb-lab">历史</span></button>
+      </div>
+      <div class="tb-right">
+        <button id="btnNarrativeEngine" class="icon-btn" title="叙事引擎"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><span class="tb-lab">叙事</span></button>
+        <button id="btnAiLog" class="icon-btn" title="AI 请求日志"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="tb-lab">日志</span></button>
+        <button id="btnTheme" class="icon-btn" title="切换界面主题"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.26-.29-.44-.66-.44-1.06A1.68 1.68 0 0 1 14.45 16.5h2.06A5.5 5.5 0 0 0 22 11c0-5-4.5-9-10-9z"/></svg><span class="tb-lab">主题</span></button>
+        <button id="btnSettings" class="icon-btn" title="设置"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><span class="tb-lab">选项</span></button>
+      </div>
+    </div>
+    <div class="tb-row tb-row-2">
+      <div class="brand">
+        <span class="logo"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M20.2 6.2 3.9 2.9a1.5 1.5 0 0 0-1.7 1.1l-.3 1.6 16.5 3.2 1.8-.6a1.5 1.5 0 0 0 0-2zM2 8.2v11.3A1.5 1.5 0 0 0 3.5 21h17a1.5 1.5 0 0 0 1.5-1.5V8.2H2zm4 3.3h5a1 1 0 0 1 0 2H6a1 1 0 0 1 0-2zm0 4h9a1 1 0 0 1 0 2H6a1 1 0 0 1 0-2z"/></svg></span>
+        <span class="title">影视前期提示词生成器</span>
+      </div>
+      <button id="cfgBadge" class="cfg-badge" title="当前模型：点击切换">AI · 未选</button>
     </div>
   </header>
+
+  <!-- 历史作品弹层（点击 📚 展开；复用 spec-panel 样式保证跨主题一致） -->
+  <div id="histPanel" class="spec-panel hidden">
+    <div class="spec-head">
+      <span>📚 历史作品</span>
+      <span class="spec-actions">
+        <button id="histNewLong" class="hist-new-btn" type="button">＋ 新建长篇</button>
+        <button id="btnNewProject" class="hist-new-btn" type="button">＋ 新建小说</button>
+      </span>
+    </div>
+    <!-- v10.17 第二行最左：导入项目（原「导入 .fyp」改名改色，移入此行） -->
+    <div class="hist-import-row">
+      <button id="btnImportFyp" class="hist-new-btn hist-import-btn" type="button">📥 导入项目</button>
+      <input type="file" id="fypImportInput" accept=".fyp,application/json" style="display:none">
+    </div>
+    <div class="hist-list" id="histList"></div>
+  </div>
+
+  <!-- 主题弹层（点击 🎨 展开；复用 spec-panel 样式保证跨主题一致） -->
+  <div id="themePanel" class="spec-panel hidden">
+    <div class="spec-head">
+      <span>🎨 界面主题</span>
+      <span class="spec-note">实时切换，无需换页</span>
+    </div>
+    <div class="theme-btns" id="themeBtns">
+      <button type="button" class="btn theme" data-theme="dark">🌙 默认深色</button>
+      <button type="button" class="btn theme" data-theme="light">☀️ 白天</button>
+      <button type="button" class="btn theme" data-theme="blackboard">🎮 3D 黑板</button>
+      <button type="button" class="btn theme" data-theme="mecha">🦾 机甲科幻</button>
+      <button type="button" class="btn theme" data-theme="cyber">🕹️ 赛博朋克</button>
+      <button type="button" class="btn theme" data-theme="guofeng">🏮 古风国潮</button>
+      <button type="button" class="btn theme" data-theme="aurora">🌌 暗夜极光</button>
+      <button type="button" class="btn theme" data-theme="paper">📜 暖阳米纸</button>
+    </div>
+    <!-- v10.16 分任务温度（从设置弹窗移入主题面板；id 不变、功能零影响） -->
+    <hr class="tp-sep">
+    <div class="set-block">
+      <div class="set-block-head"><span>🌡️ 分任务温度（留空用建议值）</span></div>
+      <label class="field"><span>全局（未细分任务）</span>
+        <input id="cfgTemp" type="number" step="0.1" min="0" max="1" placeholder="0.7"></label>
+      <label class="field"><span>生成大纲（发散，建议 0.7）</span>
+        <input id="cfgTempOutline" type="number" step="0.1" min="0" max="1" placeholder="0.7"></label>
+      <label class="field"><span>优化构想（折中，建议 0.5）</span>
+        <input id="cfgTempIdea" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
+      <label class="field"><span>标题 AI（折中，建议 0.5）</span>
+        <input id="cfgTempTitle" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
+      <label class="field"><span>全书规划师（忠实偏稳，建议 0.4）</span>
+  <input id="cfgTempPlan" type="number" step="0.1" min="0" max="1" placeholder="0.4"></label>
+      <label class="field"><span>本章梗概（速读，默认 1.0）</span>
+  <input id="cfgTempStrip" type="number" step="0.1" min="0" max="1" placeholder="1"></label>
+      <label class="field"><span>生成章节（折中，建议 0.5）</span>
+        <input id="cfgTempChapter" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
+      <label class="field"><span>词库提取（严谨，建议 0.2）</span>
+        <input id="cfgTempQC" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
+      <label class="field"><span>AI 配方助手（发散，默认 0.9）</span>
+        <input id="cfgAiRecipeTemp" type="number" step="0.1" min="0" max="1" placeholder="0.9"></label>
+      <div class="tp-save-row"><button id="btnTempSave" class="btn small primary" type="button">💾 保存温度</button></div>
+      <p class="hint">改后点「保存温度」生效；各 AI 请求按任务类型取对应温度（大纲 0.7 / 优化构想 0.5 / 标题 0.5 / 全书规划师 0.4 / 本章梗概 1.0 / 章节 0.5 / 词库提取 0.2 / AI 配方助手 0.9）。AI 配方助手温度越高候选配方差异越发散、越低越贴近描述。本章梗概为「速读」任务，压缩追求忠实，偏低保真可手动下调其温度至 0.7–0.9。</p>
+    </div>
+  </div>
+
+  <!-- 写作风格配色弹层（点击 🎨 颜色展开；仿 themePanel 复用 spec-panel 样式） -->
+  <div id="wsColorPanel" class="spec-panel hidden">
+    <div class="spec-head">
+      <span>🎨 写作风格配色</span>
+      <span class="spec-note">① 标题 / ② 梗概 / ③ 章节 三组区块着色 · 实时切换</span>
+    </div>
+    <div id="wsColorBody"></div>
+    <p class="hint">「默认」三组无色，仅文字区分。其余 11 套与「我的自定义」按 上·标题 / 中·梗概 / 下·章节 上色；每套右上方 ✕ 可删除、↩ 撤销上一步、↺ 恢复全部（仅内置配色）＋ 新建三色配色。</p>
+  </div>
+
+  <!-- 叙事引擎抽屉：汇总改良.md 全部中间件入口 -->
+  <div id="narrativeEnginePanel" class="spec-panel hidden">
+    <div class="spec-head">
+      <span>🧠 叙事引擎</span>
+      <span class="spec-note">AI 中间件状态总览</span>
+    </div>
+    <div id="nePanelBody" class="ne-panel-body"></div>
+  </div>
 
   <!-- 步骤指示 -->
   <nav id="stepper" class="stepper"></nav>
@@ -53,20 +139,14 @@
   <!-- 主内容 -->
   <main id="view" class="view"></main>
 
-  <!-- 页面末尾：小说内容总字数（固定浮于底部导航之上） -->
-  <div id="wcTotal" class="wc-total hidden"></div>
-
   <!-- 底部导航 -->
   <nav class="tabbar">
-    <button class="tab" data-step="1"><span>📖</span>故事</button>
-    <button class="tab" data-step="2"><span>🧑</span>角色</button>
-    <button class="tab" data-step="3"><span>🏞️</span>场景</button>
-    <button class="tab" data-step="4"><span>🎞️</span>分镜</button>
-    <button class="tab" data-step="5"><span>📦</span>导出</button>
+    <button class="tab" data-step="1"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>故事</button>
+    <button class="tab" data-step="2"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>角色</button>
+    <button class="tab" data-step="3"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span>场景</button>
+    <button class="tab" data-step="4"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></span>分镜</button>
+    <button class="tab" data-step="5"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.3 7 12 12 20.7 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg></span>导出</button>
   </nav>
-
-  <!-- 赛博朋克主题：底部游戏手柄底座图 -->
-  <div id="cyberPad" class="cyber-pad hidden"></div>
 </div>
 
 <!-- 设置弹窗 -->
@@ -74,42 +154,45 @@
   <div class="modal-mask" data-close></div>
   <div class="modal-panel">
     <div class="modal-head">
-      <h3>DeepSeek 配置</h3>
+      <h3>AI 模型配置</h3>
       <button class="icon-btn" data-close>✕</button>
     </div>
     <div class="modal-body">
-      <label class="field">
-        <span>API Key（仅存本机浏览器，不会上传任何第三方）</span>
-        <input id="cfgKey" type="password" placeholder="sk-..." autocomplete="off">
-      </label>
-      <label class="field">
-        <span>接口地址（默认官方，无需改）</span>
-        <input id="cfgBase" type="text" placeholder="https://api.deepseek.com">
-      </label>
-      <label class="field">
-        <span>模型名（官方当前提供 3 个 V4 模型）</span>
-        <select id="cfgModel">
-          <option value="deepseek-v4-pro" selected>deepseek-v4-pro（质量最高，推荐）</option>
-          <option value="deepseek-v4-flash">deepseek-v4-flash（最快/最便宜）</option>
-          <option value="deepseek-v4-flash-vision-exp">deepseek-v4-flash-vision-exp（带视觉，本工具用不上）</option>
-        </select>
-      </label>
-      <label class="field">
-        <span>温度（0.1 严谨 ~ 1.0 发散，建议 0.7）</span>
-        <input id="cfgTemp" type="number" step="0.1" min="0" max="1" placeholder="0.7">
-      </label>
-      <p class="hint">本工具仅调用 DeepSeek 生成文字与提示词，不出图。图片请在「即梦」用提示词生成。</p>
-
-      <div class="theme-box">
-        <h4>🎨 界面主题（实时切换，无需换页）</h4>
-        <div class="theme-btns">
-          <button type="button" class="btn theme" data-theme="dark">🌙 默认深色</button>
-          <button type="button" class="btn theme" data-theme="blackboard">🎮 3D 黑板</button>
-          <button type="button" class="btn theme" data-theme="mecha">🦾 机甲科幻</button>
-          <button type="button" class="btn theme" data-theme="cyber">🕹️ 赛博朋克</button>
-          <button type="button" class="btn theme" data-theme="guofeng">🏮 古风国潮</button>
+      <!-- 第一段：服务列表 -->
+      <div class="set-block">
+        <div class="set-block-head">
+          <span>服务商 / 账号组</span>
+          <button id="btnAddGroup" class="btn small ghost" type="button">＋ 新增组</button>
         </div>
-        <p class="hint">选择后即时生效并保存到本机；3D 黑板为 three.js 教室背景，机甲科幻为黑金青绿工业金属风，赛博朋克为霓虹游戏手柄风，古风国潮为木质卷轴牌匾风。</p>
+        <div id="groupsList" class="groups-list"></div>
+      </div>
+
+      <!-- 第二段：组详情 -->
+      <div id="groupDetail" class="set-block"></div>
+
+      <!-- 第三段：当前生成使用（三级联动，来源唯一） -->
+      <div class="set-block">
+        <div class="set-block-head"><span>当前生成使用（仅向这一个 AI 发请求，绝不并发多个）</span></div>
+        <label class="field">
+          <span>服务组</span>
+          <select id="c_selGroup"></select>
+        </label>
+        <label class="field">
+          <span>账号（API Key）</span>
+          <select id="c_selKey"></select>
+        </label>
+        <label class="field">
+          <span>模型</span>
+          <select id="c_selModel"></select>
+        </label>
+      </div>
+      <p class="hint">API Key 仅存本机浏览器，不会上传任何第三方；生成时只使用上方所选的账号与模型，避免多个 AI 并发导致费用激增。</p>
+
+      <!-- v227 使用不同AI：分任务模型入口（二级面板） -->
+      <div class="set-block">
+        <div class="set-block-head"><span>各任务使用不同模型</span></div>
+        <p class="hint" style="margin:0 0 8px">默认全部跟随上方「当前生成使用」；可进入二级面板为正文/大纲/词典提取等任务单独指定模型（如轻维护任务用 flash 省钱）。仍是单出口串行请求，绝不并发烧钱。</p>
+        <button id="btnTaskModels" class="btn ghost" type="button">🎯 分任务模型设置 · <span id="tmBadge">全部跟随全局</span> →</button>
       </div>
 
       <div class="modal-actions">
@@ -121,8 +204,41 @@
   </div>
 </div>
 
+<!-- v227 使用不同AI：分任务模型二级面板（行内容由 JS 渲染） -->
+<div id="taskModelModal" class="modal hidden">
+  <div class="modal-mask" data-tm-close></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3>🎯 分任务模型</h3>
+      <button class="icon-btn" data-tm-close>✕</button>
+    </div>
+    <div class="modal-body" id="tmBody"></div>
+    <div class="modal-actions">
+      <button id="btnTmReset" class="btn ghost hidden" type="button">全部恢复跟随全局</button>
+      <button id="btnTmSave" class="btn primary" type="button">保存</button>
+    </div>
+    <p id="tmStatus" class="status"></p>
+  </div>
+</div>
+
+<!-- 叙事引擎通用弹窗：由各中间件面板复用 -->
+<div id="neModal" class="modal hidden">
+  <div class="modal-mask" data-ne-close></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <h3 id="neModalTitle">叙事引擎</h3>
+      <button class="icon-btn" data-ne-close>✕</button>
+    </div>
+    <div class="modal-body" id="neModalBody"></div>
+    <div class="modal-actions hidden" id="neModalActions"></div>
+  </div>
+</div>
+
 <!-- 轻提示 -->
 <div id="toast" class="toast hidden"></div>
+
+<!-- 启动加载遮罩（首次 await 读取 IndexedDB，毫秒级后自动隐藏） -->
+<div id="bootLoading" class="boot-loading hidden"><div class="boot-loading-inner">加载中…</div></div>
 
 <!-- 沉浸式章节阅读浮层：点侧边空白 / ✕ / ESC 退出 -->
 <div id="readerOverlay" class="reader hidden">
@@ -130,13 +246,34 @@
   <div class="reader-panel">
     <div class="reader-head">
       <div class="reader-title" id="readerTitle"></div>
-      <button class="icon-btn reader-close" data-reader-close title="退出阅读">✕</button>
+      <div class="reader-actions">
+        <button class="icon-btn reader-toc-btn" id="readerTocBtn" title="章节目录">☰</button>
+        <button class="icon-btn reader-close" data-reader-close title="退出阅读">✕</button>
+      </div>
     </div>
+    <div class="reader-progress" id="readerProgress"><div class="rp-track"></div><i id="readerProgressFill"></i><span class="rp-tip" id="readerPctTip">第 <b>0%</b> · 全文 <b>0</b> 段</span></div>
     <div class="reader-body" id="readerBody"></div>
+    <!-- 底部中央「概」按钮：v1.0.115 点击显示规划师「主线简述」 -->
+    <button class="reader-syn-btn" id="readerSynBtn" type="button" title="主线简述" aria-label="主线简述">概</button>
+    <!-- 本章梗概浮层：正方形，宽度=阅读界面一半（fixed8） -->
+    <div class="reader-syn-pop hidden" id="readerSynPop">
+      <div class="reader-syn-card" id="readerSynCard"></div>
+    </div>
+    <!-- 章节目录抽屉：100+ 章快速跳转 -->
+    <div class="reader-toc hidden" id="readerToc">
+      <div class="toc-head">
+        <span>目录（<b id="tocCount"></b> 章）</span>
+        <button class="icon-btn" id="tocClose" title="收起">✕</button>
+      </div>
+      <div class="toc-list" id="tocList"></div>
+    </div>
   </div>
 </div>
 
-<script src="assets/vendor/tom-select/tom-select.complete.min.js"></script>
-<script src="assets/app.js"></script>
-</body>
+<script src="assets/vendor/nouislider/nouislider.min.js"></script>
+  <script src="assets/vendor/tom-select/tom-select.complete.min.js"></script>
+<script src="assets/vendor/jszip.min.js"></script>
+<script src="assets/idb.js?v=4"></script>
+  <script src="assets/app.js?v=228"></script>
+  </body>
 </html>
