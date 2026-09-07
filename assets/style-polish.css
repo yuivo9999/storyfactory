@@ -1,0 +1,514 @@
+/* =========================================================
+ * style-polish.css · 设计系统覆盖层 v2.0（全量美化）
+ * ---------------------------------------------------------
+ * 原则：
+ *  1. 纯增量覆盖：不改 style.css / 主题 CSS 任何一行；
+ *  2. 全部颜色由主题变量 + color-mix 推导，主题切换自动继承；
+ *  3. 重设计作用于四个"系统主题"（dark / light / aurora / paper），
+ *     用 :where() 保持与 style.css 同级优先级、后加载胜出；
+ *     黑板 / 机甲 / 赛博 / 古风四套强皮肤仅继承 §10~§13 通用增强；
+ *  4. 统一彩色图标字体 Twemoji Mozilla（SIL OFL），emoji 跨平台一致。
+ * ========================================================= */
+
+/* ---------- 0. 图标字体与字体栈 ---------- */
+/* Twemoji Mozilla 彩色图标字体（SIL OFL）。
+ * 要点：unicode-range 限定 emoji 区 + 放栈首 —— Chromium 在 -apple-system 等系统别名处
+ * 会提前截获 emoji 渲染（黑白/豆腐），栈首 + range 双重保证命中本字体；
+ * range 刻意排除 ①②③(2460) / ▸(25B8) / 箭头(2190) 等 UI 符号，保持系统渲染。 */
+@font-face{
+  font-family:'Twemoji Mozilla';
+  src:url('vendor/twemoji.woff2') format('woff2');
+  font-display:swap;
+  unicode-range: U+1F000-1F9FF, U+1FA00-1FAFF, U+2600-26FF, U+2700-27BF, U+2B00-2BFF, U+200D, U+FE0E-FE0F;
+}
+:root{
+  --font-ui: "Twemoji Mozilla",-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji";
+  --font-serif: "Twemoji Mozilla","Songti SC","STSong","STZhongsong","Noto Serif CJK SC","Source Han Serif SC",serif;
+  --font-mono: ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace,"Twemoji Mozilla";
+  /* 尺寸阶梯（8px 栅格） */
+  --h-btn-sm:34px; --h-btn:42px; --h-btn-lg:50px; --h-input:42px;
+  --r-sm:10px; --r-md:14px; --r-lg:18px; --r-xl:22px;
+  /* 渐变与光 */
+  --grad-primary: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 72%, #7a2d00) 100%);
+  --grad-blue:    linear-gradient(135deg, var(--accent2) 0%, color-mix(in srgb, var(--accent2) 70%, #123a7a) 100%);
+  --glow-a: color-mix(in srgb, var(--accent) 38%, transparent);
+  --glow-b: color-mix(in srgb, var(--accent2) 30%, transparent);
+  /* 阴影阶梯（深色基准；浅色/纸面主题覆盖） */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.18);
+  --shadow-md: 0 4px 14px rgba(0,0,0,.32), 0 10px 30px rgba(0,0,0,.22);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.45), 0 4px 12px rgba(0,0,0,.30);
+  --elev-border: color-mix(in srgb, #fff 7%, transparent);
+  --elev-hi: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
+  --danger:#e5484d;
+  /* 动效 */
+  --dur:180ms; --ease:cubic-bezier(.2,.7,.3,1);
+}
+[data-theme="light"], [data-theme="paper"]{
+  --shadow-sm: 0 1px 2px rgba(16,24,40,.06), 0 2px 8px rgba(16,24,40,.06);
+  --shadow-md: 0 4px 14px rgba(16,24,40,.10), 0 10px 30px rgba(16,24,40,.08);
+  --shadow-lg: 0 16px 48px rgba(16,24,40,.16), 0 4px 12px rgba(16,24,40,.08);
+  --elev-border: rgba(16,24,40,.07);
+  --elev-hi: inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+/* 系统主题选择器组（:where 优先级 0，仅命中四主题，不碰强皮肤） */
+/* 以下 ST 即 system-theme 简写注释 */
+/* ---------- 1. 全局基础 ---------- */
+body{ font-family: var(--font-ui); }
+/* 表单类元素 UA 样式不继承 body 字体（按钮内 emoji 变豆腐块的根因），统一接管；
+ * 用 html[data-theme]:not([blackboard]) 提级，压过机甲/赛博/古风等主题的字体栈；
+ * 黑板主题豁免（楷体粉笔字是其核心风格，emoji 用系统渲染）。 */
+html[data-theme]:not([data-theme="blackboard"]) body{ font-family: var(--font-ui); }
+html[data-theme]:not([data-theme="blackboard"]) :is(button, input, select, textarea, output){ font-family: var(--font-ui); }
+::selection{ background: color-mix(in srgb, var(--accent) 55%, transparent); color:#fff; }
+*:focus-visible{
+  outline:2px solid color-mix(in srgb, var(--accent2) 75%, transparent);
+  outline-offset:2px; border-radius:6px;
+}
+/* 细滚动条（全主题） */
+*{ scrollbar-width:thin; scrollbar-color: color-mix(in srgb, var(--muted) 55%, transparent) transparent; }
+*::-webkit-scrollbar{ width:6px; height:6px; }
+*::-webkit-scrollbar-thumb{ background:color-mix(in srgb, var(--muted) 45%, transparent); border-radius:3px; }
+*::-webkit-scrollbar-thumb:hover{ background:color-mix(in srgb, var(--muted) 70%, transparent); }
+*::-webkit-scrollbar-track{ background:transparent; }
+/* 复选/单选（全主题） */
+input[type="checkbox"], input[type="radio"]{ accent-color: var(--accent); width:16px; height:16px; cursor:pointer; }
+/* 数字等宽（统计/字数/进度） */
+.wc-badge, .cp-wc, .rp-tip, .gen-count-out, .board-total b, .ailog-time{ font-variant-numeric: tabular-nums; }
+/* 等宽字体的归宿：日志与 Key */
+.ailog-pre, .k-key, .g-base, .code, .gs-pre{ font-family: var(--font-mono); font-size:12px; }
+
+/* ---------- 2. 页面背景光晕（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) body::before{
+  content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(720px 420px at 82% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 62%),
+    radial-gradient(680px 460px at 8% 108%, color-mix(in srgb, var(--accent2) 8%, transparent), transparent 60%);
+}
+[data-theme="light"] body::before, [data-theme="paper"] body::before{
+  background:
+    radial-gradient(720px 420px at 82% -8%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 62%),
+    radial-gradient(680px 460px at 8% 108%, color-mix(in srgb, var(--accent2) 7%, transparent), transparent 60%);
+}
+/* 极光主题：顶部极光幕 */
+[data-theme="aurora"] body::before{
+  background:
+    radial-gradient(900px 380px at 50% -14%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 66%),
+    radial-gradient(700px 420px at 88% 8%, color-mix(in srgb, var(--accent2) 16%, transparent), transparent 62%),
+    radial-gradient(680px 460px at 8% 108%, color-mix(in srgb, var(--accent2) 10%, transparent), transparent 60%);
+}
+
+/* ---------- 3. 顶栏（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .topbar{
+  background: color-mix(in srgb, var(--bg) 74%, transparent);
+  border-bottom:1px solid var(--elev-border);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 4%, transparent), 0 6px 18px rgba(0,0,0,.18);
+}
+@supports (backdrop-filter: blur(10px)){
+  :where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .topbar{
+    backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  }
+}
+:where([data-theme="light"],[data-theme="paper"]) .topbar{ background: color-mix(in srgb, var(--panel) 74%, transparent); }
+
+/* 品牌 Logo 徽章（SVG 版） */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .brand .logo{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px; height:34px; border-radius:11px;
+  background: var(--grad-primary);
+  box-shadow: 0 3px 10px var(--glow-a), inset 0 1px 0 color-mix(in srgb, #fff 26%, transparent);
+  color:#fff;
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .brand .logo svg{ width:19px; height:19px; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .brand .title{ font-weight:800; letter-spacing:.3px; }
+
+/* 模型胶囊：渐变描边 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .cfg-badge{
+  position:relative; border-radius:999px; padding:6px 14px; font-weight:600;
+  border:1px solid transparent;
+  background:
+    linear-gradient(var(--panel2), var(--panel2)) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 65%, transparent), color-mix(in srgb, var(--accent2) 55%, transparent)) border-box;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .cfg-badge:hover{ transform:translateY(-1px); box-shadow: var(--shadow-md); }
+
+/* 顶栏图标按钮（含 SVG 图标） */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .topbar .icon-btn{
+  display:inline-flex; align-items:center; gap:5px;
+  min-height:36px; border-radius:12px;
+  transition: background var(--dur) var(--ease), transform var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .topbar .icon-btn svg{ width:19px; height:19px; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .topbar .icon-btn:hover{
+  background: color-mix(in srgb, var(--panel2) 85%, transparent);
+  color: var(--txt); transform: translateY(-1px);
+}
+
+/* ---------- 4. 步骤指示器：点线式（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper{ position:relative; padding:14px 20px 12px; gap:10px; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper::before{
+  content:''; position:absolute; top:19px; left:34px; right:34px; height:2px; border-radius:1px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 45%, var(--line)), var(--line));
+  opacity:.7;
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper .chip{
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  background:transparent; border:none; padding:0 6px;
+  font-size:11.5px; font-weight:600; color:var(--sub); white-space:nowrap;
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper .chip::before{
+  content:''; width:11px; height:11px; border-radius:50%;
+  background: var(--bg);
+  border:2px solid color-mix(in srgb, var(--muted) 65%, transparent);
+  transition: all var(--dur) var(--ease);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper .chip.done::before{
+  background: var(--accent); border-color: var(--accent);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper .chip.active{ background:transparent; color:var(--txt); font-weight:800; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .stepper .chip.active::before{
+  width:15px; height:15px; background: var(--grad-primary); border-color:transparent;
+  box-shadow: 0 0 0 3px var(--bg), 0 0 14px 3px var(--glow-a);
+}
+
+/* ---------- 5. 卡片体系（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .card{
+  border:1px solid var(--elev-border);
+  box-shadow: var(--shadow-sm), var(--elev-hi);
+  border-radius: var(--r-lg);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .card:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--elev-hi);
+}
+/* 卡片标题渐变条（章节头豁免） */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .card h3{ position:relative; padding-left:12px; font-weight:800; letter-spacing:.3px; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .card h3::before{
+  content:''; position:absolute; left:0; top:3px; bottom:3px; width:3.5px; border-radius:2px;
+  background: var(--grad-primary);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .ch-head h3{ padding-left:0; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .ch-head h3::before{ display:none; }
+
+/* 二级面板：子卡 / 分镜 / 键值行 / 历史项 / 设置组行 统一语言 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .subcard,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .shot,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .ailog-row{
+  border-color: var(--elev-border);
+  box-shadow: var(--elev-hi);
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .shot:hover{ border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
+
+/* 分镜序号徽章 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .shot .no{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:26px; height:22px; padding:0 8px; border-radius:7px;
+  background: var(--grad-primary); color:#fff; font-size:12px; font-weight:800;
+  box-shadow: 0 2px 6px var(--glow-a);
+}
+
+/* kv 字段行斑马纹（角色卡） */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .kv{ border-bottom:1px dashed color-mix(in srgb, var(--line) 65%, transparent); }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .kv:nth-child(even){ background: color-mix(in srgb, var(--panel2) 40%, transparent); border-radius:6px; }
+
+/* 状态 pill：语义色磨砂片 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .pill{
+  background: color-mix(in srgb, var(--panel2) 72%, transparent);
+  border-color: var(--elev-border);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .pill.tag-ok{
+  background: color-mix(in srgb, var(--ok) 14%, transparent);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .pill.tag-warn{
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 45%, transparent);
+}
+
+/* ---------- 6. 按钮系统（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn{
+  min-height: var(--h-btn); border-radius:12px; border-color: var(--elev-border);
+  font-weight:600; letter-spacing:.2px;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+              filter var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn:hover:not(:disabled){ transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn:active:not(:disabled){ transform: translateY(0) scale(.97); transition-duration:120ms; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn:disabled{ opacity:.45; box-shadow:none; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.small{ min-height: var(--h-btn-sm); font-size:12.5px; border-radius:10px; padding:6px 12px; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.block{ min-height: var(--h-btn-lg); font-size:15.5px; font-weight:700; border-radius:14px; }
+
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.primary{
+  background: var(--grad-primary); border-color:transparent; color:#fff;
+  box-shadow: 0 3px 12px var(--glow-a), inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.primary:hover:not(:disabled){ filter: brightness(1.09); box-shadow: 0 5px 18px var(--glow-a); }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.blue{
+  background: var(--grad-blue); border-color:transparent; color:#fff;
+  box-shadow: 0 3px 12px var(--glow-b), inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.blue:hover:not(:disabled){ filter: brightness(1.09); box-shadow: 0 5px 18px var(--glow-b); }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.ghost:hover:not(:disabled){
+  background: color-mix(in srgb, var(--panel2) 78%, transparent);
+}
+/* 危险操作 hover 红化 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .btn.del:hover:not(:disabled),
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .hist-del:hover,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .hist-op:hover{
+  color: var(--danger); border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+/* 复制按钮：hover 实心化 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .copy{
+  transition: all var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .copy:hover{
+  background: var(--accent2); color:#fff; border-color: var(--accent2);
+}
+/* 生成中：琥珀渐变 + 脉动光晕（全主题） */
+@keyframes pulseGlow{
+  0%,100%{ box-shadow: 0 2px 8px rgba(245,158,11,.30); }
+  50%    { box-shadow: 0 2px 16px rgba(245,158,11,.55); }
+}
+.btn.ghost.is-busy, #app .btn.ghost[data-regen].is-busy{ animation: pulseGlow 1.6s ease-in-out infinite; }
+
+/* 批量生成步进器 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .gen-step{
+  border-radius:10px; min-width:34px; min-height:34px; font-weight:800;
+  transition: all var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .gen-step:hover{
+  background: var(--accent); color:#fff; border-color: var(--accent);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .gen-count-out{ font-weight:800; font-size:15px; }
+
+/* ✚ v1.0.152/160 批量生成 / 区间生成：步进器与区间章数输入统一为与「批量/区间生成」按钮同高。
+   v1.0.160 修正：左侧按钮高 22px（与章节卡「重生成」同高），右侧控件须等宽等高 22px，
+   消除「前小后大」的不对称；所有主题一致生效（含黑板/机甲/赛博/古风强皮肤）。 */
+.multi-gen{ align-items:center; }
+.multi-gen .gen-stepper{
+  height:22px; box-sizing:border-box; padding:0 6px; gap:4px;
+  align-items:center; border-radius:10px;
+}
+.multi-gen .gen-step{
+  height:20px; min-height:0; width:26px; min-width:26px;
+  display:flex; align-items:center; justify-content:center; box-sizing:border-box; font-size:15px; line-height:1;
+}
+.multi-gen .gen-count-out{
+  height:20px; min-height:0; min-width:34px;
+  display:flex; align-items:center; justify-content:center;
+  padding:0 8px; box-sizing:border-box; font-size:13px; font-weight:800; line-height:1;
+}
+.multi-gen .gen-unit{ font-size:12px; }
+.range-gen{ align-items:center; }
+.range-gen .rg-label{ align-items:center; }
+.range-gen .rg-input{
+  height:22px; width:44px; box-sizing:border-box;
+  display:flex; align-items:center; justify-content:center; font-size:12px; min-height:0;
+}
+
+/* 选项 chip（创作规范 / 写作风格词条 / 配色）：选中渐变 */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .spec-opt{
+  border-radius:999px; transition: all var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .spec-opt:hover{ transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .spec-opt.active{
+  background: var(--grad-primary); color:#fff; border-color:transparent;
+  box-shadow: 0 3px 10px var(--glow-a);
+}
+
+/* ---------- 7. 输入控件（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) select{
+  min-height: var(--h-input);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) textarea,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) input,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) select{
+  transition: box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) textarea:hover,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) input:hover,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) select:hover{
+  border-color: color-mix(in srgb, var(--accent2) 40%, var(--line));
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) textarea:focus,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) input:focus,
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) select:focus{
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent2) 20%, transparent);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) label.field > span{ font-weight:600; letter-spacing:.2px; }
+
+/* noUiSlider 主题化（全主题） */
+.noUi-connect{ background: var(--grad-primary); }
+.noUi-handle{
+  border-radius:50%; border:2px solid #fff;
+  background: var(--grad-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  cursor:grab; transition: transform var(--dur) var(--ease);
+}
+.noUi-handle:hover{ transform: scale(1.1); }
+.noUi-handle:before, .noUi-handle:after{ display:none; }
+.noUi-target{ border-color: var(--elev-border); box-shadow:none; }
+
+/* ---------- 8. 底部导航（系统四主题） ---------- */
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tabbar{
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  border-top:1px solid var(--elev-border);
+  box-shadow: 0 -6px 20px rgba(0,0,0,.16);
+}
+@supports (backdrop-filter: blur(10px)){
+  :where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tabbar{
+    backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
+  }
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab{
+  position:relative;
+  transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab::before{
+  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:0; height:2.5px; border-radius:0 0 3px 3px;
+  background: var(--grad-primary);
+  transition: width 220ms var(--ease);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab.active::before{ width:58%; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab.active{
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 10%, transparent), transparent 70%);
+}
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab span{ transition: transform var(--dur) var(--ease); display:inline-flex; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab span svg{ width:20px; height:20px; }
+:where([data-theme="dark"],[data-theme="light"],[data-theme="aurora"],[data-theme="paper"]) .tab.active span{ transform: scale(1.12) translateY(-1px); }
+
+/* ---------- 9. 窗口体系（全主题通用） ---------- */
+.modal-mask{ background: rgba(0,0,0,.46); }
+@supports (backdrop-filter: blur(6px)){
+  .modal-mask{ backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+}
+.modal-panel{
+  border-radius: var(--r-xl);
+  border:1px solid transparent;
+  background:
+    linear-gradient(var(--panel), var(--panel)) padding-box,
+    linear-gradient(150deg, color-mix(in srgb, var(--accent) 32%, transparent), color-mix(in srgb, var(--accent2) 24%, transparent) 60%, var(--line)) border-box;
+  box-shadow: var(--shadow-lg);
+}
+.modal-head h3, .gs-modal-head{ font-weight:800; letter-spacing:.3px; }
+/* 弹窗 ✕：36px 触控圆钮 + hover 红化 */
+.modal-head .icon-btn, .gs-x{
+  width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:10px; transition: all var(--dur) var(--ease);
+}
+.modal-head .icon-btn:hover, .gs-x:hover{
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger) !important;
+}
+/* gs 弹层 */
+.gs-overlay{ background: rgba(0,0,0,.5); }
+@supports (backdrop-filter: blur(6px)){
+  .gs-overlay{ backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+}
+.gs-overlay .gs-modal{
+  border-radius: var(--r-xl);
+  border:1px solid var(--elev-border);
+  box-shadow: var(--shadow-lg), var(--elev-hi);
+}
+/* 顶部下拉弹层（历史/主题/配色） */
+.spec-panel{
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-lg), var(--elev-hi) !important;
+}
+/* 设置组行 / 历史项：选中渐变左条 */
+.group-item{ border-radius:12px; transition: all var(--dur) var(--ease); }
+.group-item.active{
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent) !important;
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel2)) !important;
+}
+.hist-item{ border-radius: var(--r-md); transition: border-color var(--dur) var(--ease); }
+.hist-item.active{ border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+/* 主题选择按钮（弹层内）：选中高亮 */
+.theme-btns .theme{ transition: all var(--dur) var(--ease); border-radius:12px; }
+.theme-btns .theme:hover{ transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.theme-btns .theme.active{
+  outline:2px solid color-mix(in srgb, var(--accent) 65%, transparent);
+  outline-offset:1px;
+}
+
+/* ---------- 10. Toast（全主题通用） ---------- */
+@keyframes toastIn{
+  from{ opacity:0; transform:translateX(-50%) translateY(12px) scale(.96); }
+  to  { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+}
+.toast{
+  background: color-mix(in srgb, #0b0d12 86%, transparent);
+  border:1px solid color-mix(in srgb, #fff 12%, transparent);
+  border-radius: var(--r-md);
+  padding:11px 18px; font-weight:600; letter-spacing:.2px;
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 240ms var(--ease);
+}
+@supports (backdrop-filter: blur(10px)){
+  .toast{ backdrop-filter: blur(12px) saturate(1.3); -webkit-backdrop-filter: blur(12px) saturate(1.3); }
+}
+
+/* ---------- 11. 阅读器（全主题通用） ---------- */
+.reader-body{ font-family: var(--font-serif); }
+.reader-body > p{ text-indent:2em; }
+.reader-body > p.muted{ text-indent:0; }
+#readerProgressFill{
+  background: var(--grad-primary) !important;
+  box-shadow: 0 0 10px var(--glow-a);
+  transition: width 200ms var(--ease);
+}
+.reader-panel{ border:1px solid var(--elev-border); box-shadow: var(--shadow-lg); }
+.toc-item{ position:relative; transition: background var(--dur) var(--ease); }
+.toc-item.active::before{
+  content:''; position:absolute; left:0; top:8px; bottom:8px; width:3px; border-radius:2px;
+  background: var(--grad-primary);
+}
+/* 阅读界面底部「概」按钮：全 8 主题统一白字（原继承 --accent，在渐变底上易糊） */
+.reader-syn-btn{
+  background: var(--grad-primary) !important;
+  color:#fff !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
+  border-color: transparent !important;
+  font-weight:800;
+  box-shadow: 0 4px 14px var(--glow-a), inset 0 1px 0 color-mix(in srgb, #fff 22%, transparent) !important;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+/* 注意：原样式用 translateX(-50%) 水平居中，hover/active 必须保留，否则按钮右移 */
+.reader-syn-btn:hover{ transform: translateX(-50%) translateY(-2px) scale(1.04); color:#fff !important; }
+.reader-syn-btn:active{ transform: translateX(-50%) translateY(0) scale(.96); }
+
+/* ---------- 12. 状态文本语义（全主题通用） ---------- */
+.status.err{ color: var(--danger); }
+
+/* ---------- 13. 空状态与杂项（全主题通用） ---------- */
+.hist-empty{ padding:28px 12px; text-align:center; color:var(--muted); font-size:13px; }
+.hist-empty::before{ content:'📚'; display:block; font-size:30px; margin-bottom:8px; opacity:.55; }
+/* 步骤页空态：加大留白与视觉重心 */
+.center-empty{ padding:64px 24px; font-size:14px; line-height:2; }
+.center-empty::before{ content:'🎬'; display:block; font-size:40px; margin-bottom:14px; opacity:.45; }
+@keyframes fadeBreath{ 0%,100%{opacity:.85} 50%{opacity:.55} }
+#bgTaskIndicator{ animation: fadeBreath 1.8s ease-in-out infinite; }
+.boot-loading{ backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+/* ---------- 14. 章节重生成弹窗：「直接重生成（无干预）」蓝色渐变（与右侧彩色主按钮一致饱满有填充） ---------- */
+.gs-actions .btn[data-rp-plain]{
+  background:linear-gradient(135deg,#4db8ff 0%,#2a7fe3 100%);
+  border:1px solid transparent;
+  color:#fff;
+  font-weight:600;
+  box-shadow:0 1px 6px rgba(45,130,230,.35);
+}
+.gs-actions .btn[data-rp-plain]:hover:not(:disabled):not(.is-busy){ background:linear-gradient(135deg,#69c6ff 0%,#3a93e8 100%); color:#fff; }
+.gs-actions .btn[data-rp-plain]:active:not(:disabled){ transform:scale(.98); }
+.gs-actions .btn[data-rp-plain]:disabled,
+.gs-actions .btn[data-rp-plain].is-busy{ background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%); border:1px solid transparent; color:#fff; opacity:1; box-shadow:0 1px 6px rgba(245,158,11,.4); }

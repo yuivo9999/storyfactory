@@ -1,22 +1,34 @@
 /* =========================================================
- * 主题：3D 黑板（粉笔教室）· 仅 [data-theme="blackboard"] 下生效
- * 3D 背景由 assets/blackboard3d.js（three.js Toon 光影）注入到 #bg3d
- * 本文件负责卡片/文字的粉笔黑板质感 + 步骤切换级联动画
+ * 主题：粉笔黑板（粉笔教室）· 仅 [data-theme="blackboard"] 下生效
+ * 纯 CSS 实现，不依赖 three.js / blackboard3d.js：
+ *   - 背景由本文件的 #bg3d 规则用 CSS 渐变绘制（绿黑板 + 粉笔尘 + 木框）
+ *   - 卡片/文字的粉笔黑板质感 + 步骤切换级联动画
  * ========================================================= */
 [data-theme="blackboard"]{
-  --bg:#10151c; --panel:rgba(19,53,42,.92); --panel2:rgba(12,36,27,.92);
+  --bg:#0f2a20; --panel:rgba(19,53,42,.92); --panel2:rgba(12,36,27,.92);
   --line:rgba(255,255,255,.35); --txt:#eafaf2; --sub:#9be8c8; --muted:#6f9c86;
-  --accent:#ffd27f; --accent2:#ffd27f; --ok:#7fe3b0; --warn:#ffd27f;
+  --accent:#ffd27f; --accent2:#ffd27f; --ok:#7fe3b0; --warn:#ffd27f; --on-accent:#0f2a20;
   --chalk:#f3fbf6;
 }
 [data-theme="blackboard"] body{
-  background:#10151c;
+  background:#241a12; /* 木框外的暗木底色，配合 #bg3d 内嵌木框形成教室感 */
   font-family:"KaiTi","STKaiti","PingFang SC",serif;
   color:var(--chalk);
 }
-/* 3D 背景容器（blackboard3d.js 注入 canvas） */
+/* 纯 CSS 粉笔黑板背景（不再由 blackboard3d.js 注入 canvas） */
 [data-theme="blackboard"] #bg3d{
   position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(120% 70% at 50% 0%,   rgba(255,255,255,.07), transparent 55%),
+    radial-gradient(42% 32% at 18% 78%,    rgba(255,255,255,.055), transparent 60%),
+    radial-gradient(46% 36% at 83% 22%,    rgba(255,255,255,.045), transparent 60%),
+    radial-gradient(30% 24% at 64% 60%,    rgba(255,255,255,.03),  transparent 60%),
+    linear-gradient(180deg,#173c2e 0%,#103023 52%,#0c211a 100%);
+  /* 内嵌木框 + 暗角，模拟教室黑板 */
+  box-shadow:
+    inset 0 0 0 14px #5b3c22,
+    inset 0 0 0 17px #3c2716,
+    inset 0 0 150px rgba(0,0,0,.55);
 }
 [data-theme="blackboard"] #app{ position:relative; z-index:1; }
 [data-theme="blackboard"] .topbar{
@@ -81,3 +93,18 @@
   100%{ transform:translateY(0) scale(1); opacity:1; filter:none; }
 }
 [data-theme="blackboard"] .tabbar{ box-shadow:0 -6px 18px rgba(0,0,0,.4); }
+
+/* v10.56 章节标题卡片标题行：粉笔字 + 虚线分隔 */
+[data-theme="blackboard"] .ct-head {
+  color: #fff;
+  border-bottom: 1px dashed rgba(255,255,255,.35);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+[data-theme="blackboard"] .ct-head b {
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  font-weight: 600;
+}
+[data-theme="blackboard"] .ct-fold-ico { color: #ffd27f; }

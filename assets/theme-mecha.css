@@ -26,16 +26,13 @@
   --m-radius: 12px;
 }
 
-/* ---------- 全局背景（无 mecha-bg.jpg 时降级） ---------- */
+/* ---------- 全局背景（v10.7 钢灰还原：移除背景图与近黑压暗层，直接用原本钢灰令牌做渐变） ---------- */
 [data-theme="mecha"] body {
   color: var(--m-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  /* 第 1-2 层：若有 mecha-bg.jpg 则显示并压暗；无则自动跳过，由后面渐变兜底 */
   background:
-    linear-gradient(180deg, rgba(7,8,10,0.72) 0%, rgba(7,8,10,0.55) 50%, rgba(7,8,10,0.88) 100%),
-    url('img/skins/mecha-bg.jpg') center top / cover no-repeat fixed,
-    radial-gradient(ellipse at 50% 0%, rgba(245,176,65,0.06), transparent 50%),
-    linear-gradient(180deg, #0c0e12 0%, #07080a 40%, #07080a 100%);
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.07), transparent 55%),
+    linear-gradient(180deg, var(--m-metal-1) 0%, var(--m-metal-2) 45%, var(--m-metal-3) 100%);
 }
 
 [data-theme="mecha"] #app { background: transparent; }
@@ -203,7 +200,7 @@
 [data-theme="mecha"] select {
   background: rgba(6,8,10,0.65);
   border: 1px solid #334033;
-  color: var(--m-green);
+  color: #ffe08a;   /* 改颜色.md 项1：输入/下拉文字 绿 #00e676 → 金 #ffe08a */
   border-radius: 8px;
   box-shadow: inset 0 2px 7px rgba(0,0,0,0.5), 0 0 8px rgba(0,230,118,0.04);
   font-family: inherit;
@@ -253,7 +250,7 @@
   border-bottom: 1px solid #2a3330;
 }
 [data-theme="mecha"] .subcard .prompt-text {
-  color: #c8e6c9;
+  color: #ffe08a;   /* 改颜色.md 项4：子卡片提示文字 绿 #c8e6c9 → 金 #ffe08a */
 }
 [data-theme="mecha"] .subcard .copy {
   background: rgba(0,230,118,0.1);
@@ -350,5 +347,34 @@
 [data-theme="mecha"] #exportArea {
   background: rgba(6,8,10,0.5);
   border-color: #2a3330;
-  color: #c8e6c9;
+  color: #ffe08a;   /* 改颜色.md 项3：导出大文本框 绿 #c8e6c9 → 金 #ffe08a */
 }
+
+/* 阅读界面专属换肤（不动全局标准变量，弹窗/Toast 维持默认）：机甲金属 */
+[data-theme="mecha"] .reader-panel{
+  background: #12161b; color: var(--m-text);
+  border: 1px solid var(--m-border); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.35);
+}
+[data-theme="mecha"] .reader-head{ background: #0a0c0e; border-bottom-color: var(--m-border); }
+[data-theme="mecha"] .reader-toc{ background: #0d1013; border-left-color: var(--m-border); }
+[data-theme="mecha"] .reader-body p:first-child::first-letter{ color: var(--m-gold); }
+[data-theme="mecha"] .reader-toc-btn.on{ background: var(--m-gold); color:#1a1206; border-color: var(--m-gold); }
+[data-theme="mecha"] .reader-syn-btn{ background: #0a0c0e; border-color: var(--m-border); color: var(--m-gold); }
+[data-theme="mecha"] .reader-syn-btn:hover{ background: var(--m-gold); color:#1a1206; }
+[data-theme="mecha"] .reader-syn-card{ background: #12161b; color: var(--m-text); border: 1px solid var(--m-border); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.35); }
+[data-theme="mecha"] .reader-syn-card .syn-body.muted{ color: var(--m-text-dim); }
+
+/* v10.56 章节标题卡片标题行：机甲橙金指示灯感 */
+[data-theme="mecha"] .ct-head {
+  color: var(--m-text);
+  border-bottom: 1px solid var(--m-border);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+[data-theme="mecha"] .ct-head b {
+  font-size: 14px;
+  color: var(--m-gold-light);
+  text-shadow: 0 0 8px rgba(245,176,65,0.25);
+  letter-spacing: 0.5px;
+}
+[data-theme="mecha"] .ct-fold-ico { color: var(--m-gold); }

@@ -1,0 +1,49 @@
+/* =========================================================
+ * 暗夜极光主题（aurora）· 深靛蓝底 + 极光青紫
+ * 设计：旗舰科技感，玻璃卡片 + 极光渐变强调色
+ * 生效：html[data-theme="aurora"]（变量契约，自动继承 polish 层）
+ * ========================================================= */
+
+[data-theme="aurora"] {
+  --bg:#0d1020; --panel:#161a30; --panel2:#1d2240; --line:#2a3054;
+  --txt:#e9ecff; --sub:#9aa3d0; --muted:#6b72a0;
+  --accent:#7c6cff; --accent2:#41e6d0; --ok:#3ddc97; --warn:#f5b942; --on-accent:#fff;
+  --radius:16px;
+  --shadow:0 1px 3px rgba(5,8,24,0.5);
+}
+
+[data-theme="aurora"] body{
+  background:var(--bg); color:var(--txt);
+}
+/* 玻璃卡片：半透 + 微光描边 */
+[data-theme="aurora"] .card{
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 16%, var(--line));
+}
+@supports (backdrop-filter: blur(8px)){
+  [data-theme="aurora"] .card{ backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+}
+[data-theme="aurora"] .topbar{
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  border-bottom:1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
+}
+/* 主按钮：极光双色渐变（紫→青） */
+[data-theme="aurora"] .btn.primary{
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 130%);
+  border-color:transparent; color:#fff;
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+/* 输入聚焦：青色光环 */
+[data-theme="aurora"] textarea:focus,
+[data-theme="aurora"] input:focus,
+[data-theme="aurora"] select:focus{
+  border-color: var(--accent2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent2) 22%, transparent);
+}
+/* 选中态文字色 */
+[data-theme="aurora"] .tab.active{ color: var(--accent2); }
+[data-theme="aurora"] .chip.active{ background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color:transparent; }
+/* 弹层与阅读器 */
+[data-theme="aurora"] .gs-overlay{ background: rgba(6,8,20,.55); }
+[data-theme="aurora"] .reader{ background: rgba(13,16,32,.96); }
+[data-theme="aurora"] .reader-panel{ background: var(--panel); color: var(--txt); }

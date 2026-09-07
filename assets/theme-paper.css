@@ -1,0 +1,125 @@
+/* =========================================================
+ * 暖阳米纸主题（paper）· 米纸底 + 焙茶橙
+ * 设计：人文阅读感，纸面卡片 + 衬线标题 + 暖色强调
+ * 生效：html[data-theme="paper"]（变量契约，自动继承 polish 层）
+ * ========================================================= */
+
+[data-theme="paper"] {
+  --bg:#f7f2e9; --panel:#fffdf7; --panel2:#f1ead9; --line:#e2d8c2;
+  --txt:#33291d; --sub:#6e5f4a; --muted:#a2937a;
+  --accent:#c2703d; --accent2:#3d6e9e; --ok:#4e9a51; --warn:#c98a2b; --on-accent:#fff;
+  --radius:16px;
+  --shadow:0 1px 3px rgba(80,60,30,0.08), 0 1px 2px rgba(80,60,30,0.05);
+}
+
+[data-theme="paper"] body{
+  background:
+    radial-gradient(1000px 500px at 50% -10%, rgba(194,112,61,.05), transparent 60%),
+    var(--bg);
+  color:var(--txt);
+}
+/* 纸面卡片：暖白底 + 柔边 */
+[data-theme="paper"] .card{
+  background: var(--panel);
+  border:1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+/* 衬线标题：书卷气 */
+[data-theme="paper"] .card h3,
+[data-theme="paper"] .brand .title,
+[data-theme="paper"] .modal-head h3,
+[data-theme="paper"] .gs-modal-head{
+  font-family:"Songti SC","STSong","STZhongsong","Noto Serif CJK SC",serif,"Twemoji Mozilla";
+  letter-spacing:.5px;
+}
+[data-theme="paper"] .topbar{ background: rgba(255,253,247,.78); }
+[data-theme="paper"] textarea,
+[data-theme="paper"] input,
+[data-theme="paper"] select{
+  background:#fff; border-color:var(--line);
+}
+[data-theme="paper"] .btn.primary{ color:#fff; }
+[data-theme="paper"] .btn.blue{ color:#fff; }
+/* 底部导航 */
+[data-theme="paper"] .tabbar{ background: rgba(255,253,247,.85); }
+/* 弹层与阅读器 */
+[data-theme="paper"] .gs-overlay{ background: rgba(60,45,25,.35); }
+[data-theme="paper"] .reader{ background: rgba(247,242,233,.97); }
+[data-theme="paper"] .reader-panel{ background:#fffdf7; color:var(--txt); }
+/* 构想输入框：米纸色调和（压住默认蓝光） */
+[data-theme="paper"] .idea-row textarea{
+  background: color-mix(in srgb, var(--accent) 7%, #fff);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+}
+[data-theme="paper"] .idea-row textarea:focus{
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+/* =========================================================
+ * 可读性修正（暖阳·浅底）
+ * ---------------------------------------------------------
+ * 1) 写作风格「配方 / 词条」选中态：原为「彩色底 + 白字」，
+ *    --c-element 十套配色中多套为浅色（#b1e4e7/#dcb582/#e2d8ef/
+ *    #fcbed4/#f8b79a/#f9e9da），白字对比度仅 1.2~2.5:1，几乎不可读。
+ *    改为「同色相浅底 + 黑字」：保留配色辨识度，对比度升至 8:1 以上。
+ * 2) 全书规划师卡：该卡为全局暗色设计（黑底），但本主题的
+ *    textarea{background:#fff} 与 .card{background:panel} 会把它
+ *    染成白底，而 .cp-input 的 color:#fff 不变 → 白底白字完全隐形。
+ *    此处恢复暗底，并按需求将主线简述文字改为蓝色。
+ * ========================================================= */
+
+/* —— 1. 写作风格 · 词条选中态：浅底黑字 —— */
+[data-theme="paper"] .ws-chip.on,
+[data-theme="paper"] [data-cs] .ws-group .ws-chip.on,
+[data-theme="paper"] [data-cs] .ws-group[data-g="element"] .ws-chip.on{
+  background: color-mix(in srgb, var(--c-element, var(--accent2)) 38%, #fff);
+  border-color: color-mix(in srgb, var(--c-element, var(--accent2)) 65%, var(--line));
+  color:#1a1408;
+  font-weight:700;
+}
+[data-theme="paper"] .ws-chip.on:hover,
+[data-theme="paper"] [data-cs] .ws-group .ws-chip.on:hover{
+  background: color-mix(in srgb, var(--c-element, var(--accent2)) 52%, #fff);
+  color:#000;
+}
+/* 配方候选 · 标签与选中卡 */
+[data-theme="paper"] .ai-recipe-tg{
+  background: color-mix(in srgb, var(--accent) 16%, #fff);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  color:#6d3a17;
+}
+[data-theme="paper"] .ai-recipe-cand.hi{
+  background: color-mix(in srgb, var(--accent) 9%, #fff);
+  border-color: var(--accent);
+}
+/* 多线/多主角配方 · 选中态小标签 */
+[data-theme="paper"] .recipe.active .r-tag{
+  background: color-mix(in srgb, var(--accent) 30%, #fff);
+  color:#1a1408;
+  font-weight:700;
+}
+[data-theme="paper"] .recipe.active .r-check{
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* —— 2. 全书规划师卡：宣纸米白底（对齐国潮的宣纸视觉，融入暖阳纸面）—— */
+[data-theme="paper"] .cp-card{ background:var(--panel); color:var(--txt); border:1px solid var(--line); }
+[data-theme="paper"] .cp-body{ background:var(--panel); color:var(--txt); }
+[data-theme="paper"] .cp-item{ background:var(--panel2); color:var(--txt); border-color:var(--line); }
+[data-theme="paper"] .cp-no{ background:color-mix(in srgb, var(--accent) 20%, var(--panel2)); border-color:color-mix(in srgb, var(--accent) 45%, var(--line)); color:var(--txt); }
+[data-theme="paper"] .cp-input{
+  background:#fff;
+  color:var(--txt);                    /* 墨字，米底可读 */
+  border-color:var(--line);
+}
+[data-theme="paper"] .cp-input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+[data-theme="paper"] .cp-input::placeholder{ color:var(--muted); }
+[data-theme="paper"] .cp-wc{ color:var(--sub); }
+[data-theme="paper"] .cp-body .sub{ color:var(--sub); }
+[data-theme="paper"] .cp-body .muted{ color:var(--muted); }
+[data-theme="paper"] .cp-stream-preview{ background:var(--panel2); color:var(--txt); border-color:var(--line); }

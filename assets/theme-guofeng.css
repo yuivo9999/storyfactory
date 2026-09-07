@@ -20,6 +20,14 @@
   --gf-line: rgba(212, 168, 75, 0.35);
   --gf-shadow: 0 6px 18px rgba(0,0,0,0.45);
   --gf-inset: inset 0 1px 0 rgba(255,255,255,0.08);
+  /* 标准变量契约：让阅读浮层 / 弹窗 / Toast 等自动适配国风皮肤（宣纸 + 墨字 + 金线） */
+  --panel: #f4ecd8;
+  --panel2: #ece2c8;
+  --txt: var(--gf-ink);
+  --muted: var(--gf-dim);
+  --line: var(--gf-line);
+  --accent: var(--gf-gold);
+  --on-accent: var(--gf-ink);
 }
 
 /* 背景：深红木纹（代码兜底）或用户提供的背景图 */
@@ -41,7 +49,7 @@
   box-shadow: none;
 }
 
-/* 顶部标题牌：金漆牌匾 */
+/* 顶部标题牌：金漆牌匾（两行布局容器） */
 [data-theme="guofeng"] header {
   position: relative;
   background:
@@ -53,8 +61,8 @@
     0 0 0 2px #2e1a11,
     0 0 18px rgba(212,168,75,0.25),
     var(--gf-shadow);
-  margin: 14px 12px 10px;
-  padding: 12px 16px;
+  margin: 8px 10px 10px;
+  padding: 6px 10px 10px;
 }
 [data-theme="guofeng"] header::before,
 [data-theme="guofeng"] header::after {
@@ -67,12 +75,13 @@
   border: 2px solid #5c3826;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  display: none; /* 角落已由功能按钮占据，隐藏装饰圆钉避免杂乱 */
 }
 [data-theme="guofeng"] header::before { left: 14px; }
 [data-theme="guofeng"] header::after { right: 14px; }
 [data-theme="guofeng"] header .title {
   color: var(--gf-gold-light);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 2px;
   text-shadow: 0 2px 3px rgba(0,0,0,0.55), 0 0 8px rgba(212,168,75,0.35);
@@ -80,12 +89,22 @@
 [data-theme="guofeng"] header .logo {
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
 }
-[data-theme="guofeng"] header .icon-btn {
-  background: rgba(212,168,75,0.12);
-  border: 1px solid rgba(212,168,75,0.45);
-  border-radius: 10px;
+[data-theme="guofeng"] .tb-row-2 {
+  border-top: 1px solid rgba(212,168,75,0.2);
+  justify-content: center;
+}
+[data-theme="guofeng"] .tb-row-2 .cfg-badge { display: none; }
+[data-theme="guofeng"] .tb-left .icon-btn,
+[data-theme="guofeng"] .tb-right .icon-btn {
+  background: rgba(74,44,31,0.9);
+  border: 1px solid rgba(212,168,75,0.5);
+  border-radius: 12px;
   color: var(--gf-gold-light);
-  box-shadow: 0 0 8px rgba(212,168,75,0.15);
+  box-shadow: 0 0 10px rgba(212,168,75,0.2);
+}
+[data-theme="guofeng"] .tb-left .icon-btn:active,
+[data-theme="guofeng"] .tb-right .icon-btn:active {
+  background: rgba(74,44,31,0.7);
 }
 
 /* 步骤条：改成横向木牌 */
@@ -218,6 +237,7 @@
   border: 1px solid rgba(212,168,75,0.5);
   color: var(--gf-gold);
   box-shadow: none;
+  text-shadow: none;   /* v1.0.197 修复浅色宣纸上金色小字发糊：去掉 .btn 继承的 0 1px 2px rgba(0,0,0,.5) 深色虚影，金色字以清晰细腻显示 */
 }
 
 /* 底部令牌导航 */
@@ -335,25 +355,40 @@
  * ========================================================= */
 [data-theme="guofeng"] body.has-guofeng-bg .stepper { display: none; }
 
-/* 顶部图片牌匾：固定置顶，尺寸约为原来的一半（用 calc 居中，避免 transform 影响内部 fixed 按钮的定位） */
+/* 顶部牌匾已去除（v10.54）：不再铺 guofeng-title.png、不再显示标题文字；盒子归零避免遮挡点击 */
 [data-theme="guofeng"] body.has-guofeng-bg header {
   position: fixed;
-  top: 60px;
-  left: calc(50% - 140px);
-  width: 280px;
-  height: 91px;
+  top: 58px;
+  left: calc(50% - 70px);
+  width: 0;
+  height: 0;
   margin: 0; padding: 0;
-  background: transparent url('img/skins/guofeng-title.png') center / 280px 91px no-repeat;
+  background: none;
   border: none;
   border-radius: 0;
   box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   z-index: 30;
+}
+/* 第一行功能入口：在背景图屋檐区悬浮（左历史 / 右主题+选项） */
+[data-theme="guofeng"] body.has-guofeng-bg .tb-row-1 {
+  position: fixed;
+  top: 12px;
+  left: 0; right: 0;
+  z-index: 35;
+  padding: 0 12px;
 }
 [data-theme="guofeng"] body.has-guofeng-bg header::before,
 [data-theme="guofeng"] body.has-guofeng-bg header::after { display: none; }
+/* 牌匾内第二行：去掉 padding 与分隔线，让品牌标题居中占满牌匾 */
+[data-theme="guofeng"] body.has-guofeng-bg .tb-row-2 {
+  padding: 0;
+  border-top: none;
+  justify-content: center;
+}
 [data-theme="guofeng"] body.has-guofeng-bg header .brand {
   flex: 1;
   width: 100%;
@@ -364,43 +399,64 @@
 }
 [data-theme="guofeng"] body.has-guofeng-bg header .logo { display: none; }
 [data-theme="guofeng"] body.has-guofeng-bg header .title {
-  display: block;
+  display: none;   /* v10.54 已去除标题文字「影视前期提示词生成器」 */
   width: 100%;
   text-align: center;
-  font-size: 20px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
+  white-space: nowrap;
   color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.65);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.65);
 }
 
-/* 主内容区：默认主题样式，仅在顶部留出牌匾空间 */
+/* 主内容区：默认主题样式，顶部留出功能按钮空间（牌匾已去除，128px 收窄为 60px） */
 [data-theme="guofeng"] body.has-guofeng-bg #view {
-  padding: 170px 18px 290px;
+  padding: 60px 18px 290px;
   background: transparent;
 }
 [data-theme="guofeng"] body.has-guofeng-bg #view::before,
 [data-theme="guofeng"] body.has-guofeng-bg #view::after { display: none; }
 
-/* 右上角工具组（规范 + 设置）浮于屋檐区，金边木牌风；#topTools 本身已由基础样式固定定位 */
-[data-theme="guofeng"] #topTools .icon-btn {
-  background: rgba(74,44,31,0.9);
-  border: 1px solid rgba(212,168,75,0.5);
-  border-radius: 12px;
-  color: var(--gf-gold-light);
-  box-shadow: 0 0 10px rgba(212,168,75,0.2);
-}
-[data-theme="guofeng"] #specPanel {
+/* 主题弹层（金边木牌 + 纸色背景，与历史弹层一致） */
+[data-theme="guofeng"] #themePanel {
   background: linear-gradient(180deg, #f7f1e3 0%, #f4ecd8 100%);
   color: var(--gf-ink);
   border: 2px solid var(--gf-gold);
   box-shadow: 0 0 0 2px #2e1a11, 0 10px 30px rgba(0,0,0,.4);
 }
-[data-theme="guofeng"] #specPanel .spec-note { color: var(--gf-dim); }
-[data-theme="guofeng"] #specPanel .spec-row .sr-desc { color: var(--gf-dim); }
-[data-theme="guofeng"] #specPanel .spec-row:hover { background: rgba(166,50,50,.10); }
-[data-theme="guofeng"] #specPanel .spec-row.active { border-color: var(--gf-red); background: rgba(166,50,50,.16); }
-[data-theme="guofeng"] #specPanel .spec-row .sr-check { color: var(--gf-red); }
+[data-theme="guofeng"] #themePanel .spec-note { color: var(--gf-dim); }
+
+/* 故事页创作规范选择器：木雕小牌，选中为朱红 */
+[data-theme="guofeng"] .spec-pick-head { color: var(--gf-dim); }
+[data-theme="guofeng"] .spec-opt {
+  background: linear-gradient(180deg, #5c3826 0%, #3d2418 100%);
+  border: 1px solid rgba(212,168,75,0.4);
+  color: var(--gf-gold-light);
+  box-shadow: var(--gf-inset), 0 2px 5px rgba(0,0,0,0.3);
+}
+[data-theme="guofeng"] .spec-opt.active {
+  background: linear-gradient(180deg, #b53a3a 0%, #7a2626 100%);
+  border-color: var(--gf-gold-light);
+  color: #fff;
+}
+
+/* 历史作品弹层（与规范弹层同为金边木牌 + 纸色背景） */
+[data-theme="guofeng"] #histPanel {
+  background: linear-gradient(180deg, #f7f1e3 0%, #f4ecd8 100%);
+  color: var(--gf-ink);
+  border: 2px solid var(--gf-gold);
+  box-shadow: 0 0 0 2px #2e1a11, 0 10px 30px rgba(0,0,0,.4);
+}
+[data-theme="guofeng"] #histPanel .hist-item:hover { background: rgba(166,50,50,.10); }
+[data-theme="guofeng"] #histPanel .hist-item.active { border-color: var(--gf-red); background: rgba(166,50,50,.16); }
+[data-theme="guofeng"] #histPanel .hist-main { color: var(--gf-ink); }
+[data-theme="guofeng"] #histPanel .hist-title .hist-cur { background: var(--gf-red); }
+[data-theme="guofeng"] #histPanel .hist-desc { color: var(--gf-dim); }
+[data-theme="guofeng"] #histPanel .hist-meta { color: var(--gf-dim); }
+[data-theme="guofeng"] #histPanel .hist-new-btn { background: var(--gf-red); color: #fff; }
+[data-theme="guofeng"] #histPanel .hist-del:hover { color: var(--gf-red); background: rgba(166,50,50,.14); }
+[data-theme="guofeng"] #histPanel .hist-empty { color: var(--gf-dim); }
 
 /* 底部令牌导航：透明浮在背景图木槽上 */
 [data-theme="guofeng"] body.has-guofeng-bg .tabbar {
@@ -422,3 +478,74 @@
   --wc-fg: #4a2c1f;
   --wc-border: rgba(166,50,50,.4);
 }
+
+/* 写作风格卡片适配宣纸底色，文字改为深墨色 */
+[data-theme="guofeng"] .ws-card { background: #faf6ed; border-color: #d9cbb0; }
+[data-theme="guofeng"] .ws-head h3 { color: var(--gf-red); }
+[data-theme="guofeng"] .ws-sum { color: var(--gf-dim); }
+[data-theme="guofeng"] .ws-group-t { color: var(--gf-ink); }
+[data-theme="guofeng"] .ws-manage-btn { color: var(--gf-ink); border-color: rgba(212,168,75,0.4); background: rgba(212,168,75,0.12); }
+[data-theme="guofeng"] .ws-manage-btn:hover { background: rgba(212,168,75,0.25); color: var(--gf-ink); }
+[data-theme="guofeng"] .ws-chip { color: var(--gf-ink); border-color: #c9b896; background: rgba(244,236,216,0.6); }
+[data-theme="guofeng"] .ws-chip:hover { border-color: var(--gf-gold); background: rgba(212,168,75,0.15); }
+[data-theme="guofeng"] .ws-chip.on { background: var(--gf-red); border-color: var(--gf-red); color: #fff; }
+[data-theme="guofeng"] .ws-subcat-t { color: var(--gf-dim); }
+[data-theme="guofeng"] .ws-opt { border-color: #c9b896; background: rgba(244,236,216,0.6); }
+[data-theme="guofeng"] .ws-opt:hover { border-color: var(--gf-gold); background: rgba(212,168,75,0.15); }
+[data-theme="guofeng"] .ws-opt-name { color: var(--gf-ink); }
+[data-theme="guofeng"] .ws-opt-note { color: var(--gf-dim); }
+[data-theme="guofeng"] .ws-opt.on { border-color: var(--gf-red); background: var(--gf-red); box-shadow: none; color: #fff; }
+[data-theme="guofeng"] .ws-opt.on .ws-opt-name { color: #fff; }
+[data-theme="guofeng"] .ws-opt.on .ws-opt-note { color: rgba(255,255,255,.85); }
+
+
+/* 主线简述卡片适配古风宣纸底色 */
+[data-theme="guofeng"] .cp-card {
+  background: var(--gf-paper);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+[data-theme="guofeng"] .cp-head {
+  background: linear-gradient(135deg, var(--gf-red) 0%, #822a2a 100%);
+}
+[data-theme="guofeng"] .cp-body {
+  background: var(--gf-paper);
+}
+[data-theme="guofeng"] .cp-item {
+  background: var(--panel2);
+  border-color: var(--line);
+}
+[data-theme="guofeng"] .cp-no {
+  background: var(--gf-paper-dim);
+  color: var(--gf-ink);
+  border-color: var(--line);
+}
+[data-theme="guofeng"] .cp-input {
+  background: var(--gf-paper);
+  border-color: var(--line);
+  color: var(--gf-ink);
+}
+[data-theme="guofeng"] .cp-body .sub {
+  color: var(--gf-dim);
+}
+[data-theme="guofeng"] .cp-body .muted {
+  color: var(--gf-dim);
+}
+[data-theme="guofeng"] .cp-wc {
+  color: var(--gf-dim);
+}
+
+/* v10.56 章节标题卡片标题行：金漆墨字 + 金线分隔，贴合古风 */
+[data-theme="guofeng"] .ct-head {
+  color: var(--gf-ink);
+  border-bottom: 1px solid var(--gf-line);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+[data-theme="guofeng"] .ct-head b {
+  font-size: 14px;
+  color: var(--gf-ink);
+  letter-spacing: 1px;
+}
+[data-theme="guofeng"] .ct-fold-ico { color: var(--gf-gold); }
+
+[data-theme="guofeng"] .cp-head-left h3 { color: #fff; }
