@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.217';   // v1.0.217 世界观规则增强并注入词典达人：①字段加 scope（适用对象/范围），rule 尽量含违规代价；②引导语扩充易漏维度——社会劳动作息/经济货币物价/法律治安/阶层身份流动/力量体系与使用代价/地理交通/时间节令天象(含时间流速、梦现实边界)/风俗禁忌因果/明面规则vs潜规则/例外条款/烟火市井物价；③建议条数 3→5；④scope 贯穿存盘(_worldRules)、查看弹窗、词典卡片折叠区、正文注入与「迷雾全量」端、一致性自检(fmtWR 统一格式化)。原 v1.0.216 .gs-overlay 弹窗定位「垂直中线自适应」。原 v1.0.215 万物词典查看入口四类始终显示。原 v1.0.213 三张关联表防假数。
+const APP_VERSION = '1.0.219';   // v1.0.219 ①词典达人行改名为「词典达人」仅指 AI 本尊（万物词典是数据视图，非 AI，温度作用于词典达人生成本身）；②规划师四任务温度彻底拆开（不再共用 planTemp）：节拍表=planBeatsTemp/时间线=planTimelineTemp/标题定稿=plannerTitlesTemp/伏笔=plannerAuxTemp，独立字段·独立输入框·各自调用点接入；③确认规划师 PLANNER_STAGES 本就无「词典」步骤（词典播种为无UI孤立残留），词典由词典达人/词典提取负责。planTemp 保留为「批量补时间(timeFill)」等工具任务所用。原 v1.0.218 分任务模型四行改名。原 v1.0.217 世界观规则增强。
 const KEY_CFG = 'fyp_cfg';
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -302,10 +302,11 @@ function remainingEmptyChapters(){ return (state.chapters||[]).filter(c=> !(c.co
 function uid(p){ return (p||'id')+(++uidSeq)+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }   // v1.0.137 fix：原仅自增序号，刷新页面后 uidSeq 重置回 1000，新增组会与历史组拿到相同 ID（如两个 g1001），导致组间串名/串 Key。现追加时间戳+随机段保证跨会话唯一；会话内自增段保留，同会话也绝不重复。旧数据中的短 ID 仅作比较用、不解析格式，完全兼容。
 // v227「使用不同AI」分任务模型：任务档键清单（UI 分组渲染与 resolveActiveSpec 覆盖解析共用）。
 // 档位语义与 UI 分组见《使用不同ai.md》§3.2；调用点标注映射见同文 §1.3；测试连接（恒用全局）不在清单内。
-const TM_KEYS = ['chapter','dictmaster','planBeats','planTimeline','plannerTitles','plannerAux',
-  'idea','titleAdvice','contentAdvice',
-  'glossary','subplot','strip','rolling','audit',
-  'assets','recipe'];
+const TM_KEYS = ['idea','audit',
+  'plannerTitles','planBeats','planTimeline','plannerAux',
+  'dictmaster','chapter',
+  'strip','subplot','glossary','rolling',
+  'contentAdvice','assets','recipe'];
 
 function glmModels(){ return [
   {name:'glm-4.5-air', label:'GLM-4.5-Air（智谱 · 高性价比，现用）', kind:'pro'},
@@ -417,6 +418,10 @@ function resolveActiveSpec(taskKey){
     chapterTemp: (cfg.chapterTemp==null ? 0.5 : cfg.chapterTemp),   // v10.8 分任务温度：章节
     qcTemp:      (cfg.qcTemp==null ? 0.2 : cfg.qcTemp),              // 分任务温度：词库提取（严谨低温）
     planTemp:    (cfg.planTemp==null ? 0.4 : cfg.planTemp),          // v10.11 分任务温度：章节规划（节拍表）
+    planBeatsTemp:(cfg.planBeatsTemp==null ? 0.4 : cfg.planBeatsTemp),     // v1.0.219 规划师·节拍表 独立温度
+    planTimelineTemp:(cfg.planTimelineTemp==null ? 0.4 : cfg.planTimelineTemp),  // v1.0.219 规划师·全局时间线 独立温度
+    plannerTitlesTemp:(cfg.plannerTitlesTemp==null ? 0.4 : cfg.plannerTitlesTemp),// v1.0.219 规划师·标题定稿 独立温度
+    plannerAuxTemp:(cfg.plannerAuxTemp==null ? 0.4 : cfg.plannerAuxTemp),   // v1.0.219 规划师·伏笔 独立温度（词典播种已移除）
     stripTemp:   (cfg.stripTemp==null ? 1.0 : cfg.stripTemp),         // v1.0.115 分任务温度：本章梗概（速读，创作温度偏高）
     subplotTemp: (cfg.subplotTemp==null ? 0.25 : cfg.subplotTemp),    // 分任务温度：支线进度更新（契约类窄采样）
     auditTemp:   (cfg.auditTemp==null ? 0.2 : cfg.auditTemp),        // 分任务温度：审校/锚点提取（契约类窄采样）
@@ -3239,7 +3244,7 @@ const CHAPTER_PLAN_SYS = CHAPTER_PLAN_SYS_PRO;
  * 现拆成 4 个独立阶段（各自可单独重跑）：
  *   ① 节拍表   buildBeatsSys()          → chapterPlans[i].beats
  *   ② 章节标题（复用 REGEN_TITLES_SYS）→ chapters[i].title
- *   ③ 万物词典 PLANNER_GLOSSARY_SYS     → glossary
+ *   ③ 全局时间线 PLANNER_TIMELINE_SYS    → _globalTimeline
  *   ④ 伏笔网   PLANNER_FORESHADOW_SYS   → _foreshadowLedger
  */
 
@@ -3432,26 +3437,7 @@ ${specLines}
 6. 只输出上述 JSON，不要 markdown 代码块、不要解释。
 ${_timeLaw}`;}
 
-// ④ 万物词典：产出初期词典种子，合并进权威词典（同名以现有为准）。
-// v242/911-①：「宁缺毋滥」改为「宁全勿缺」——数量下限（user 侧按章节数计算）+ 允许题材衍生，解决词典供给单薄。
-const PLANNER_GLOSSARY_SYS = `你是一位长篇「设定词典构建师」。请基于全书结构骨架与全部章节标题，产出作品初期万物词典。
-【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{
-  "glossary": {
-    "characters": [{"name":"人名","identity":"身份","age":"岁数","gender":"性别","appearance":"外貌","hobby":"爱好","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"关系","trait":"性格"}],
-    "places": [{"name":"地名","type":"类型","note":"设定"}],
-    "propernouns": [{"name":"专名","note":"含义"}]
-  }
-}
-【硬性约束】
-1. 词典须覆盖全书叙事所需：主要人物（含配角）、关键地名/场景、专属设定术语。各类条目数量必须达到 user 侧【词典规模要求】给出的下限；宁全勿缺。
-2. 以章节标题/「大纲节拍的结构」阶段中出现的实体为主；不足下限时，允许依据题材惯例与本章节阶段职责合理衍生配角、地点、场景、组织、器物、术语等（衍生条目在 identity/note 末尾标注「（衍生）」），名称须符合本书题材与世界观的命名风格，禁止无意义凑数。
-3. 中国背景人物建议采用百家姓姓氏+两字名（柔性参考，不作强制）；其他文化背景人物按其世界观自然命名，程序不会因命名拦截任何条目。
-4. 若输入中已给出【现有词典】，同名条目不要重复输出，只补缺失条目。
-5. 人物必须输出全部 9 个字段：identity / age / gender / appearance / hobby / habit / catchphrase / relation / trait；habit（小习惯与习惯性动作）与 catchphrase（口头禅）并非人人都有——主角/重要配角较常有专属小动作或口头禅，判定配角的没有就填「无」，禁止缺字段/留空。
-6. 只输出上述 JSON。`;
-
-// ⑤ 伏笔网：跨章节设计伏笔—回收链，写入伏笔台账。（v1.0.141 断链：不再引用旧结构骨架/幕；改为基于「大纲节拍的结构」阶段）
+// ④ 伏笔网：跨章节设计伏笔—回收链，写入伏笔台账。（v1.0.141 断链：不再引用旧结构骨架/幕；改为基于「大纲节拍的结构」阶段）
 const PLANNER_FORESHADOW_SYS = `你是一位长篇「伏笔设计师」。请基于全部章节标题与「大纲节拍的结构」阶段——若输入中提供了【全局时间线】与【各章节拍事件】，也必须将它们一并作为依据——设计一张贯穿全书的伏笔网络（植入章—回收章配对）。
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
 {
@@ -4416,31 +4402,6 @@ function mergeExtractedGlossary(ext, src){
   mergeArr(gl.propernouns, ext.propernouns, 'k');
   n.total = n.c + n.p + n.k;
   return n;
-}
-// v11 规划师初期词典播种：把规划师返回的初始词典合并进权威词典。按 name 去重、同名以现有为准；
-// 不打 _auto 标记（与正文自动增量区分，清理弹窗将按「原始条目」处理，便于保留种子）。返回实际新增条数。
-function mergeSeedGlossary(seed){
-  const o = state.outline; if(!o) return 0;
-  if(!o.glossary) o.glossary = {characters:[], places:[], propernouns:[]};
-  if(!seed || (!Array.isArray(seed.characters) && !Array.isArray(seed.places) && !Array.isArray(seed.propernouns))) return 0;
-  const gl = o.glossary; let added = 0, flagged = 0;
-  const _aliasMap = glossaryAliases();   // v244/914-③：曾用名→现名映射，命中即视为用户已改名，不回灌
-  const mergeArr = (cur, arr, checkName) => {
-    const have = new Set((cur||[]).map(x=>String(x&&x.name||'').trim()).filter(Boolean));
-    (arr||[]).forEach(it=>{
-      const nm = String(it&&it.name||'').trim(); if(!nm || have.has(nm)) return;
-      if(_aliasMap.has(nm)) return;   // v244/914-③：nm 是任一条目曾用名（人名/地名/专名）→ 用户已改名，跳过不回灌
-      // v242/911-Q2：人名规范零阻挡——不再拦截丢弃，全部放行入库；不合规范仅打 _nameFlag 标记（词典卡⚠徽标）
-      const nv = checkName ? nmNameRuleViolation(nm) : '';
-      if(nv){ flagged++; it = { ...it, _nameFlag: nv }; }
-      cur.push(it); have.add(nm); added++;
-    });
-  };
-  mergeArr(gl.characters, seed.characters, true);
-  mergeArr(gl.places, seed.places);
-  mergeArr(gl.propernouns, seed.propernouns);
-  if(flagged) console.warn('规划师播种：'+flagged+' 个人名不合命名规范（已入库并打⚠标记，不再拦截）');
-  return { added, flagged };
 }
 // v11 规划师定稿标题应用：长度必须与当前章节数严格一致才应用，否则保留现有标题并提示防错位。
 // 应用前把当前（步2参考/手动）标题整批入版本栈，保证初稿可一键回退。返回是否成功应用。
@@ -10487,7 +10448,7 @@ async function genPlannerTitles(btn, opts){
     const user = titlesGenUser({ req:'' });
     const onStream = delta => { _streamBuf += String(delta||''); if(preview){ preview.textContent = _streamBuf; preview.scrollTop = preview.scrollHeight; } };
     const cands = await Promise.all([
-      callAIWithContract(callDeepSeek(REGEN_TITLES_SYS, user, {temperature:resolveActiveSpec().planTemp, topP:0.5, onStream, signal:_abortCtl?.signal, taskKey:'plannerTitles'}), {needJson:true, expectedCount:n, countPath:'titles', taskName:'规划师-标题-A'}),
+      callAIWithContract(callDeepSeek(REGEN_TITLES_SYS, user, {temperature:resolveActiveSpec().plannerTitlesTemp, topP:0.5, onStream, signal:_abortCtl?.signal, taskKey:'plannerTitles'}), {needJson:true, expectedCount:n, countPath:'titles', taskName:'规划师-标题-A'}),
     ]);
     const best = pickBestTitles(cands, n);
     if(!best.ok) throw new Error(best.error);
@@ -10551,7 +10512,7 @@ async function genPlannerBeats(btn, opts){
         user += `\n\n【全书末章·结局拍（硬约束）】本批第 ${_finalOffset + 1} 章，即全书第 ${_finalAbs + 1} 章，是全书最后一章。该章**最后一拍禁止用 hook（悬念）**，必须改为「结局」节拍：本章最后一段 beats 的 type 固定为 "ending"，其余各拍类型照常按微拍顺序。其 event 必须收束全书主线与各主要人物归宿、给出核心冲突的最终解决与确定结局或明确余味；禁止留悬念钩子、禁止开放式烂尾。`;
       }
       const cands = await Promise.all([
-        callAIWithContract(callDeepSeek(buildBeatsSys(), user, {temperature:resolveActiveSpec().planTemp, topP:0.8, maxTokens:clampMaxTokens('chapterPlan'), onStream, signal:_abortCtl?.signal, taskKey:'planBeats'}), {needJson:true, expectedCount:n, countPath:'chapterPlans', schemaValidator:(j)=> validatePlannerBeatsBatch(j, { finalOffset: _finalOffset }), taskName:`节拍表批次 ${_doneN}-A`}),
+        callAIWithContract(callDeepSeek(buildBeatsSys(), user, {temperature:resolveActiveSpec().planBeatsTemp, topP:0.8, maxTokens:clampMaxTokens('chapterPlan'), onStream, signal:_abortCtl?.signal, taskKey:'planBeats'}), {needJson:true, expectedCount:n, countPath:'chapterPlans', schemaValidator:(j)=> validatePlannerBeatsBatch(j, { finalOffset: _finalOffset }), taskName:`节拍表批次 ${_doneN}-A`}),
       ]);
       const best = pickBestChapterPlan(cands, n);
       if(!best.ok){
@@ -10785,7 +10746,7 @@ async function genPlannerTimeline(btn, opts){
         const usr = user + (attempt>0 ? `\n【重试提示】上一轮第 ${si+1} 段输出无效，请严格按格式重新输出。原因：${lastErr}` : '');
         const onStream = delta => { _streamBuf += String(delta||''); if(preview){ preview.textContent = _streamBuf; preview.scrollTop = preview.scrollHeight; } };
         const cands = await Promise.all([
-          callAIWithContract(callDeepSeek(PLANNER_TIMELINE_SYS, usr, {temperature:resolveActiveSpec().planTemp, topP:0.7, maxTokens:clampMaxTokens('chapterPlan'), onStream, signal:_abortCtl?.signal, taskKey:'planTimeline'}), {needJson:true, expectedCount:e-s, countPath:'chapters', schemaValidator:j=>validateTimelineSegOutput(j, e-s), taskName:`全局时间线-段${si+1}${attempt>0?'-重试'+attempt:''}`}),
+          callAIWithContract(callDeepSeek(PLANNER_TIMELINE_SYS, usr, {temperature:resolveActiveSpec().planTimelineTemp, topP:0.7, maxTokens:clampMaxTokens('chapterPlan'), onStream, signal:_abortCtl?.signal, taskKey:'planTimeline'}), {needJson:true, expectedCount:e-s, countPath:'chapters', schemaValidator:j=>validateTimelineSegOutput(j, e-s), taskName:`全局时间线-段${si+1}${attempt>0?'-重试'+attempt:''}`}),
         ]);
         const best = cands.filter(c=>c && c.ok).sort((a,b)=>(b.score||0)-(a.score||0))[0];
         if(best){
@@ -10843,73 +10804,7 @@ async function genPlannerTimeline(btn, opts){
   }
 }
 
-// ④ 万物词典（单批；产出种子合并进权威词典，同名以现有为准）
-async function genPlannerGlossary(btn, opts){
-  opts = opts || {};
-  if(!plannerGate(opts)) return false;
-  // v1.0.155：③词典前置要求章节标题（②），避免基于空标题生成、质量下降
-  if(!((state.outline && state.outline.chapters || []).some(c=>String((c&&c.title)||'').trim()))){
-    if(!opts.silent) toast('请先生成章节标题（规划师第②步），再生成万物词典');
-    refreshPlannerStageBar(null,'glossary'); return false;
-  }
-  markAIRunning('chapterPlan');
-  refreshPlannerStageBar('glossary', null);
-  let preview = plannerPreview(btn, '正在生成万物词典…'), _streamBuf = '';
-  plannerRunBtn(btn, true);
-  const o = state.outline;
-  const stopParent = btn && btn.closest('.cp-head-top') ? btn.closest('.cp-head-top') : (btn && btn.parentNode);
-  if(stopParent) showStopBtn(stopParent);
-  try{
-    const titles = (o.chapters||[]).map((c,i)=>`第${i+1}章《${c&&c.title||''}》`).join(' / ');
-    const parts = [];
-    const anchor = outlineAnchorBlock(); if(anchor) parts.push(anchor);
-    parts.push(`【小说标题】${o.title||''}\n【小说简介】${o.logline||''}`);
-    // v242/911-③：输入加料——题材导航 + 各幕必须事件，为词典衍生扩容供给素材
-    const nb = o.navBeacon || {};
-    const beaconLines = [];
-    if(nb.genre) beaconLines.push('题材：'+nb.genre);
-    if(nb.protagonist) beaconLines.push('主角：'+nb.protagonist);
-    if(nb.coreConflict) beaconLines.push('核心冲突：'+nb.coreConflict);
-    if(beaconLines.length) parts.push(`【题材导航】\n${beaconLines.join('\n')}`);
-    // v1.0.144：structure 已彻底移除；名册设定贴合全书拍子节奏即可（拍子指导见 chapterPlans/generated 章节标题）。
-    // v242/911-①：词典规模下限（按章节数推算），配合 System「宁全勿缺」+ 题材衍生
-    const _totalCh = (o.chapters||[]).length;
-    const _minC = Math.max(8, Math.ceil(_totalCh/4));
-    const _minP = Math.max(5, Math.ceil(_totalCh/8));
-    const _minK = Math.max(5, Math.ceil(_totalCh/10));
-    parts.push(`【词典规模要求】人物 ≥${_minC} 条、地点 ≥${_minP} 条、专名 ≥${_minK} 条；章节标题未提及的可按题材惯例合理衍生（标注「（衍生）」），不足下限视为不合格`);
-    parts.push(`【章节标题】${titles||'(无)'}`);
-    // v1.0.155：消除词典「悬空引用」——把「大纲节拍的结构」阶段数据真实下发，词典以结构与标题为准
-    const glSkel = structureSkeletonBlock(); if(glSkel) parts.push(glSkel);
-    // v1.0.186 团队设定注入词典：核心团全员必须立档、可作节拍/正文的人名真源（非 solo 时才有）
-    const _tb = teamShapeBrief();
-    if(_tb) parts.push(_tb + '\n（须为每位核心主角立档：双主角即两位主角、团队即主角+主要配角；identity 含其定位/担当，各成员字段齐全，杜绝正文时临时造名）');
-    if(sourceHasGlossary((o.glossary)||{})) parts.push(`【现有词典】${JSON.stringify(o.glossary,null,2)}`);
-    const user = parts.join('\n\n');
-    const onStream = delta => { _streamBuf += String(delta||''); if(preview){ preview.textContent = _streamBuf; preview.scrollTop = preview.scrollHeight; } };
-    const res = await callAIWithContract(callDeepSeek(PLANNER_GLOSSARY_SYS, user, {temperature:resolveActiveSpec().planTemp, topP:0.6, maxTokens:clampMaxTokens('glossary'), onStream, signal:_abortCtl?.signal, taskKey:'plannerAux'}), {needJson:true, taskName:'规划师-词典'});   // v242/911-② 词典 8192 档
-    if(!res.ok) throw new Error(res.error);
-    const g = res.data && res.data.glossary;
-    if(!g || (!Array.isArray(g.characters) && !Array.isArray(g.places) && !Array.isArray(g.propernouns))) throw new Error('词典结构缺失');
-    // v242/911-⑦：全部重名属合法情形，不再判失败；人名零阻挡（放行+_nameFlag 标记）后统一提示
-    const r = mergeSeedGlossary(g);
-    persist(); render(); markAIDone('chapterPlan'); refreshPlannerStageBar(null, null);
-    if(!opts.silent) toast(r.added > 0
-      ? `万物词典已生成：新增 ${r.added} 条${r.flagged ? `（${r.flagged} 条命名待核，已标⚠）` : ''}`
-      : '万物词典已核对：与现有词典全部重名，无新增');
-    return true;
-  }catch(e){
-    if(e.name !== 'AbortError') addToFixQueue({kind:'chapterPlan', error:'词典：'+e.message});
-    if(!opts.silent) toast(e.name==='AbortError' ? '已停止生成万物词典' : '万物词典生成失败：'+e.message);
-    refreshPlannerStageBar(null, 'glossary');
-    return false;
-  }finally{
-    state.aiNetwork.running = (state.aiNetwork.running||[]).filter(k=>k!=='chapterPlan');
-    hideStopBtn(); if(preview) preview.remove(); plannerRunBtn(btn, false);
-  }
-}
-
-// ⑤ 伏笔网（单批；读全部章节标题，产出植入章→回收章配对，写入 _foreshadowLedger）
+// ④ 伏笔网（单批；读全部章节标题，产出植入章→回收章配对，写入 _foreshadowLedger）
 async function genPlannerForeshadow(btn, opts){
   opts = opts || {};
   if(!plannerGate(opts)) return false;
@@ -10944,7 +10839,7 @@ async function genPlannerForeshadow(btn, opts){
     if(_tb) parts.push(_tb);
     const user = parts.join('\n\n');
     const onStream = delta => { _streamBuf += String(delta||''); if(preview){ preview.textContent = _streamBuf; preview.scrollTop = preview.scrollHeight; } };
-    const res = await callAIWithContract(callDeepSeek(PLANNER_FORESHADOW_SYS, user, {temperature:resolveActiveSpec().planTemp, topP:0.6, maxTokens:clampMaxTokens('json'), onStream, signal:_abortCtl?.signal, taskKey:'plannerAux'}), {needJson:true, taskName:'规划师-伏笔'});
+    const res = await callAIWithContract(callDeepSeek(PLANNER_FORESHADOW_SYS, user, {temperature:resolveActiveSpec().plannerAuxTemp, topP:0.6, maxTokens:clampMaxTokens('json'), onStream, signal:_abortCtl?.signal, taskKey:'plannerAux'}), {needJson:true, taskName:'规划师-伏笔'});
     if(!res.ok) throw new Error(res.error);
     const fs = (res.data && Array.isArray(res.data.foreshadows)) ? res.data.foreshadows : [];
     if(!fs.length) throw new Error('未提取到伏笔条目');
@@ -10983,7 +10878,6 @@ const PLANNER_GEN = {
   beats: genPlannerBeats,
   timeline: genPlannerTimeline,   // v1.0.183 ④ 全局时间线
   titles: genPlannerTitles,
-  glossary: genPlannerGlossary,
   foreshadow: genPlannerForeshadow
 };
 // 单阶段入口：独立重跑某个规划师阶段（只跑失败的那一步，不重跑前面已成功的）
@@ -13884,7 +13778,7 @@ function saveTemps(){
   // v1.0.208 各任务温度现由「分任务模型」面板以 getCfg 直接维护；此处把 editCfg 与 live cfg 同步，
   // 避免「保存设置」用陈旧快照覆盖掉分任务面板已改的温度。
   const live = getCfg();
-  const TM_FIELDS = ['ideaTemp','dictmasterTemp','assetsTemp','titleTemp','planTemp','stripTemp','chapterTemp','qcTemp','aiRecipeTemp','subplotTemp','auditTemp','rollingTemp','contentAdviseTemp'];
+  const TM_FIELDS = ['ideaTemp','dictmasterTemp','assetsTemp','titleTemp','planTemp','planBeatsTemp','planTimelineTemp','plannerTitlesTemp','plannerAuxTemp','stripTemp','chapterTemp','qcTemp','aiRecipeTemp','subplotTemp','auditTemp','rollingTemp','contentAdviseTemp'];
   TM_FIELDS.forEach(f=>{ if(live && typeof live[f]==='number') editCfg[f]=live[f]; });
 }
 
@@ -13911,42 +13805,42 @@ function updateCfgBadge(){
 }
 
 /* --- v227「使用不同AI」分任务模型二级面板（设计见《使用不同ai.md》§3） --- */
-// 档位分组：顺序=创作流水线；同档默认推荐同模型（§3.2 排列逻辑：按写书流程排、三档分组、全局置顶）
-// v234/T2：任务名后追加单字推荐（强=质量主力模型 / 中=中档 / 弱=flash 省钱），依据任务重量/费用占比/JSON 严谨度
+// 档位分组：顺序=创作流水线（从项目开始到结束的先后：构想→大纲后定位→规划师四步→词典/正文→每章轻维护→补充/资产）。
 const TM_GROUPS = [
-  { title:'✍️ 重创作（要质量，费用大头，建议主力模型）', keys:[
-    ['chapter','正文生成（强）','全书正文质量与费用大头；所选模型须支持流式（stream）'],
-    ['dictmaster','词典达人 · 万物词典（强）','JSON 契约：人物十维＋人物关系表＋地名关联表＋专名关联表＋世界观规则，供正文一致消费'],
-    ['planBeats','规划师 · 节拍表（强）','JSON，逐章情节节拍'],
-    ['planTimeline','规划师 · 时间线（强）','JSON，全局章节时间线分段'],
-    ['plannerTitles','规划师 · 标题定稿（中）','JSON，全书章节标题；短文本创意，中档够且省费'],
-    ['plannerAux','规划师 · 词典播种/伏笔（中）','JSON 任务；体量小但需严谨']
+  { title:'🧠 前置 · 构想与定位（项目起点，一次即可）', keys:[
+    ['idea','优化构想','对既有构想发散/收敛；创作第一步'],
+    ['audit','核心定位提取','从小说简介提取核心定位/深层命题；纯 JSON 后台']
   ]},
-  { title:'💡 建议类（要点子，建议中档模型）', keys:[
-    ['idea','优化构想（中）','对既有构想发散/收敛'],
-    ['titleAdvice','标题 AI 建议（中）','JSON 任务；短创意'],
-    ['contentAdvice','章节内容 AI 建议（中）','JSON 任务']
+  { title:'📐 规划师四步 · 章节规划（要质量，建议主力模型）', keys:[
+    ['plannerTitles','规划师 · 标题定稿','JSON，全书章节标题；短文本创意，中档够且省费'],
+    ['planBeats','规划师 · 节拍表','JSON，逐章情节节拍'],
+    ['planTimeline','规划师 · 时间线','JSON，全局章节时间线分段'],
+    ['plannerAux','规划师 · 伏笔','伏笔网：植入章→回收章配对；JSON 严谨']
   ]},
-  { title:'🔧 轻维护（高频小请求，建议 flash 省钱）', keys:[
-    ['glossary','词典提取（中）','JSON 严谨任务；换弱模型解析失败率会升高（有校验兜底，不阻断）'],
-    ['subplot','副线追踪（弱）','小 JSON 追踪任务'],
-    ['strip','本章梗概（速读）（弱）','每章生成后都会调用'],
-    ['rolling','滚动摘要（弱）','长篇记忆层，每批正文后调用'],
-    ['audit','一致性巡检（张力/人设/指纹/锚点）（弱）','纯 JSON 后台巡检，用户无感']
+  { title:'✍️ 重创作（正文费用大头，建议主力模型）', keys:[
+    ['dictmaster','词典达人','AI 生成万物词典（人物十维+人物关系表+地名关联表+专名关联表+世界观规则），供正文一致消费'],
+    ['chapter','正文生成','全书正文质量与费用大头；所选模型须支持流式（stream）']
   ]},
-  { title:'📦 其他资产', keys:[
-    ['assets','封面/人物/场景/分镜（中）','提示词类产出'],
-    ['recipe','配方产物（中）','AI 配方助手；候选配方需判断力']
+  { title:'🔧 每章/每批 · 轻维护（高频小请求，建议 flash 省钱）', keys:[
+    ['strip','本章梗概（速读）','每章生成后都会调用'],
+    ['subplot','副线追踪','小 JSON 追踪任务'],
+    ['glossary','词典提取','JSON 严谨任务；换弱模型解析失败率会升高（有校验兜底，不阻断）'],
+    ['rolling','滚动摘要','长篇记忆层，每批正文后调用']
+  ]},
+  { title:'💡 写作补充与资产', keys:[
+    ['contentAdvice','章节内容 AI 建议','JSON 任务'],
+    ['assets','封面/人物/场景/分镜','提示词类产出'],
+    ['recipe','AI 配方助手','候选配方需判断力；写风配方卡']
   ]}
 ];
 
 // v1.0.208 分任务模型内嵌温度：taskKey → [温度字段, 建议缺省]。多个任务可共享同一温度字段（规划师系列共用 planTemp）。
 const TM_TEMP = {
-  chapter:['chapterTemp',0.5], dictmaster:['dictmasterTemp',0.5],
-  planBeats:['planTemp',0.4], planTimeline:['planTemp',0.4], plannerTitles:['planTemp',0.4], plannerAux:['planTemp',0.4],
-  idea:['ideaTemp',0.5], titleAdvice:['titleTemp',0.5], contentAdvice:['contentAdviseTemp',0.6],
-  glossary:['qcTemp',0.2], subplot:['subplotTemp',0.25], strip:['stripTemp',1.0],
-  rolling:['rollingTemp',0.3], audit:['auditTemp',0.2], assets:['assetsTemp',0.7], recipe:['aiRecipeTemp',0.9]
+  idea:['ideaTemp',0.5], audit:['auditTemp',0.2],
+  plannerTitles:['plannerTitlesTemp',0.4], planBeats:['planBeatsTemp',0.4], planTimeline:['planTimelineTemp',0.4], plannerAux:['plannerAuxTemp',0.4],
+  dictmaster:['dictmasterTemp',0.5], chapter:['chapterTemp',0.5],
+  strip:['stripTemp',1.0], subplot:['subplotTemp',0.25], glossary:['qcTemp',0.2], rolling:['rollingTemp',0.3],
+  contentAdvice:['contentAdviseTemp',0.6], assets:['assetsTemp',0.7], recipe:['aiRecipeTemp',0.9]
 };
 let editTM = null;          // 面板暂存：保存前绝不落盘（对齐设置弹窗 editCfg 模式）
 let editTemps = {};         // v1.0.208 面板内每个温度字段暂存（按字段存值）；保存前不落盘
