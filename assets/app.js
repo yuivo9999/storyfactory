@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.237';   // v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.239';   // v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -196,7 +196,7 @@ function normalizeOutline(o){
       p = p || {};
       delete p.summary; delete p.advance;   // 主线简述/主线推进字段已彻底移除，仅保留 beats/emotionalArc/requiredEntities
       p.beats = Array.isArray(p.beats) ? p.beats : [];
-      p.beats = p.beats.map(b => (b && typeof b==='object') ? b : { type:'', event:'', emotional:'', requiredEntities:[], foreshadowing:[], time:'' });   // v1.0.175：节拍恒为对象兜底
+      p.beats = p.beats.map(b => (b && typeof b==='object') ? b : { type:'', event:'', tlEvent:'', emotional:'', requiredEntities:[], foreshadowing:[], time:'' });   // v1.0.175：节拍恒为对象兜底；v1.0.238：兜底补 tlEvent（时间线定制版）
       p.beats.forEach(b => { if(b.time==null) b.time=''; });   // v1.0.175：时间锚字段兜底（旧数据补空）
       p.requiredEntities = Array.isArray(p.requiredEntities) ? p.requiredEntities : [];
       return p;
@@ -3453,9 +3453,9 @@ ${specLines}
   "chapterPlans": [
     {
       "beats": [
-        {"type":"${defs[0].key}", "event":"本节拍关键事件：写清人物动作、直接冲突与即时目标（一句话约40字，具体不空泛）", "emotional":"情绪，1—8字", "requiredEntities":["必须出现的人名/地名/专名"], "foreshadowing":["本章埋下的伏笔（有才填）"]},
-        {"type":"${defs[Math.min(1,cnt-1)].key}", "event":"推进/转折事件：人物做了什么、冲突如何升级（一句话约40字）", "emotional":"情绪变化", "requiredEntities":[], "foreshadowing":[]},
-        ${cnt>3 ? `{"type":"${defs[cnt-2].key}", "event":"章末前的承转或余波事件：人物心理/动作/对话如何收束（一句话约40字）", "emotional":"情绪落点", "requiredEntities":[], "foreshadowing":[]},\n` : ''}        {"type":"${defs[cnt-1].key}", "event":"章末钩子/悬念：承接下一章的线索或关系突变（一句话约40字）", "emotional":"章末情绪落点", "requiredEntities":[], "foreshadowing":[]}
+        {"type":"${defs[0].key}", "event":"本节拍关键事件：写清人物动作、直接冲突与即时目标（一句话约40字，具体不空泛）", "tlEvent":"时间线定制版：只写本条的时间线索——发生时段/动作耗时/空间移动/等待/跨日等（≤20字，时间向，不写情绪与剧情分析）", "emotional":"情绪，1—8字", "requiredEntities":["必须出现的人名/地名/专名"], "foreshadowing":["本章埋下的伏笔（有才填）"]},
+        {"type":"${defs[Math.min(1,cnt-1)].key}", "event":"推进/转折事件：人物做了什么、冲突如何升级（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"情绪变化", "requiredEntities":[], "foreshadowing":[]},
+        ${cnt>3 ? `{"type":"${defs[cnt-2].key}", "event":"章末前的承转或余波事件：人物心理/动作/对话如何收束（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"情绪落点", "requiredEntities":[], "foreshadowing":[]},\n` : ''}        {"type":"${defs[cnt-1].key}", "event":"章末钩子/悬念：承接下一章的线索或关系突变（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"章末情绪落点", "requiredEntities":[], "foreshadowing":[]}
       ],
       "emotionalArc": "本章情绪弧：从X到Y，用一句话概括",
       "requiredEntities": ["本章必须使用的核心实体汇总"]
@@ -3469,7 +3469,8 @@ ${specLines}
 3. 节拍事件必须从章节标题与「大纲节拍的结构」阶段推导，不得偏离当前阶段、不得自创剧情；每段节拍必须贴合其【功能说明】的叙事职责。
 4. requiredEntities 与 foreshadowing 只能使用设定词典中已有人名/地名/专名，禁止自造新名。
 5. 精简输出（提速）：event 紧扣「人物动作+直接冲突+即时目标」，一句话说清（约 40 字上下），严禁精简成空泛模板句或事件雷同；每段 requiredEntities 至多 2 个；emotional ≤6 字。
-6. 只输出上述 JSON，不要 markdown 代码块、不要解释。
+6. 【tlEvent 职责分工（v1.0.238）】每拍除 event（正文向：写剧情动作）外，必须另写 tlEvent（时间线定制版，时间向）：只提炼本条的时间线索——发生时段（清晨/正午/黄昏/深夜）、动作耗时（片刻/半日/整夜/数日）、空间移动（赶路/奔袭/转场/闭关）、等待或跨日等，供「④ 全局时间线」快速准确地为全书排时；tlEvent 与 event 同一事件但视角不同，禁止写情绪、心理或剧情分析，无独立时间信息时写空字符串（中间拍可留空，但章首/章末拍必须给出）。
+7. 只输出上述 JSON，不要 markdown 代码块、不要解释。
 `;}
 
 // ④ 伏笔网：跨章节设计伏笔—回收链，写入伏笔台账。（v1.0.141 断链：不再引用旧结构骨架/幕；改为基于「大纲节拍的结构」阶段）
@@ -10640,6 +10641,8 @@ function validatePlannerBeatsBatch(j, opts){
         }
       }
       if(!b.event || !String(b.event||'').trim()) { if(typeof b.event !== 'string') b.event=''; if(!String(b.event||'').trim()) return `第 ${i+1} 章第 ${k+1} 个 beat 缺少 event`; }
+      // v1.0.238：tlEvent（时间线定制版）可缺省/留空，不强校验；缺省补空
+      if(b.tlEvent==null) b.tlEvent=''; else if(typeof b.tlEvent !== 'string') b.tlEvent = String(b.tlEvent||'').trim();
       // v1.0.224：节拍表不再要求 time（时间由④全局时间线唯一权威负责，届时回写）；这里不再校验 time 缺失
       if(_timeAnchorOn()){ if(b.time==null) b.time=''; else b.time=String(b.time).trim(); }
     }
@@ -10810,70 +10813,68 @@ async function genPlannerBeats(btn, opts){
 // 输入：本批各章「标题 + 节拍事件」+ 大纲结构阶段（+ 上一批末尾时点）。AI 从剧情事件独立规划时间，不再依赖节拍表已有 time。
 // 时间单位解绑：时点可用 时刻/日/旬/月/季/年，跨章跳转以剧情为准；只标注确需跳变的章，非跳变章默认顺延。
 const PLANNER_TIMELINE_SYS = `你是一位资深长篇「全局时间统筹师」，负责为全书安排**唯一、连贯、可信**的时间线。你不是重排别人已定的时间，而是从**每一章的剧情事件**判断每章落在什么时间、章节之间时间如何流动。
-【事件驱动】：给出的素材是本批各章的【标题 + 各拍event（剧情事件）】+ 全书结构阶段。你要从事件看时间——赶路/养伤/修炼/等待/远行/多日布局让时间向前跳跃；同一场戏内的多拍落在同一时刻/同一日；追杀/夺宝/对决/宫斗等紧迫戏压缩到数小时内。严禁"第N章=第N天"这种机械等差排期。
+【事件驱动】：给出的素材是每章标题 + 每拍定制版事件（节拍表已为你提炼时间线索）。你要从事件看时间——赶路/养伤/修炼/等待/远行/多日布局让时间向前跳跃；同一场戏内的多拍落在同一时刻/同一日；追杀/夺宝/对决/宫斗等紧迫戏压缩到数小时内。严禁"第N章=第N天"这种机械等差排期。
 【时间单位解绑】：时点是开放的——可以是 时刻(清晨/夜)/日(第2天)/旬/月/季/年，按剧情需要选择，绝不要把所有章都锁死在"第N天"。全书可有跨旬/跨月/跨年的大跨度（如闭关数年、远行数月、季节更迭），只要剧情事件支持即可；同一天内又可有多章连续推进。跨度由事件真实耗时决定。
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{"anchor":"本批现实主线起始时点（衔接上一批末尾；首段则为全书现实主线起点）","end":"本批现实主线结束时点（供下一批承接）","chapters":[{"index":1,"from":"第1章现实主线起始时点","to":"第1章现实主线末尾时点","jump":"本批前一章末 → 本章初是否需标注跳变（该章相对前章仍顺延则填空字符串；确有大跨度跳跃才填，如 数日后/三日后/翌月/半年后/入冬/闭关三月 → 描述跳变），"beats":[{"type":"<本批内该章原拍type，原样照抄>","time":"支线·时点，如 现实·第2天·上午"}, ...]}, ...], "global_notes":"用一句话说明本批时间跨度与节奏安排（含用了哪些时间单位）"}
+{"chapters":[{"index":1,"from":"第1章现实主线起始时点","to":"第1章现实主线末尾时点","jump":"上一章末→本章初的跳变（相对前章仍顺延则填空字符串；确有大跨度跳跃才填，如 数日后/三日后/翌月/半年后/入冬/闭关三月）"}, ...], "global_notes":"用一句话说明全书时间跨度与节奏安排（含用了哪些时间单位）"}
 【硬性规则】
-1. index 从 1 起，对应当前本批内部第几章（1=本批第一章），数量必须与本批给定章节数完全一致；每章 beats 的数量与 type 必须照抄，只许改动 time。
-2. 现实（主线）支线：本批第一个现实时点（anchor）必须晚于或衔接上一批末尾（给了就严禁倒退）；本批现实支线内部全程单调不倒退；回忆/梦境/穿越等非主线支线各自独立计时、互不干扰，切换须由剧情出入点解释。
-3. 每章 from 应落在该章首拍现实时点，to 落在该章末拍现实时点；若章以非主线支线开章/收章，可用该章主线落点作 from/to，支线时点在 beats 里表达。
-4. 时间节奏要有起伏：本批里有的章时间基本不流动（同日内推进），有的章跨数天/旬/月/季/年，绝不均匀；确需大跨度跳跃的章在 jump 中标出跳变。
-5. 每个 time / from / to 只写"支线名 + 一个时点"（≤14 字），用·分隔，不要多余解释；jump 为空串表示与前章自然顺延，否则描述跳变（≤10字）。
-6. 同一场戏的多拍共享同一时点：同一场景内连续动作的拍，time 写相同的「支线·时点」（如拍1、拍2 都写 现实·第2天·上午）。只有时间真的推移（转场/多日间隔/昼夜更替/赶路/养伤）才写更晚的时点。严禁为凑内容给每拍硬排一个递增时段（禁止把同一上午拆成 上午/中午/下午）。
-7. 中间拍若无独立时间意义，time 可留空('')或照抄上一拍；但每章首拍与末拍必须给出时点（首=章首承接锚、末=章末承接锚）。
-8. 同章内时间粒度保持一致：用时段就整章都带时段（凌晨/上午/中午/下午/傍晚/晚上/深夜）；当日首拍直接写『现实·第N天·凌晨』，不要『第N天』整日没有时段 与 后续『第N天·上午』混用，避免同日内被误判为倒流。`;
+0. 先全局、后局部（v1.0.239）：动手排每章之前，先依据【全书时间跨度推断依据】与全部章节标题/事件，判断整部小说的现实时间轴跨度（数小时/数日/数月/数年/数十年/跨越数代/千年仙途），把它作为全书的"总时间轴"；然后把每章落在这一条总轴上——首章 from 到末章 to 的总跨度必须与判断一致，全书整体单调推进。严禁无依据地"一章一天"机械递进，也不许把跨度算错（如数年的故事排成数日、数日的连环事件排成数年）。
+1. index 从 1 起，对应当前章节序号，数量必须与全书章节数完全一致。只输出章级锚点（from/to/jump），**不要输出每拍 time**——每拍时点由系统依据章级锚点自行处理。
+2. 全书现实主线时间必须单调不倒退：后一章 from 必须晚于或等于前一章 to；回忆/梦境/穿越等非主线支线各自独立计时、互不干扰，切换须由剧情出入点解释（可在 from/to 前加支线名，如「回忆·第1天」）。
+3. 每章 from 落在该章开场时点，to 落在该章结束时的时点；若章以非主线支线开章/收章，可用该章主线落点作 from/to。
+4. 时间节奏要有起伏：有的章时间基本不流动（同日内推进），有的章跨数天/旬/月/季/年，绝不均匀；确需大跨度跳跃的章在 jump 中标出跳变。
+5. 每个 from / to 只写"支线名 + 一个时点"（≤14 字），用·分隔，不要多余解释；jump 为空串表示与前章自然顺延，否则描述跳变（≤10字）。
+6. 同章内时间粒度保持一致：用时段就整章都带时段（凌晨/上午/中午/下午/傍晚/晚上/深夜）；当日首拍直接写『现实·第N天·凌晨』，不要『第N天』整日没有时段 与 后续『第N天·上午』混用，避免同日内被误判为倒流。`;
 
-// 分段输出校验：结构 + 每章 beat 数/type 顺序/必填 time + anchor/end 非空
+// v1.0.238 输出瘦身校验：只查章级锚点——chapters 数量、index、from/to 非空；不再要求 anchor/end、不再校验每拍 beats/type/time（拍级时点由系统依据章级锚点处理）
 function validateTimelineSegOutput(j, expectedCount){
   if(!j || typeof j !== 'object') return '返回不是对象';
-  if(!String(j.anchor||'').trim()) return '缺少 anchor（本批现实主线起始时点）';
-  if(!String(j.end||'').trim()) return '缺少 end（本批现实主线结束时点，供下一批承接）';
   if(!Array.isArray(j.chapters) || !j.chapters.length) return '缺少 chapters 数组';
-  if(j.chapters.length !== expectedCount) return `本批 chapters 应为 ${expectedCount} 章，实得 ${j.chapters.length}`;
-  const keys = beatTypeKeys();
+  if(j.chapters.length !== expectedCount) return `chapters 应为 ${expectedCount} 章，实得 ${j.chapters.length}`;
   for(const [ci, cp] of j.chapters.entries()){
-    if(!cp || typeof cp !== 'object') return `本批第 ${ci+1} 个 chapter 不是对象`;
-    if(!Number.isInteger(+cp.index) || +cp.index < 1) return `本批第 ${ci+1} 个 chapter 缺失有效 index`;
-    if(!Array.isArray(cp.beats) || cp.beats.length !== beatCnt()) return `本批第 ${ci+1} 章 beats 应为 ${beatCnt()} 段，实得 ${Array.isArray(cp.beats)?cp.beats.length:'非数组'}`;
-    for(let i=0;i<cp.beats.length;i++){
-      const b = cp.beats[i];
-      if(!b) return `本批第 ${ci+1} 章第 ${i+1} 拍缺失`;
-      // v1.0.233：每拍 time 由「必填」放宽为「按需」——只强制章首/章末拍给时点（承接锚点），中间拍可留空或与上拍同值（同一场戏共享时点）
-      const isFirst = (i===0), isLast = (i===cp.beats.length-1);
-      if(isFirst && !String(b.time||'').trim()) return `本批第 ${ci+1} 章首拍缺失 time（章首时点，作承接锚）`;
-      if(isLast && !String(b.time||'').trim()) return `本批第 ${ci+1} 章末拍缺失 time（章末时点，作章末锚）`;
-      if(keys[i] && b.type !== keys[i]) return `本批第 ${ci+1} 章第 ${i+1} 拍 type 应为 ${keys[i]}，实得 ${b.type}`;
-    }
+    if(!cp || typeof cp !== 'object') return `第 ${ci+1} 个 chapter 不是对象`;
+    if(!Number.isInteger(+cp.index) || +cp.index < 1) return `第 ${ci+1} 个 chapter 缺失有效 index`;
+    if(!String(cp.from||'').trim()) return `第 ${ci+1} 章缺失 from（章首时点）`;
+    if(!String(cp.to||'').trim()) return `第 ${ci+1} 章缺失 to（章末时点）`;
   }
   return '';
 }
 
 // v1.0.230：移除 timelineSegments——全局时间线改为整段一次生成，不再切段。
 
-// 本批用户拼装：处理范围 + 上一批末尾承接上下文 + 本批各章节拍「事件」（v1.0.224：事件驱动，节拍表不再提供 time）
-function buildTimelineSegUser(s, e, prevEnd){
+// v1.0.238：时间线专属线——只注入 全书章节数 + 每章标题 + 每拍定制版事件（优先 tlEvent，回退 event）+ 团队同场共时（仅多角色时，solo 自动为空）。
+// 其余（书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接）一律不再注入：时间线只从事件看时间，输入越干净、输出越不易出错。
+function buildTimelineSegUser(){
   const o=state.outline||{};
   const totalN=(o.chapters||[]).length;
-  const parts=[`【全书章节数】${totalN} 章`,`【本次处理范围】第 ${s+1}—${e} 章（本批共 ${e-s} 章）`];
-  if(o.title) parts.push(`【书名】${o.title}`);
-  if(o.tone) parts.push(`【整体情绪基调】${o.tone}`);
-  const _stg=chapterPlanStages(o);
-  if(_stg&&_stg.length) parts.push(`【大纲节拍的结构】全书按阶段推进：${_stg.map(x=>`第 ${x.first}—${x.last} 章「${x.name}」`).join('；')}`);
-  if(prevEnd) parts.push(`【上一批已排定的现实主线末尾时点】${prevEnd}\n本批第一个现实时点（anchor）必须晚于或衔接它，严禁整体倒退；回忆/梦境/穿越等非主线支线各自独立计时、不受此限。`);
-  parts.push(`【时间单位说明】本批需你（时间线权威）独立从剧情规划时间：时点可用 时刻/日/旬/月/季/年，由事件真实耗时决定，严禁锁死"第N天"；跨度跳跃按剧情需要 + 在 jump 标注。同一场戏的多拍可给相同 time，只有时间推移才更新；每章首拍/末拍必给时点，中间拍可同值或留空，不要为凑每拍硬排递增时段。`);
+  const parts=[`【全书章节数】${totalN} 章`];
   const rows=[];
-  for(let i=s;i<e;i++){
+  for(let i=0;i<totalN;i++){
     const c=o.chapters[i]||{};
     const p=Array.isArray(o.chapterPlans)?o.chapterPlans[i]:null;
     const t=String((c.title||'').trim());
     const beats=(p&&Array.isArray(p.beats))?p.beats:[];
-    // 事件驱动：给出各拍 event 供时间线推断落点（不再给 time，由时间线全新规划）
-    const btxt=beats.map((b,bi)=>`   [${bi+1}] ${b.type||'?'} ${String((b.event||'')).replace(/\s+/g,'').slice(0,46)}`).join('\n');
+    // 定制版事件：优先取节拍表为时间线提炼的 tlEvent；旧数据无 tlEvent 时回退 event
+    const btxt=beats.map((b,bi)=>{
+      const tl=String((b&&b.tlEvent)||'').trim();
+      const ev=String((b&&b.event)||'').replace(/\s+/g,'').slice(0,46);
+      return `   [${bi+1}] ${b.type||'?'} ${tl ? `（${tl}）` : ''}${ev}`;
+    }).join('\n');
     rows.push(`第${i+1}章《${t}》\n${btxt||'  （无节拍）'}`);
   }
-  parts.push(`【本批各章节拍事件（据此规划时间）】\n${rows.join('\n')}`);
-  const _tb=teamShapeBrief();   // v1.0.186 团队同场共时：团队核心团默认同在一条主线支线、共同推进
+  parts.push(`【每章标题与每拍定制版事件（据此规划时间，事件驱动：赶路/养伤/等待/远行→时间跳跃；同一场戏多拍→同时刻）】\n${rows.join('\n')}`);
+  // v1.0.239：全书时间跨度推断依据——从首章开篇与末章结局两个端点提炼"时间定位"，让模型先纵览全局判断整书现实时间轴跨度，再逐章落点，杜绝一天一章的机械递进。
+  {
+    const c0=o.chapters[0]||{}, cL=o.chapters[totalN-1]||{};
+    const p0=Array.isArray(o.chapterPlans)?o.chapterPlans[0]:null;
+    const pL=Array.isArray(o.chapterPlans)?o.chapterPlans[totalN-1]:null;
+    const b0=(p0&&Array.isArray(p0.beats)&&p0.beats[0])?p0.beats[0]:null;
+    const bL=(pL&&Array.isArray(pL.beats)&&pL.beats[pL.beats.length-1])?pL.beats[pL.beats.length-1]:null;
+    const t0=String((b0&&(b0.tlEvent||b0.event))||'').replace(/\s+/g,'').slice(0,40);
+    const tL=String((bL&&(bL.tlEvent||bL.event))||'').replace(/\s+/g,'').slice(0,40);
+    if(t0 || tL) parts.push(`【全书时间跨度推断依据（先定全局，再落局部）】开篇·第1章《${String(c0.title||'').trim()}》起始事件：${t0||'（缺）'}；结局·第${totalN}章《${String(cL.title||'').trim()}》收束事件：${tL||'（缺）'}。纵览这两端点与全书标题/事件序列，判断整部小说的现实时间轴跨度（数小时/数日/数月/数年/数十年/跨越数代/千年仙途），并把全部章节落在这条总时间轴上：首章 from 到末章 to 的总跨度必须与该判断一致，严禁无依据地"一章一天"机械递进。`);
+  }
+  const _tb=teamShapeBrief();   // v1.0.186 团队同场共时：团队/双主角默认同在一条主线支线、共同推进（单主角时为空，不注入）
   if(_tb) parts.push(_tb+'\n（时间侧留意：除非剧情明确拆线，各核心主角/成员的时间应落在同一主线支线的同一时点，团队因"分工拆成两路"而分处不同时点、双主角因"各自独立场景"而位于同一时点不同现场——都要在节拍/正文给出进入与回收说明，别拆到互相矛盾的时点）');
   return parts.join('\n\n');
 }
@@ -10935,7 +10936,7 @@ async function genPlannerTimeline(btn, opts){
     const anchors = [];
     let notes = '', lastErr = '';
     let changed = 0;
-    const user = buildTimelineSegUser(0, totalN, undefined);   // 整段直发全书（复用原有的用户拼装，边界承接参数传 undefined）
+    const user = buildTimelineSegUser();   // v1.0.238：时间线专属线，一次整段直发全书（无批次/无承接参数）
     let ok = false;
     for(let attempt=0; attempt<PLANNER_RETRY_MAX; attempt++){
       if(_abortCtl && _abortCtl.signal.aborted) throw {name:'AbortError'};
@@ -10949,17 +10950,19 @@ async function genPlannerTimeline(btn, opts){
       ]);
       const best = cands.filter(c=>c && c.ok).sort((a,b)=>(b.score||0)-(a.score||0))[0];
       if(best){
-        // 整段应用：cp.index 为全书章节序号（1 基），直接写入对应章 拍 time 与起止时间锚
+        // v1.0.238 整段应用（输出瘦身）：模型只出章级锚点 from/to/jump；拍级时点由系统本地回填——章首拍=from、章末拍=to、中间拍保持原值/留空（同一场戏共享时点，不再硬排递增）
         best.data.chapters.forEach(cp=>{
           const idx = +cp.index - 1;
           if(idx < 0 || idx >= totalN) return;
-          const plan = o.chapterPlans[idx]; if(!plan || !Array.isArray(plan.beats)) return;
-          cp.beats.forEach((nb,j)=>{ const bb=plan.beats[j]; if(!bb) return; const nt=String(nb&&nb.time||'').trim(); if(nt && String(bb.time||'').trim()!==nt){ bb.time=nt; changed++; } });
           const _f0 = String(cp.from||'').trim();
           const _f1 = String(cp.to||'').trim();
-          const t0 = _f0 || (cp.beats.length ? String(cp.beats[0].time||'').trim() : '');
-          const t1 = _f1 || (cp.beats.length ? String(cp.beats[cp.beats.length-1].time||'').trim() : '');
-          anchors.push({ index: idx, title: String((o.chapters[idx] && o.chapters[idx].title) || (''+idx+1)), from: t0, to: t1, jump: String(cp.jump||'').trim() });
+          const plan = o.chapterPlans[idx];
+          if(plan && Array.isArray(plan.beats) && plan.beats.length){
+            const firstB = plan.beats[0], lastB = plan.beats[plan.beats.length-1];
+            if(firstB && _f0 && String(firstB.time||'').trim()!==_f0){ firstB.time=_f0; changed++; }
+            if(lastB && _f1 && String(lastB.time||'').trim()!==_f1){ lastB.time=_f1; changed++; }
+          }
+          anchors.push({ index: idx, title: String((o.chapters[idx] && o.chapters[idx].title) || (''+idx+1)), from: _f0, to: _f1, jump: String(cp.jump||'').trim() });
         });
         if(!notes) notes = String(best.data.global_notes||'').trim() || '';
         ok = true;
