@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.239';   // v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.242';   // v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -1369,7 +1369,7 @@ L4 · 滚动摘要与相关设定：最近 3 个滚动摘要区块、相关词�
 7. 结尾须指向下一章标题，埋下线索或悬念，但不得提前揭示下一章具体情节（若上下文未给出下一章标题，则按本章剧情自然收束即可，不强求指向标题）。
 8. 正文长度严格以【篇幅体量】块为准，必须在第一次生成时即写足该块硬下限（v1.0.165：取消"不设上限"宽松口径，禁止写成未达下限的梗概式短场景）。
 9. 场景与节拍的自然衔接铁律：全章必须是一条连续流动的叙事线——每个节拍事件的结尾自然引出下一个节拍的开头；时间/地点/视点的切换必须给出过渡（时间词、空间移动、镜头焦点转移或因果钩子），禁止节拍间硬跳切、禁止把每个节拍写成孤立片段。节拍之外的衔接与过渡文字（非情节推进的铺垫/转场内容）同样是正文的组成部分，不是多余的填充。
-10. 时间锚铁律（若 L1 节拍表标注了时间）：每段节拍标注的【时间】（如 现实·第2天·清晨）是本章时间承接的硬基准——正文各段落在哪个时点、就写那一时段的场景（光线/天色/动静/人物状态），上一章末尾落到哪个时点，本章开头就从那个时点或其自然延续接入，禁止时间跳跃开场、禁止把本章剧情安排到上一章主线的更早时点（同主线时点禁止倒退）。但时间一律靠场景细节自然体现，严禁出现在段首报时（"现在是/此刻是/此时是/当下是"）、严禁把时间锚或"第X天"字样原样照抄进正文；仅当时间确实跳跃时才用"翌日""三日后的黄昏"等自然过渡语融入叙述。跨支线（回忆/梦境/穿越）须按节拍表的支线标签处理，并在文中显式体现进入与回归，不扰乱主线时间顺序。另：严禁章节/段落以时间词开篇——首句不要用"清晨/天色/夜色/翌日/午后/入夜/黄昏"等时间状语起头，也不要把时间锚当首句标题；新章首句应从人物动作、对话、物件或场景细节切入，时间自第二句起用场景细节自然带出（仅当本章时间较上一章确已跳变时，才允许紧接首句之后交代一次，且融入叙述、不作孤立时间状语）。
+10. 时间锚铁律（若 L1 节拍表标注了时间）：每段节拍标注的【时间】（如 现实·第2天·清晨）是本章时间承接的硬基准——正文各段落在哪个时点、就写那一时段的场景（光线/天色/动静/人物状态，如熹微/烈日/夕照/星夜/烛火/虫鸣/人物衣物与倦意等细节自然交代），上一章末尾落到哪个时点，本章开头就从那个时点或其自然延续接入，禁止时间跳跃开场、禁止把本章剧情安排到上一章主线的更早时点（同主线时点禁止倒退）。但时间一律靠场景细节自然体现，严禁出现在段首报时（"现在是/此刻是/此时是/当下是"）、严禁把时间锚或"第X天"字样原样照抄进正文；仅当时间确实跳跃时才用"翌日""三日后的黄昏"等自然过渡语融入叙述、不作注释式开场。跨支线（回忆/梦境/穿越）须按节拍表的支线标签处理，并在文中显式体现进入与回归，不扰乱主线时间顺序。（v1.0.24x：删除"严禁时间词开篇/首句禁时间状语"绝对禁令——与章首铁律④「时间开句可用（仅限频次）」及承接任务书菜单⑥冲突；开场方式以章首铁律 6 式为准。）
 11. 视角与上帝视角铁律（v1.0.180）：默认采用"受限视角"叙述——把"摄影机"约 90% 的时间锁在主角身上，只以主角能看到/听到/摸到/感知到的信息推进叙述；想表现他人内心，一律改从主角的观察与推断出发，禁止直接钻进路人/配角/反派的内心"读心"。仅在下列"合法时机"才允许切到"上帝/他人视角"：(a) 章/节/空行分隔之后（有明确视角分界可用）；(b) 与主角核心目标同场产生重大利益冲突的关键时刻（全章最多一两处，用完立即回到主角）；(c) 只"展示而不解释"的客观信息（写他人"做了什么/什么神态/什么动作"，而不是"心里想什么"）；(d) 背景/世界观/前史等设定信息必须"寄生"在角色的即时感官里（经耳朵听到、鼻子闻到、手触及）传达，禁止作者跳出来大段广播；(e) 悬念揭晓的时刻（对前期已埋设的不确定性的兑现）。禁止项：同一场景内多个角色的内心随意跳切（禁止"跳切"）；禁止用上帝视角提前揭示主角与读者尚不该知道的答案（禁止剥夺"侦探权"）；禁止借上帝视角长篇灌输背景设定（禁止"死神"式信息倾泻）；禁止让配角甚至路人获得与主角同等的心理戏、使情感焦点涣散（禁止稀释"主角感"）。【例外】若本章叙事技法采用了「多视角群像」，可放宽为受控视角切换，但仍须每个视角边界清晰、各视角有辨识度、切换有明确分界（章节/空行），且整体仍以主角视角为主轴。
 
 【内部一致性自检（不写入输出）】
@@ -2370,8 +2370,9 @@ function refreshAdvHistBadge(kind){
 }
 // v11 给 AI 配方助手注入本作书名/简介，让候选配方贴合本小说；无大纲时仅提示先生成。
 // 4.7 Pro（3.6 原码）：资深风格工程师 + 写作配方设计师
+// v1.0.24x：复用「词典达人单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本；上传主线简述入口（遗留物）已移除
 const AI_RECIPE_SYS_PRO = `你是一位资深长篇小说「风格工程师」，同时为「写作配方设计师」。
-【核心任务】根据用户描述或上传的主线简述，设计 2~6 个可直接落地的组合配方。
+【核心任务】根据本小说的②优化构想所选方案（含书名+九要素，其中「风格/题材/氛围/主角气质」等字段是设计配方的首要依据）或用户描述，设计 2~6 个可直接落地的组合配方。
 
 【必须输出的 JSON 结构】
 [
@@ -2387,38 +2388,43 @@ const AI_RECIPE_SYS_PRO = `你是一位资深长篇小说「风格工程师」�
 ]
 
 【硬性约束】
-1. tags 只能使用现有词库 id；现有词库是基础参照、不是天花板：当现有词条无法覆盖用户诉求时，必须主动设计 1~3 个新词条放入 gap 补位（这是加分项，不是违规，大胆创造）。
+1. tags 只能使用现有词库 id。现有词库只是参照、不是天花板，更不是必须迁就的对象：即使现有词条看似可用，只要它不是百分之百贴合本小说（例如只覆盖了一半的意涵），就必须设计完全为本小说量身定制的全新词条放入 gap——这是核心职责（大胆创造），不是加分项。新词条的 note/tips/avoid/check/demo 必须以本小说的题材、人物、世界观为唯一依据书写。
 2. gap 为 null 表示现有词库足够；gap 非空时每个新词条必须五维齐全（note/tips/avoid/check/demo），缺一作废。
 3. 不同候选用词尽量不同、风格拉开差异。
 4. why / scenario / reasons 里引用词条时必须使用中文 name，禁止出现英文 id。
-5. 只输出上述 JSON 数组，不要 markdown 代码块、不要解释。`;
+5. gap 新词条的 cat 只能取以下五类之一：语言质感、情绪与张力、节奏与网感、叙事技法、台词设计。
+6. 只输出上述 JSON 数组，不要 markdown 代码块、不要解释。`;
 
 function aiRecipeUser(extra){
+  const cand = selectedPolishCandidate();
+  const txt = String((cand && cand.text)||'').trim();
+  if(txt){
+    // 单一专线：只注入所选方案完整原文（剔除「结构」段——节拍/章节规划对风格设计无用），配方须百分之百贴合本小说
+    const body = stripStructureFromIntro(txt);
+    const head = '【所选方案完整原文（唯一蓝本：含书名+九要素，配方须百分之百贴合本小说）】\n' + body;
+    return extra ? `${head}\n\n以下为对该小说的写作风格配方设计请求：\n${extra}` : head;
+  }
+  // 回退：尚未生成②优化构想所选方案时退回书名+简介（有总比没有好）
   const o = state.outline || {};
   const head = (String(o.title||'').trim() && String(o.logline||'').trim())
     ? `【小说书名】${o.title}\n【小说简介】${o.logline}\n\n以下为该小说的写作风格配方设计请求：`
     : '（尚未生成大纲：为让 AI 依据本小说书名与简介设计更贴合的风格配方，建议先到「大纲」步生成书名与简介。）';
   return extra ? `${head}\n\n${extra}` : head;
 }
+// v228/P4 词库 spec 摘要：内置词条取 note 摘要；自定义词条 note 多为「写法:/避免:/自查:」多行结构化配方，只取首行并标注，避免截断成乱麻误导 AI
+function aiRecipeSpecNote(s){
+  const n = String(s.note||'').trim();
+  if(!n) return '';
+  const multi = n.includes('\n') && /写法|避免|自查/.test(n);
+  const head = n.split('\n')[0].trim();
+  return (multi ? (head ? head + '（多行配方·详见词库）' : '（多行配方·详见词库）') : n).slice(0,60);
+}
 function aiRecipePrompt(userDesc){
   const lib = writeStyleLib();
-  const spec = lib.map(s=> `- ${s.id}：${s.name}（${s.cat||'custom'}）｜${String(s.note||'').slice(0,60)}`).join('\n');   // v228/P4：注入 note 摘要，AI 不再"只见名字不见味道"
+  const spec = lib.map(s=> `- ${s.id}：${s.name}（${s.cat||'custom'}）｜${aiRecipeSpecNote(s)}`).join('\n');   // v228/P4：注入 note 摘要，AI 不再"只见名字不见味道"
   // 4.7 Pro（3.6）：system 换 AI_RECIPE_SYS_PRO + 现有词库 id/name/cat
   return { system: AI_RECIPE_SYS_PRO + '\n\n【现有词库 id/name/cat】：\n' + spec, user: aiRecipeUser(userDesc) };
 }
-// v1.0.62 上传主线简述 TXT → 判断该小说文风 → 给可模仿的写作配方（全文直发，不分段）
-// 4.7 Pro（3.6）：同步换 PRO system（保留「完整通读主线简述」语境前缀）
-function aiPromptFromOutline(text){
-  const lib = writeStyleLib();
-  const spec = lib.map(s=> `- ${s.id}：${s.name}（${s.cat||'custom'}）｜${String(s.note||'').slice(0,60)}`).join('\n');   // v228/P4：注入 note 摘要，AI 不再"只见名字不见味道"
-  return { system:
-    '你是资深长篇小说「风格工程师」。用户上传的是一部小说的【主线简述】TXT（非正文）。\n' +
-    '请你【完整通读】这份梗概，判断该小说的文风、叙事节奏、对白与情绪质感，再为"想模仿这部小说写作"的用户设计 2~6 个可直接落地的组合配方。\n\n' +
-    AI_RECIPE_SYS_PRO + '\n\n【现有词库 id/name/cat】：\n' + spec,
-    user: aiRecipeUser(text) };
-}
-// v1.0.62 上传来源标记：'desc'＝描述入口 ／ 'outline'＝主线简述入口（仅用于结果区提示，不持久化）
-let aiSource = 'desc';
 // AI 配方助手卡片（仅长篇小说模式在渲染层调用）
 function aiRecipeCard(){
   const lib = writeStyleLib();
@@ -2426,20 +2432,17 @@ function aiRecipeCard(){
   return `<div class="card ai-recipe-card${collapsed?' collapsed':''}">
     <div class="ai-recipe-head" data-ai-recipe-fold role="button" tabindex="0" title="展开/收起">
       <h3 style="margin:0">🧪 AI 配方助手 <span class="sc-fold-ico">${collapsed?'▸':'▾'}</span></h3>
-      <span class="muted" style="font-size:11px;font-weight:400">为「写作风格」而生 · 描述一段风格，或上传主线简述 AI 提炼配方</span>
+      <span class="muted" style="font-size:11px;font-weight:400">为「写作风格」而生 · 基于本小说②优化构想所选方案设计配方</span>
     </div>
     <div class="ai-recipe-body">
       <div class="ai-desc-wrap">
-        <span class="ai-upload-name" data-ai-upload-name></span>
-        <textarea id="aiReDesc" rows="3" placeholder="用一段话描述你想要的风格/题材/氛围。例如：轻松治愈的都市言情，带点温馨笑料，配角俏皮，节奏明快。" style="width:100%;box-sizing:border-box"></textarea>
+        <textarea id="aiReDesc" rows="3" placeholder="可选：用一段话补充你想要的风格/题材/氛围。例如：轻松治愈的都市言情，带点温馨笑料，配角俏皮，节奏明快。（留空则仅依据所选方案设计配方）" style="width:100%;box-sizing:border-box"></textarea>
       </div>
       <div class="ai-recipe-tool">
         <button type="button" class="btn primary" data-ai-recipe-gen>✨ 生成配方</button>
         <button type="button" class="btn small ghost" data-ai-recipe-clear>清空</button>
         <button type="button" class="ai-upload-btn ai-hist-btn" data-ai-recipe-hist title="AI 配方历史：回看已生成过的候选配方">📖<span class="ai-hist-badge">${snapAiHist().length||''}</span></button>
-        <button type="button" class="ai-upload-btn" data-ai-recipe-file title="上传主线简述TXT">＋</button>
       </div>
-      <input type="file" id="aiReFile" accept=".txt,text/plain" hidden />
       <div data-ai-recipe-out>${ aiRecipeResultHtml(lib) }</div>
     </div>
   </div>`;
@@ -2458,7 +2461,7 @@ function aiRecipeResultHtml(lib){
         ${ recipeScBadge(c) }
         <span class="muted" style="font-size:11px">${esc(c.desc||'')}</span>
       </div>
-      <div class="ai-recipe-tags">${ (c.tags||[]).map(id=>{ const s=writeStyleById(id); return `<span class="ai-recipe-tg">${esc(s?s.name:id)}</span>`; }).join('') }</div>
+      <div class="ai-recipe-tags">${ (c.tags||[]).map(id=>{ const s=writeStyleById(id); return `<span class="ai-recipe-tg"${s?'':' title="引用了词库外 id"'} style="${s?'':'opacity:.65'}">${esc(s?s.name:id)}${s?'':'（词库外）'}</span>`; }).join('') }</div>
       <div class="ai-recipe-sec"><span class="ar-lab">为何这样选</span>${esc(wiseWhyText(c.why||''))}</div>
       <div class="ai-recipe-sec"><span class="ar-lab">适用场景</span>${esc(wiseWhyText(c.scenario||''))}</div>
       <div class="ai-recipe-gap">
@@ -2518,50 +2521,34 @@ function recipeScBadge(c){
 async function aiRecipeProduce(system, user){
   const opt = { maxTokens: clampMaxTokens('json'), temperature:(getCfg().aiRecipeTemp==null?0.9:getCfg().aiRecipeTemp), topP:0.5 };
   const FIX = `\n\n【上一轮修正：新词条必须五维齐全】含新词条（gap 非空）的配方：每个新词条必须五维齐全——note（一句话定位）、tips（≥2 条）、avoid（≥1 条）、check（≥1 条）、demo（示例句）。请务必为每个候选给全、给对上述字段。`;
-  let list = null;
+  const FIX_JSON = `\n\n【上一轮修正：JSON 解析失败】上一轮输出无法被解析为合法 JSON 数组。请严格只输出一个 JSON 数组（不要 markdown 代码块、不要解释、不要任何额外文字）。`;
+  let list = null, lastJsonOk = false;
   for(let attempt=1; attempt<=2; attempt++){
-    const sys = attempt>1 ? String(system)+FIX : system;
+    const sys = attempt>1 ? String(system) + (lastJsonOk ? FIX : FIX_JSON) : system;
     const raw = unwrapAIResult(await callDeepSeek(sys, user, Object.assign({}, opt, {taskKey:'recipe'})));
     const cands = prepRecipeList(parseAiJsonList(raw));
-    if(Array.isArray(cands) && cands.length){ list = cands; break; }
+    lastJsonOk = Array.isArray(cands) && cands.length > 0;
+    if(lastJsonOk){ list = cands; break; }
   }
   if(!list || !list.length) throw new Error('AI 未返回有效配方，请重试');
   return list;
 }
-// 生成候选配方
+// 生成候选配方（v1.0.24x：有 ②优化构想所选方案时描述可选——留空则仅依据专线设计）
 async function aiRecipeGen(){
   const ta = $('#aiReDesc'); if(!ta) return;
   const desc = (ta.value||'').trim();
-  if(!desc){ toast('请先描述你想要的风格'); return; }
-  const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = `<p class="muted" style="margin:8px 0 0">⏳ AI 正在根据你的描述设计候选配方与词条缺口……</p>`;
+  const hasLine = !!((selectedPolishCandidate()||{}).text || '').trim();
+  if(!desc && !hasLine){ toast('请先描述你想要的风格'); return; }
+  if(!desc && hasLine){ toast('将仅依据所选方案设计配方'); }
+  const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = `<p class="muted" style="margin:8px 0 0">⏳ AI 正在${hasLine?'依据所选方案':'根据你的描述'}设计候选配方与词条缺口……</p>`;
   const gen = $('[data-ai-recipe-gen]'); if(gen){ gen.disabled = true; gen.textContent = '生成中…'; }
   try{
     const {system, user} = aiRecipePrompt(desc);
     const list = await aiRecipeProduce(system, user);   // D2/C①：生成即校验新词条五维齐全，不合格自动重试
     aiRp = { list, hi: 0 };
-    // v10.57 生成成功即存历史快照（书本图标可回看；outline 由 aiRecipeFromOutline 存）
-    if(aiSource !== 'outline') addAiHist({ id: aiHistEntryId(), ts: Date.now(), src:'desc', desc: desc, list: JSON.parse(JSON.stringify(list)), applied:[] });
+    addAiHist({ id: aiHistEntryId(), ts: Date.now(), src:'desc', desc: desc || '依据所选方案', list: JSON.parse(JSON.stringify(list)), applied:[] });
   }catch(e){
     aiRp = { list:null, err: (e&&e.message)||'生成失败' };
-  }
-  if(out) out.innerHTML = aiRecipeResultHtml();
-  if(gen){ gen.disabled = false; gen.textContent = '✨ 生成配方'; }
-}
-// v1.0.62 上传主线简述 → 全文直发 AI 通读 → 提炼可模仿的写作配方（复用 aiRp 渲染链，不分段）
-let _aiOutlineFname = ''; // v10.57 暂存上传文件名，供快照 desc 标记
-async function aiRecipeFromOutline(text){
-  aiSource = 'outline';
-  const out = $('[data-ai-recipe-out]');
-  if(out) out.innerHTML = `<p class="muted" style="margin:8px 0 0">⏳ AI 正通读主线简述并提炼可模仿的写作配方…</p>`;
-  const gen = $('[data-ai-recipe-gen]'); if(gen){ gen.disabled = true; gen.textContent = '通读中…'; }
-  try{
-    const {system, user} = aiPromptFromOutline(text);
-    const list = await aiRecipeProduce(system, user);   // D2/C①：生成即校验新词条五维齐全
-    aiRp = { list, hi: 0 };
-    // v10.57 生成成功即存历史快照（以梗概文件名标记来源；不存原文大文本）
-    addAiHist({ id: aiHistEntryId(), ts: Date.now(), src:'outline', desc: _aiOutlineFname || '主线简述', list: JSON.parse(JSON.stringify(list)), applied:[] });
-  }catch(e){
-    aiRp = { list:null, err: (e&&e.message)||'通读失败' };
   }
   if(out) out.innerHTML = aiRecipeResultHtml();
   if(gen){ gen.disabled = false; gen.textContent = '✨ 生成配方'; }
@@ -3453,9 +3440,9 @@ ${specLines}
   "chapterPlans": [
     {
       "beats": [
-        {"type":"${defs[0].key}", "event":"本节拍关键事件：写清人物动作、直接冲突与即时目标（一句话约40字，具体不空泛）", "tlEvent":"时间线定制版：只写本条的时间线索——发生时段/动作耗时/空间移动/等待/跨日等（≤20字，时间向，不写情绪与剧情分析）", "emotional":"情绪，1—8字", "requiredEntities":["必须出现的人名/地名/专名"], "foreshadowing":["本章埋下的伏笔（有才填）"]},
-        {"type":"${defs[Math.min(1,cnt-1)].key}", "event":"推进/转折事件：人物做了什么、冲突如何升级（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"情绪变化", "requiredEntities":[], "foreshadowing":[]},
-        ${cnt>3 ? `{"type":"${defs[cnt-2].key}", "event":"章末前的承转或余波事件：人物心理/动作/对话如何收束（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"情绪落点", "requiredEntities":[], "foreshadowing":[]},\n` : ''}        {"type":"${defs[cnt-1].key}", "event":"章末钩子/悬念：承接下一章的线索或关系突变（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"章末情绪落点", "requiredEntities":[], "foreshadowing":[]}
+        {"type":"${defs[0].key}", "event":"本节拍关键事件：写清人物动作、直接冲突与即时目标（一句话约40字，具体不空泛）", "tlEvent":"时间线定制版：只写本条的时间线索——发生时段/动作耗时/空间移动/等待/跨日等（≤20字，时间向，不写情绪与剧情分析）", "emotional":"情绪，1—8字（无情绪变化可留空）", "requiredEntities":["必须出现的人名/地名/专名（没有可空数组）"], "foreshadowing":["本章埋下的伏笔（有才填）"]},
+        {"type":"${defs[Math.min(1,cnt-1)].key}", "event":"推进/转折事件：人物做了什么、冲突如何升级（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"情绪变化（无变化可留空）", "requiredEntities":[], "foreshadowing":[]},
+        ${cnt>3 ? `{"type":"${defs[cnt-2].key}", "event":"章末前的承转或余波事件：人物心理/动作/对话如何收束（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"情绪落点（无变化可留空）", "requiredEntities":[], "foreshadowing":[]},\n` : ''}        {"type":"${defs[cnt-1].key}", "event":"章末钩子/悬念：承接下一章的线索或关系突变（一句话约40字）", "tlEvent":"时间线定制版：只写本条的时间线索（≤20字，时间向）", "emotional":"章末情绪落点（无变化可留空）", "requiredEntities":[], "foreshadowing":[]}
       ],
       "emotionalArc": "本章情绪弧：从X到Y，用一句话概括",
       "requiredEntities": ["本章必须使用的核心实体汇总"]
@@ -3468,27 +3455,28 @@ ${specLines}
 2b. 特例（全书末章）：当批次指令声明某章为全书最后一章时，该章末拍 type 改为 "ending"（「全书结局」拍——收束全书主线与各主要人物归宿、给出核心冲突的最终解决与确定结局或余味，禁止悬念钩子/开放式烂尾），其余各拍仍严格依序不变；非末章一律不得使用 "ending"。
 3. 节拍事件必须从章节标题与「大纲节拍的结构」阶段推导，不得偏离当前阶段、不得自创剧情；每段节拍必须贴合其【功能说明】的叙事职责。
 4. requiredEntities 与 foreshadowing 只能使用设定词典中已有人名/地名/专名，禁止自造新名。
-5. 精简输出（提速）：event 紧扣「人物动作+直接冲突+即时目标」，一句话说清（约 40 字上下），严禁精简成空泛模板句或事件雷同；每段 requiredEntities 至多 2 个；emotional ≤6 字。
+5. 精简输出（提速）：event 紧扣「人物动作+直接冲突+即时目标」，一句话说清（约 40 字上下），严禁精简成空泛模板句或事件雷同；每段 requiredEntities 可为空数组（有实体才填，至多 2 个）；emotional 无情绪变化可留空、有则 ≤6 字。
 6. 【tlEvent 职责分工（v1.0.238）】每拍除 event（正文向：写剧情动作）外，必须另写 tlEvent（时间线定制版，时间向）：只提炼本条的时间线索——发生时段（清晨/正午/黄昏/深夜）、动作耗时（片刻/半日/整夜/数日）、空间移动（赶路/奔袭/转场/闭关）、等待或跨日等，供「④ 全局时间线」快速准确地为全书排时；tlEvent 与 event 同一事件但视角不同，禁止写情绪、心理或剧情分析，无独立时间信息时写空字符串（中间拍可留空，但章首/章末拍必须给出）。
 7. 只输出上述 JSON，不要 markdown 代码块、不要解释。
 `;}
 
 // ④ 伏笔网：跨章节设计伏笔—回收链，写入伏笔台账。（v1.0.141 断链：不再引用旧结构骨架/幕；改为基于「大纲节拍的结构」阶段）
-const PLANNER_FORESHADOW_SYS = `你是一位长篇「伏笔设计师」。请基于全部章节标题与「大纲节拍的结构」阶段——若输入中提供了【全局时间线】与【各章节拍事件】，也必须将它们一并作为依据——设计一张贯穿全书的伏笔网络（植入章—回收章配对）。
+const PLANNER_FORESHADOW_SYS = `你是一位长篇「伏笔设计师」。请基于全部章节标题与「大纲节拍的结构」阶段——若输入中提供了【全局时间线】与【各章节拍要点】，也必须将它们一并作为依据——设计一张贯穿全书的伏笔网络（植入章—回收章配对）。
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
 {
   "foreshadows": [
-    {"plantChapter": 5, "payoffChapter": 21, "text": "伏笔内容（≤40字）", "type": "人物/物件/事件/设定"}
+    {"plantChapter": 5, "payoffChapter": 21, "text": "伏笔内容（≤40字）", "type": "人物/物件/事件/设定", "payoffNote": "回收章如何兑现该伏笔（可选，≤30字）"}
   ]
 }
 【硬性约束】
-1. 伏笔必须能从章节标题、「大纲节拍的结构」阶段、【各章节拍事件】或【全局时间线】中找到依据，禁止无中生有；每条给出明确的植入章与回收章（回收章 > 植入章）。
+1. 伏笔必须能从章节标题、「大纲节拍的结构」阶段、【各章节拍要点】或【全局时间线】中找到依据，禁止无中生有；每条给出明确的植入章与回收章（回收章 > 植入章）。
 2. 全书记 5—15 条为宜；重大主线伏笔 1—3 条贯穿全书，其余为局部小伏笔（回收跨度 3—8 章）。
-3. 回收章的剧情必须能承接该伏笔的兑现。
+3. 回收章的剧情必须能承接该伏笔的兑现；payoffNote 用于告诉后续写正文的 AI 具体如何兑现，须与该章拍要点承接。
 4. 伏笔的植入与回收必须落在「大纲节拍的结构」合理跨度内：重大贯穿伏笔的回收章应落在其植入阶段之后、且不越过所对应的推进/合阶段；不得把伏笔植入或回收到与其阶段职责无关的章节。
 5. 【时间线感知】若提供了【全局时间线】，伏笔的植入时点与回收时点须贴着全局时间推进——避免全部伏笔挤在同一时点（如同日）或同一段紧邻章节内批量兑现；重大伏笔应跨出真实可感知的时间跨度（覆盖数章乃至全书），局部小伏笔也要覆盖一段有意义的剧情。
-6. 【多主角个人线】（仅当输入含【叙事主体·】（双主角或团队）时生效）：双主角——两位主角各配至少一条可独立推进的伏笔/弧线，且作为互不合并的两条线跨章回收；团队——除主角外给每位主要配角各配至少一条"个人线"伏笔（身世/旧伤/隐瞒/私欲/独立目标）。植入—回收须跨出真实章距，不能与其团队交集或彼此关系线性合并；成员间/双主角间的暗流、分歧、隐瞒也是可用的伏笔来源。
-7. 只输出上述 JSON，不要 markdown 代码块、不要解释。`;
+6. 【避重复】若【各章节拍要点】中某章已列出「已埋线索」，不要在伏笔网中重复设计同一条线索；可从其"未兑现"处接续设计回收，或另立新线索。
+7. 【多主角个人线】（仅当输入含【叙事主体·】（双主角或团队）时生效）：双主角——两位主角各配至少一条可独立推进的伏笔/弧线，且作为互不合并的两条线跨章回收；团队——除主角外给每位主要配角各配至少一条"个人线"伏笔（身世/旧伤/隐瞒/私欲/独立目标）。植入—回收须跨出真实章距，不能与其团队交集或彼此关系线性合并；成员间/双主角间的暗流、分歧、隐瞒也是可用的伏笔来源。
+8. 只输出上述 JSON，不要 markdown 代码块、不要解释。`;
 
 // v1.0.116 小说核心锚点提取器：从完整线性简介中提炼「核心一句话定位 + 深层命题」，作为下游 AI 的导航灯塔。
 // 只读提炼，不做创作；低温(0.2)严格把关，不改变 logline 本身。
@@ -3682,7 +3670,6 @@ const AIBus = {
     };
     switch(kind){
       case 'idea': return { ...base, rawIdea: state.idea || '' };
-      case 'recipe': return { ...base, outline: o, existingTags: (state.chapterStyle?.tags||[]) };
       case 'outline': return { ...base, polishBrief: state._lastPolishBrief || null };
       case 'titles': return { ...base, outline: o, glossary: o.glossary, expectedN: extra?.n || (o.chapters||[]).length };
       case 'chapterPlan': return { ...base, outline: o, titles: (o.chapters||[]).map(c=>c.title), glossary: o.glossary };
@@ -3717,7 +3704,6 @@ const AIBus = {
 function getSystemPrompt(kind, extra){
   switch(kind){
     case 'idea': return IDEA_POLISH_SYS + (extra && extra.multi ? POLISH_MULTI_MODE : '');   // 4.9 加固：多方案开关接线（此前 POLISH_MULTI_MODE 只定义从未拼入，勾选「多方案」实际不生效）
-    case 'recipe': return AI_RECIPE_SYS_PRO;
     case 'outline': return buildOutlineSys();
     case 'titles': return REGEN_TITLES_SYS;
     case 'chapterPlan': return CHAPTER_PLAN_SYS;
@@ -3742,7 +3728,6 @@ function buildAIPrompt(kind, extra){
   const ctx = AIBus.get(kind, extra);
   switch(kind){
     case 'idea': return buildIdeaPolishUser(ctx);
-    case 'recipe': return buildRecipeUser(ctx);
     case 'outline': return buildOutlineUser(ctx);
     case 'titles': return titlesGenUser(extra);
     case 'chapterPlan': return chapterPlanUser();
@@ -3781,9 +3766,6 @@ function buildIdeaPolishUser(ctx){
   if(tb) parts.push(tb);
   if(parts.length) lines.push(`【已选叙事结构】\n${parts.join('\n\n')}`);
   return lines.join('\n\n');
-}
-function buildRecipeUser(ctx){
-  return aiRecipeUser(ctx.idea);
 }
 function buildOutlineUser(ctx){
   // 与 4.7 Pro（3.2）genOutline 的 user 拼装等价：【用户构想】+【优化构想简报】
@@ -3906,7 +3888,7 @@ const NARRATIVE_IRON_SOFT = `〔软约束 · 尽力而为、随题材微调〕
 · 语言底色必须随题材稳定贯穿全书，禁止中途漂移：都市/网游/沙雕→贴近生活口语；仙侠/红楼风→适度书面高级感。
 · 快节奏场景必须优先大白话短句，禁止绕弯长句，保证读者一目十行不卡壳。`;
 
-function narrativeIronBlock(role){
+function narrativeIronBlock(role, opts){
   // C fix: 禁则清单 / 语言分层为独立叙事中间件，各自按其开关与 scope 生效，不再被「叙事铁律总开关」整块吞噬
   const parts = [];
   const ban = banListBlockFor(role);
@@ -3916,6 +3898,13 @@ function narrativeIronBlock(role){
     if(lang) parts.push(lang);
   }
   const sep = '\n\n';
+  opts = opts || {};
+  // v1.0.240：规划向瘦身（节拍表用）——不再注入正文向铁律全文（禁止直白内心/模板词/对白口语化等均只约束正文成稿，对"设计事件"无用），
+  // 只保留禁则清单 + 一行规划纪律摘要；事件动机/不雷同约束已由节拍表系统提示词第 5 条覆盖，不重复注入。
+  if(opts.lean){
+    const head = '【规划纪律（精简）】节拍事件须有清晰动机、禁止无故推进剧情、禁止各章事件雷同或套模板。';
+    return parts.filter(Boolean).length ? sep + head + '\n' + parts.join('\n') : head;
+  }
   if(state._narrIron === false){
     const block = parts.filter(Boolean).join('\n');
     return block ? sep + '【叙事纪律（铁律已关闭，仅保留禁则/语言分层等中间件）】\n' + block : '';
@@ -4260,15 +4249,29 @@ function glossaryDupNoteHtml(){
 
 // 每次生成新章节时，向 AI 提供「全局创作上下文」：
 // B) 【设定词典】——人物/地点/专名（完整保留、分类排序、同名仅提示不删）。仅当词典有条目时注入，避免空标签浪费 token。
-function chapterGlossaryBlock(curN){
+function chapterGlossaryBlock(curN, opts){
   const o = state.outline;
   if(!o) return '';
+  opts = opts || {};
+  const lean = !!opts.lean;   // v1.0.240：规划向瘦身（节拍表用）——人物只保留 名称（身份·关系），正文细节字段（外貌/爱好/口头禅/习惯/岁数/性别）不注入
+  // v1.0.241：标题向极简（names）——只输出 人物/地名/专名 名称清单，无任何细节字段/关系表/世界观/副线；标题仅需防"引入词典外新名"。
+  if(opts.names){
+    const g = (o && o.glossary) || {};
+    if(!sourceHasGlossary(g)) return '';
+    const rf = glossaryForAI();
+    const cs = rf.characters.map(c=>String(c.name||'').trim()).filter(Boolean).join('、');
+    const ps = rf.places.map(p=>String(p.name||'').trim()).filter(Boolean).join('、');
+    const pn = rf.propernouns.map(p=>String(p.name||'').trim()).filter(Boolean).join('、');
+    return `【设定词典（名称清单，标题不得引入清单外的新人名/地名/专名）】\n人物：${cs||'（无）'}\n地点：${ps||'（无）'}\n专名：${pn||'（无）'}`;
+  }
   // v10.61 章节正文不注入"长篇结构设计"卡片数据；结构走向由节拍表承接，词典单独注入。
   let body = `\n\n【全局创作上下文（严格服从，禁止自造新名）】`;
   const g = (o && o.glossary) || {};
   if(sourceHasGlossary(g)){
     const rf = glossaryForAI();
-    const cDetail = c => [c.identity?`身份:${c.identity}`:'', c.age?`岁数:${c.age}`:'', c.gender?`性别:${c.gender}`:'', c.appearance?`外貌:${c.appearance}`:'', c.hobby?`爱好:${c.hobby}`:'', (c.habit&&c.habit!=='无')?`小习惯与习惯性动作:${c.habit}`:'', (c.catchphrase&&c.catchphrase!=='无')?`口头禅:${c.catchphrase}`:'', c.relation?`关系:${c.relation}`:'', c.trait?`性格:${c.trait}`:''].filter(Boolean).join('；');
+    const cDetail = lean
+      ? c => [c.identity?`身份:${c.identity}`:'', c.relation?`关系:${c.relation}`:''].filter(Boolean).join('；')
+      : c => [c.identity?`身份:${c.identity}`:'', c.age?`岁数:${c.age}`:'', c.gender?`性别:${c.gender}`:'', c.appearance?`外貌:${c.appearance}`:'', c.hobby?`爱好:${c.hobby}`:'', (c.habit&&c.habit!=='无')?`小习惯与习惯性动作:${c.habit}`:'', (c.catchphrase&&c.catchphrase!=='无')?`口头禅:${c.catchphrase}`:'', c.relation?`关系:${c.relation}`:'', c.trait?`性格:${c.trait}`:''].filter(Boolean).join('；');
     const pDetail = p => [p.type?`类型:${p.type}`:'', p.note?`说明:${p.note}`:''].filter(Boolean).join('；');
     const cs = rf.characters.map(c=> `${c.name}${cDetail(c)?`（${cDetail(c)}）`:''}`).join('、');
     const ps = rf.places.map(p=> `${p.name}${pDetail(p)?`（${pDetail(p)}）`:''}`).join('、');
@@ -6529,7 +6532,10 @@ function outlineAnchorBlock(){
   const o = state.outline||{};
   const a = String(o.anchor||'').trim(), t = String(o.thesis||'').trim();
   if(!a && !t) return '';
-  return `【核心定位】${a||'未提取'}\n【深层主题】${t||'未提取'}`;
+  const lines = [];
+  if(a) lines.push(`【核心定位】${a}`);
+  if(t) lines.push(`【深层主题】${t}`);
+  return lines.join('\n');
 }
 // 长度兜底裁剪，防止手填/AI 输出超长反噬下游 AI 焦点
 function clampAnchor(str, max){
@@ -6602,8 +6608,7 @@ function bindAiRecipe(){
   const clr = card.querySelector('[data-ai-recipe-clear]');
   if(clr) clr.onclick = ()=>{
     const ta = $('#aiReDesc'); if(ta) ta.value = '';
-    const nm = card.querySelector('[data-ai-upload-name]'); if(nm) nm.textContent = '';
-    aiRp = null; aiSource = 'desc';
+    aiRp = null;
     const out = card.querySelector('[data-ai-recipe-out]'); if(out) out.innerHTML = aiRecipeResultHtml();
   };
   // v10.31 卡片折叠：点头部整卡展开/收起，状态持久化到 cfg.aiRecipeCollapsed（默认折叠）
@@ -6618,26 +6623,6 @@ function bindAiRecipe(){
   // v10.57 书本图标：打开 AI 配方历史弹层（徽标随快照数更新）
   const histBtn = card.querySelector('[data-ai-recipe-hist]');
   if(histBtn) histBtn.onclick = ()=>{ openAiHistPanel(); };
-  // v1.0.62 上传主线简述 TXT：圆形加号 → FileReader.readAsText → AI 通读提炼配方
-  const fIn = $('#aiReFile');
-  const readOutline = (f)=>{
-    if(!f) return;
-    if(!/\.txt$/i.test(f.name)){ toast('请上传 .txt 文本'); return; }
-    const r = new FileReader();
-    r.onload = ()=>{
-      const txt = String((r.result)||'').trim();
-      if(!txt){ toast('文件内容为空'); return; }
-      const nm = card.querySelector('[data-ai-upload-name]'); if(nm) nm.textContent = f.name;
-      _aiOutlineFname = f.name;   // v10.57 供快照标记来源
-      aiRecipeFromOutline(txt);
-    };
-    r.onerror = ()=> toast('读取文件失败');
-    r.readAsText(f);
-  };
-  if(fIn) fIn.onchange = ()=>{ const f = fIn.files && fIn.files[0]; readOutline(f); fIn.value=''; };
-  const openPick = ()=>{ if(fIn) fIn.click(); };
-  const fileBtn = card.querySelector('[data-ai-recipe-file]');
-  if(fileBtn) fileBtn.onclick = openPick;
   // 事件委托：选用候选 / 加入缺口词条（点选候选后内部 render()，事件需在容器上重查）
   card.addEventListener('click', (e)=>{
     const pick = e.target.closest('[data-ai-recipe-pick]');
@@ -7412,7 +7397,7 @@ function titlesGenUser(opts){
   const parts = [];
   const anchor = outlineAnchorBlock();
   parts.push(anchor ? `${anchor}\n【小说标题】${o.title||''}\n【小说简介】${o.logline||''}` : `【小说标题】${o.title||''}\n【小说简介】${o.logline||''}`);
-  parts.push(`【原始构想】${o.userIdea||state.idea||''}`);
+  // v1.0.241：不再注入【原始构想】全文——与小说简介/核心定位大量重复，标题设计不需要粗糙原始稿
   parts.push(`【整体情绪基调】${o.tone || '未指定'}`);
   // v1.0.141：断掉旧 structure(acts/mainLine/pivotPlan) 注入，改为注入「大纲节拍的结构」阶段列表
   const _btStg = chapterPlanStages(o);
@@ -7420,9 +7405,10 @@ function titlesGenUser(opts){
     const _btTxt = _btStg.map(s=>`第 ${s.first}—${s.last} 章「${s.name}」`).join('；');
     parts.push(`【大纲节拍的结构】全书按本节拍阶段推进：${_btTxt}。每章标题须落在其所属阶段内、符合该阶段叙事职责，不在本阶段的剧情不得出现在标题与本章。`);
   }
-  parts.push(`【设定词典】${chapterGlossaryBlock()}`);
-  // 注入风格说明
-  const styleNote = chapterStyleNote();
+  const _dict = chapterGlossaryBlock(undefined, {names:true});   // v1.0.241：标题只注入词典名称清单（防引入新名），不再全量注入人物细节/关系表/世界观/副线
+  if(_dict && _dict.trim()) parts.push(_dict.trim());
+  // v1.0.241：风格块改用轻量版（只给风格名+浓度），不再注入正文向 note/五维
+  const styleNote = writeStyleNamesBlock();
   if(styleNote) parts.push(styleNote);
   // B fix: 禁则清单注入标题出口，使「生效范围→标题」选项真正生效（banListBlockFor('title') 内部已按 scope/开关/长篇门控）
   const _banTitle = banListBlockFor('title');
@@ -10602,8 +10588,8 @@ function plannerBatchContext(b, opts){
   const parts = [];
   if(opts.withStyle !== false){ const ws = writeStyleNamesBlock(); if(ws.trim()) parts.push(ws.trim()); }
   const anchor = outlineAnchorBlock(); if(anchor) parts.push(anchor);
-  parts.push(`【导航灯塔】\n${JSON.stringify(o.navBeacon||{})}`);   // v228/P6：紧凑 JSON 输入瘦身（提速，语义不变）
-  // v1.0.141：断掉旧 structure(acts/mainLine/pivotPlan) 注入，改为注入「大纲节拍的结构」阶段列表
+  // v1.0.240：不再注入【导航灯塔】JSON——其 genre/protagonist/coreConflict/tone 与 核心定位/深层主题/整体情绪基调 重复，同一信息注入两遍纯属噪声
+  // 【大纲节拍的结构】阶段列表：保留（阶段约束，节拍须落在阶段内）
   const _stg = chapterPlanStages(o);
   if(_stg.length){
     const _stgTxt = _stg.map(s=>`第 ${s.first}—${s.last} 章「${s.name}」`).join('；');
@@ -10615,8 +10601,8 @@ function plannerBatchContext(b, opts){
   parts.push(`【本批次】第 ${b.start+1}—${b.end} 章，共 ${n} 章\n${batchTitles}`);
   const prev = b.start > 0 ? buildPrevSkeleton(b.start) : '';
   if(prev) parts.push(prev);
-  if(opts.withGlossary !== false){ const g = chapterGlossaryBlock(); if(g.trim()) parts.push(g.trim()); }
-  const iron = narrativeIronBlock('planner');   // v1.0.133 叙事铁律（规划纪律：禁则硬约束+软约束引导）
+  if(opts.withGlossary !== false){ const g = chapterGlossaryBlock(undefined, {lean:true}); if(g.trim()) parts.push(g.trim()); }   // v1.0.240：节拍表用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅等正文细节不注入）
+  const iron = narrativeIronBlock('planner', {lean:true});   // v1.0.240 规划纪律瘦身：节拍表不再注入正文向铁律全文，仅保留禁则清单 + 一行规划纪律摘要（铁律第 5 条已覆盖）
   if(iron) parts.push(iron);
   return parts.join('\n\n');
 }
@@ -10882,7 +10868,17 @@ function buildTimelineSegUser(){
 // v1.0.230：全局时间线改为整段一次生成，移除分段轨道及相关函数（tlTrackEl/renderSegTrack/showTimelineResume）。
 function hideTimelineTrack(){ const el=$('.cp-tl-track'); if(el) el.remove(); }
 
-// v1.0.184：全局时间线 + 各章节拍事件 上下文块——供 ⑤伏笔网 阶段读取，让伏笔设计贴着全局时间推进、能落地到具体剧情。
+// 长文截断：优先在标点处截断，避免从词中间硬切断
+function clipText(str, max){
+  str = String(str||'').trim();
+  if(str.length <= max) return str;
+  const cut = str.slice(0, max);
+  const m = cut.match(/[\s\S]*[，。；：、！？,.!?:;…]/);
+  return ((m && m[0].length > Math.ceil(max*0.4)) ? m[0] : cut) + '…';
+}
+// v1.0.184：全局时间线 + 各章节拍要点 上下文块——供 ⑤伏笔网 阶段读取，让伏笔设计贴着全局时间推进、能落地到具体剧情。
+// v1.0.24x：噪声瘦身——①章节标题统一 cleanChapterTitle（去《》与前缀），避免标题被重复注入 3 次且格式不一；
+//           ②节拍事件不再全量拼接，只取每章首拍「情境事件」+ 该拍已埋伏笔线索，长文按标点回退截断。
 // 若尚未生成时间线/节拍，则静默返回 ''（伏笔网仍可基于标题与结构阶段运行）。
 function globalTimelineBlock(){
   const o = state.outline || {};
@@ -10892,9 +10888,9 @@ function globalTimelineBlock(){
   const gt = o._globalTimeline;
   if(gt && Array.isArray(gt.chapters) && gt.chapters.length){
     const rows = gt.chapters.map(c=>{
-      const t = String((o.chapters[c.index]&&o.chapters[c.index].title)||'').trim();
+      const t = cleanChapterTitle((o.chapters[c.index]&&o.chapters[c.index].title)||'');
       const jt = String(c.jump||'').trim();
-      return `第${c.index+1}章《${t||'?'}》：${String(c.from||'?').trim()} → ${String(c.to||'?').trim()}${jt?`（跳跃：${jt}）`:''}`;
+      return `第${c.index+1}章 ${t||'?'}：${String(c.from||'?').trim()} → ${String(c.to||'?').trim()}${jt?`（跳跃：${jt}）`:''}`;
     });
     parts.push(`【全局时间线】（全书各章时间跨度 起 → 止）\n${rows.join('\n')}`);
     if(gt.notes) parts.push(`【全局节奏】${gt.notes}`);
@@ -10903,11 +10899,15 @@ function globalTimelineBlock(){
   for(let i=0;i<totalN;i++){
     const p = Array.isArray(o.chapterPlans)?o.chapterPlans[i]:null;
     if(!p || !Array.isArray(p.beats) || !p.beats.length) continue;
-    const t = String((o.chapters[i]&&o.chapters[i].title)||'').trim();
-    const evs = p.beats.map(b=>String((b&&b.event)||'').replace(/\s+/g,'').slice(0,40)).filter(Boolean).join(' -> ');
-    if(evs) evRows.push(`第${i+1}章《${t||'?'}》：（${evs}）`);
+    const firstB = p.beats[0];
+    const segs = [];
+    const ev = String((firstB && (firstB.tlEvent||firstB.event))||'').replace(/\s+/g,'').trim();
+    if(ev) segs.push(`情境：${clipText(ev,60)}`);
+    const fsClues = (firstB && Array.isArray(firstB.foreshadowing)) ? firstB.foreshadowing.map(x=>String(x||'').trim()).filter(Boolean) : [];
+    if(fsClues.length) segs.push(`已埋线索：${fsClues.join('、')}`);
+    if(segs.length) evRows.push(`第${i+1}章：${segs.join('；')}`);   // 章号对齐【章节标题】行；标题映射见上方时间线行，不重复注入
   }
-  if(evRows.length) parts.push(`【各章节拍事件】（伏笔据此落地到具体剧情）\n${evRows.join('\n')}`);
+  if(evRows.length) parts.push(`【各章节拍要点】（每章情境 + 节拍内已埋伏笔线索，伏笔据此落地）\n${evRows.join('\n')}`);
   return parts.join('\n\n');
 }
 
@@ -11022,14 +11022,16 @@ async function genPlannerForeshadow(btn, opts){
   try{
     const total = (o.chapters||[]).length;
     if(!total){ if(!opts.silent) toast('请先生成章节标题'); return false; }
-    const titles = (o.chapters||[]).map((c,i)=>`第${i+1}章《${c&&c.title||''}》`).join(' / ');
+    const titles = (o.chapters||[]).map((c,i)=>`第${i+1}章 ${cleanChapterTitle((c&&c.title)||'')}`).join('\n');
     const parts = [];
     const anchor = outlineAnchorBlock(); if(anchor) parts.push(anchor);
-    parts.push(`【小说标题】${o.title||''}\n【小说简介】${o.logline||''}`);
+    const head = [];
+    if(o.title) head.push(`【小说标题】${o.title}`);
+    if(o.logline) head.push(`【小说简介】${o.logline}`);
+    if(head.length) parts.push(head.join('\n'));
     const skel = structureSkeletonBlock(); if(skel) parts.push(skel);   // v1.0.139：伏笔网注入全书结构骨架
-    parts.push(`【章节标题】${titles||'(无)'}`);
-    parts.push(`【全书章数】${total}`);
-    const tlBlock = globalTimelineBlock(); if(tlBlock) parts.push(tlBlock);   // v1.0.184：注入全局时间线+每章节拍事件，伏笔贴着时间布线
+    parts.push(`【章节标题】\n${titles||'(无)'}`);   // v1.0.24x：每章一行 + 标题清洗，删除冗余【全书章数】
+    const tlBlock = globalTimelineBlock(); if(tlBlock) parts.push(tlBlock);   // v1.0.184：注入全局时间线+每章节拍要点，伏笔贴着时间布线
     const _tb = teamShapeBrief();   // v1.0.186 团队设定注入伏笔网：每位成员一条个人线伏笔
     if(_tb) parts.push(_tb);
     const user = parts.join('\n\n');
@@ -11039,22 +11041,42 @@ async function genPlannerForeshadow(btn, opts){
     const fs = (res.data && Array.isArray(res.data.foreshadows)) ? res.data.foreshadows : [];
     if(!fs.length) throw new Error('未提取到伏笔条目');
     const ledger = o._foreshadowLedger = o._foreshadowLedger || { planted:[], resolved:[], overdue:[] };
+    // v1.0.24x：输出后处理——类型白名单、文本长度钳制、章内植入密度后验（>3 顺延）、payoffNote 承接提示
+    const FS_TYPES = ['人物','物件','事件','设定'];
+    const normFsText = s => String(s||'').replace(/[\s\u3000、，。；：！？,.!?:;'"“”‘’《》〈〉\-—…·]/g,'').toLowerCase();
+    const clampFs = (s,max) => (s.length > max ? s.slice(0,max-1)+'…' : s);
+    const plantCnt = {};
+    const shiftPlant = ch => {   // 同章植入 >3 时顺延到其后第一个有空位的章（最多看 3 章），避免批量堆在开头
+      if((plantCnt[ch]||0) < 3) return ch;
+      for(let k=1; k<=3 && ch+k < total; k++){ if((plantCnt[ch+k]||0) < 3) return ch+k; }
+      return -1;
+    };
     let cnt = 0;
     fs.forEach(f=>{
-      const text = String(f && f.text || '').trim(); if(!text) return;
-      if(ledger.planted.some(x=>x.text===text)) return;
+      const raw = String(f && f.text || '').trim(); if(!raw) return;
+      const text = clampFs(raw, 40);
+      const nText = normFsText(text);
+      if(ledger.planted.some(x=>normFsText(x.text)===nText)) return;   // v1.0.24x：去重升级为归一化文本（去空白/标点），同义改写不再漏网
       // v1.0.140：AI 的 plantChapter/payoffChapter 是 1 基章号，统一转 0 基并钳制。
       // 原 pay 用 min(total,…) 且未 -1，导致 6 章书回收章被存成 6（显示成"第 7 章"）。
       const maxCh = total - 1;
-      const plant = Math.max(0, Math.min(maxCh, (Math.round(Number(f.plantChapter)||1) - 1)));
+      let plant = Math.max(0, Math.min(maxCh, (Math.round(Number(f.plantChapter)||1) - 1)));
       let pay = Math.round(Number(f.payoffChapter)||(plant+2)) - 1;   // 转 0 基
       pay = Math.max(plant + 1, Math.min(maxCh, pay));
       if(pay <= plant) pay = plant;   // 植入章已是最后一章时兜底
-      ledger.planted.push({ id:'pf_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text, chPlanted:plant, expectedCh:pay, type:String(f.type||'事件') });
+      plant = shiftPlant(plant);
+      if(plant < 0) return;   // 顺延窗口内无空位：AI 堆砌时的兜底丢弃
+      if(pay <= plant) pay = Math.min(maxCh, plant + 1);
+      if(pay <= plant) pay = plant;
+      let type = String(f.type||'').trim();
+      if(!FS_TYPES.includes(type)) type = '事件';   // v1.0.24x：类型白名单归一，非法值回落「事件」
+      const payoffNote = clampFs(String(f.payoffNote||'').trim(), 30);   // 可选：回收章如何兑现，供正文逾期注入时具体提示
+      plantCnt[plant] = (plantCnt[plant]||0) + 1;
+      ledger.planted.push({ id:'pf_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), text, chPlanted:plant, expectedCh:pay, type, ...(payoffNote?{payoffNote}:{}) });
       cnt++;
     });
     if(!cnt) throw new Error('伏笔条目均重复或无效');
-    ledger.overdue = ledger.planted.filter(x=>0>=x.expectedCh && !ledger.resolved.some(r=>r.id===x.id));
+    ledger.overdue = [];   // v1.0.24x：生成时无「当前章」概念，直接置空（原过滤 0>=expectedCh 恒为假，属死代码）；逾期由载入自愈/后续章节刷新计算
     persist(); render(); markAIDone('chapterPlan'); refreshPlannerStageBar(null, null);
     if(!opts.silent) toast(`伏笔网已生成：${cnt} 条（植入章→回收章）`);
     return true;
@@ -11149,15 +11171,21 @@ async function genPlannerAll(btn){
 
 // 4.5：前文骨架（供规划师批间衔接）：全部前序标题
 // v1.0.183：增强为「前文内容骨架」——除标题外，注入前序章节已生成的节拍事件梗概与时间锚，让后批规划师拥有真实的前文内容与时间承接依据，不再只见标题。
+// v1.0.240：前文骨架收敛为「最近 6 章承接串」——更早章节压缩为一行「已定稿」，不再随批次线性膨胀（100 章书最后一批原来注入前 80 章 ≈ 11000+ 字，现在恒定 ≤6 章）。
+// 承接只需最近几章的结尾态势；全局走向由「大纲节拍的结构」阶段列表负责，不依赖骨架。
 function buildPrevSkeleton(endIdx){
   const o = state.outline;
   const ch = (o.chapters||[]).slice(0, endIdx);
+  if(!ch.length) return '';
   const plans = Array.isArray(o.chapterPlans) ? o.chapterPlans : [];
+  const KEEP = 6;
+  const keep = ch.slice(Math.max(0, ch.length - KEEP));
   const lines = [];
-  ch.forEach((c,i)=>{
+  keep.forEach((c,i)=>{
+    const abs = ch.length - keep.length + i;
     const t = String((c&&c.title)||'').trim();
-    let line = `第${i+1}章${t?`《${t}》`:'（标题未定）'}`;
-    const p = plans[i];
+    let line = `第${abs+1}章${t?`《${t}》`:'（标题未定）'}`;
+    const p = plans[abs];
     if(p && Array.isArray(p.beats) && p.beats.length){
       const b0 = String((p.beats[0]&&p.beats[0].time)||'').trim();
       const b1 = String((p.beats[p.beats.length-1]&&p.beats[p.beats.length-1].time)||'').trim();
@@ -11167,7 +11195,10 @@ function buildPrevSkeleton(endIdx){
     }
     lines.push(line);
   });
-  return `【已定稿的前文骨架】\n${lines.join('\n')||'（无）'}`;
+  const head = ch.length > KEEP
+    ? `【已定稿的前文骨架（第 1—${ch.length - KEEP} 章已定稿；承接最近 ${KEEP} 章态势）】\n`
+    : `【已定稿的前文骨架】\n`;
+  return head + (lines.join('\n') || '（无）');
 }
 
 // 4.5：规划师批次输出 schema 校验（titles/chapterPlans 结构、beats 四段完整性）
@@ -11760,7 +11791,7 @@ function buildChapterUser(i, opt={}){
   const _prevHasBody = i > 0 && !!(state.chapters[i-1] && state.chapters[i-1].content && String(state.chapters[i-1].content).trim());
   const _hookList = (fc.unresolvedHooks||[]).map(h=>h.text).filter(Boolean);
   // A fix: 把伏笔台账「已逾期」的伏笔一并注入后续章节，兑现看板"逾期会提醒 AI 必须兑现"的承诺（与未收束伏笔分开呈现、避免重复）
-  const _ovdText = (((state.outline&&state.outline._foreshadowLedger)||{}).overdue||[]).map(x=>(x&&x.text)?String(x.text):'').filter(Boolean);
+  const _ovdText = (((state.outline&&state.outline._foreshadowLedger)||{}).overdue||[]).map(x=>(x&&x.text)?String(x.text)+(x.payoffNote?`（兑现：${x.payoffNote}）`:''):'').filter(Boolean);
   if(fc.lastScene || _hookList.length || _ovdText.length){
     const _seg = [];
     // v1.0.175：承接真相源——上一章正文末尾时间锚（轻量模型从事后正文提取，最可信），仅当可用时注入
@@ -11866,11 +11897,8 @@ ${prevFull}
 本章承接上一章（第 ${i} 章《${pcC.title||''}》）：
 ${ob2.join('\n')}
 【承接硬规则】
-1. 前 20% 篇幅内自然承接上章章末钩子：未完成的动作/对话/悬念直接续写，禁止另起炉灶或时间跳跃开场。
-2. 禁止复述或重新介绍上章已交代的设定与人物信息，直接推进剧情。
-3. 若上章结尾（见 L2 上一章全文末段）与本章节拍表冲突，以上章真实结尾为准。
-4. 时间锚（若 L1 节拍表标注了时间）：本章各段时间/时点须与节拍表标注一致——但这只是"落在哪个时点就写那一时段的场景"的内部约束，绝不等于要写"报时"；时间必须靠场景细节自然交代（熹微/烈日/夕照/星夜/烛火/虫鸣/人物衣物与倦意等），严禁段落以"现在是/此刻是/此时是/当下是"等报时句开头，严禁把节拍锚或"第X天"字样原样写进读者视野；仅当进入下一段时间确实发生跳跃时给出自然的过渡时间语（如"翌日清晨""三日后的黄昏"）并融入叙述，不作注释式开场。本章开头须落在上章末尾时间之后或与之衔接（同主线时点禁止倒退）；闪回/梦境/穿越等异支线开场须在文中显式交代进入并随后收回，不扰乱主线时间顺序。
-5. 本张开场方式（见上「本张开场方式」）为本章核心指令：本章开场只能从菜单 6 类中选择、禁止越界成其他套路；须对照【L2 上一章全文】首句避免与上一章同类；全书任一种开场占比不超过三成；除「人物开句 / 时间开句」两式外，本张开场首个字符严禁出现任何人物姓名或称谓。
+1. 前 20% 篇幅内自然承接上章章末钩子：未完成的动作/对话/悬念直接续写，禁止另起炉灶或时间跳跃开场；禁止复述或重新介绍上章已交代的设定与人物信息（承接细则见上方【L2 上一章全文】用途声明①-④）；若上章结尾（见 L2 末段）与本章节拍表冲突，以上章真实结尾为准。
+（v1.0.24x：原第 2 条"时间锚"删除——时间承接细则统一收拢至系统第 10 条【时间锚铁律】单一权威，本章具体时点数据见上方 ob2「时间承接」行；原第 5 条"开场方式菜单重述 + 首字符禁人名"删除——菜单以 ob2【本张开场方式】为唯一出处，"首字符禁人名"与章首铁律③「人物开句可用」冲突；三成占比 ob2 已含。）
 `);
       }
     }
@@ -12050,9 +12078,8 @@ function fogWorldInject(i){
   const o = state.outline; if(!o) return '';
   const g = o.glossary || {};
   const seg = [];
-  // 世界观规则：全量必给（世界实际运转规则，无剧透风险、务必一致遵守，不裁剪）
-  const wr = (g._worldRules||[]).filter(x=> x && String(x.rule||'').trim());
-  if(wr.length) seg.push(`【世界观规则·全量】（本书世界实际如何运转的具体规则，对每一章都全文给出，本章写作必须遵守、不得违背该世界逻辑）\n${wr.map(fmtWR).join('\n')}`);
+  // v1.0.24x：世界观规则不再重复注入——L3 设定词典已含「世界观规则（全量·正文须遵守不违背）」且为不可裁红线（budgetChapterContext 保护），
+  // 此处同源双写属纯冗余，移除；迷雾仅保留「揭示边界」职责（关系/关联表按本章出场实体过滤）。
   // 迷雾依据：本章已出场实体（relevantGlossaryForChapter 反哺）
   const rg = relevantGlossaryForChapter(i);
   const mk = k => new Set((rg[k]||[]).map(x=>String(x&&x.name||'').trim()).filter(Boolean));
@@ -12065,9 +12092,9 @@ function fogWorldInject(i){
   if(rel.length){ seg.push(`【人物关系表·迷雾】（仅本章已出场人物直接相关的关系，正文据此写、未揭示的不得提前写）\n${rel.map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).join('\n')}`); any = true; }
   if(pc.length){ seg.push(`【地名关联表·迷雾】（仅本章已出场地点直接相关的关联）\n${pc.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('\n')}`); any = true; }
   if(prc.length){ seg.push(`【专名关联表·迷雾】（仅本章已出场专名直接相关的关联）\n${prc.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('\n')}`); any = true; }
-  if(any || wr.length){
-    const fogNote = any ? `\n（注：上述关系/关联为「迷雾」版，只列出与本章已出场实体直接相关的部分；未在本章出现或尚未揭示的关系，正文一律不得提前书写、留待后续章节自然展开，以免提前剧透。）` : '';
-    return `${seg.join('\n')}${any ? fogNote : ''}`;
+  if(any){
+    const fogNote = `\n（注：上述关系/关联为「迷雾」版，只列出与本章已出场实体直接相关的部分；未在本章出现或尚未揭示的关系，正文一律不得提前书写、留待后续章节自然展开，以免提前剧透。）`;
+    return `${seg.join('\n')}${fogNote}`;
   }
   return '';
 }
@@ -12102,27 +12129,6 @@ function longestCommonPrefix(a, b){
   let i = 0;
   while(i < Math.min(a.length, b.length) && a[i] === b[i]) i++;
   return a.slice(0, i);
-}
-
-function avgSentenceLength(text){
-  const sents = text.split(/[。！？；\n]+/).filter(s => s.trim());
-  if(!sents.length) return 0;
-  const total = sents.reduce((sum, s) => sum + (s.match(/[\u4e00-\u9fa5]/g)||[]).length, 0);
-  return total / sents.length;
-}
-
-// v225/P3 重写：对话占比 = 成对引号内的对话汉字数 / 全文汉字数（弃用"每对引号≈30字"的假估计——旧正则字符类只含直引号，不含中文弯引号 U+201C/U+201D，正文用弯引号时统计恒 0）
-function dialogueRatio(text){
-  const t = String(text||'');
-  let dia = 0;
-  // 简体中文主用弯引号；兼容直角引号与半角直引号。『』常嵌套在「」内，先剥外层再算内层，防重复计数
-  [/“([^“”]*)”/g, /「([^「」]*)」/g, /"([^"]*)"/g, /'([^']*)'/g].forEach(re => {
-    let m; while((m = re.exec(t)) !== null) dia += (m[1].match(/[\u4e00-\u9fa5]/g)||[]).length;
-  });
-  const inner = t.replace(/“[^“”]*”/g, '　').replace(/「[^「」]*」/g, '　');
-  let m2; while((m2 = /『([^『』]*)』/g.exec(inner)) !== null) dia += (m2[1].match(/[\u4e00-\u9fa5]/g)||[]).length;
-  const total = (t.match(/[\u4e00-\u9fa5]/g)||[]).length;
-  return total ? Math.min(1, dia / total) : 0;
 }
 
 /* =========================================================
@@ -12176,30 +12182,7 @@ function invalidateChapterMemory(i){
     Object.keys(o._relGlossCache).forEach(k => { if(+k >= i) o._relGlossCache[k]._stale = true; });
   }
   persist();
-  // v228/P5-⑤：剧情贴合软审计（仅 toast 提示、不阻断、不入修复队列；本函数 4 个调用点均在正文落库成功之后）
-  auditChapterAdherence(i);
-}
-
-// v228/P5-⑤：剧情贴合软审计——节拍 event 的信息二元组在正文中的命中率，<60% 仅 toast 提示「可能跑偏」，
-// 不阻断、不入修复队列（先观察误报率，后续可再收紧）。函数声明提升，供 invalidateChapterMemory 调用。
-function auditChapterAdherence(i){
-  try{
-    const text = String((state.chapters && state.chapters[i] && state.chapters[i].content)||'');
-    const plan = (state.outline && state.outline.chapterPlans && state.outline.chapterPlans[i]) || {};
-    if(!text.trim() || !Array.isArray(plan.beats) || plan.beats.length < beatCnt()) return;
-    const FUNC = /[的了是在和与也被把又就还着有个这那不上为到说得很]/;   // 滤掉含虚词的跨词二元组
-    const kws = new Set();
-    plan.beats.forEach(b=>{
-      const ev = String((b && b.event)||'');
-      (ev.match(/[\u4e00-\u9fa5a-zA-Z0-9]{2,10}/g)||[]).forEach(run=>{
-        for(let p=0; p+1<run.length; p++){ const bg = run.slice(p, p+2); if(!FUNC.test(bg)) kws.add(bg); }
-      });
-    });
-    if(kws.size < 6) return;   // 关键词太少不评估，避免小样本噪声
-    let hit = 0; kws.forEach(w=>{ if(text.includes(w)) hit++; });
-    const ratio = hit / kws.size;
-    if(ratio < 0.6) toast(`⚠️ 第 ${i+1} 章剧情贴合度偏低（约 ${Math.round(ratio*100)}%），建议对照节拍表检查是否跑偏（仅提示，不阻断）`);
-  }catch(e){ /* 软审计绝不影响主流程 */ }
+  // v1.0.24x：剧情贴合软审计（auditChapterAdherence）已按用户决定关闭——约束与注入已足够，机械后验易误伤正文；函数体一并移除。
 }
 
 // v228/P5：逐章细摘要（200-300 字/章）。与 5 章一块的粗摘要互补——粗块在第 5 章前完全缺位（旧版开头几章记忆真空，
@@ -13750,13 +13733,15 @@ function renderForeshadowLedger(){
   const planted=(fs.planted||[]).map((it,idx)=>{
     const sameCh = (it.expectedCh||0) <= (it.chPlanted||0);
     const payTxt = sameCh ? '本章内回收' : `预计第 ${(it.expectedCh||0)+1} 章回收`;
-    return `<div class="ne-fs-item"><b>🪝 ${esc(it.text)}</b><div class="muted">埋于第 ${(it.chPlanted||0)+1} 章 · ${payTxt}</div><div class="ne-fs-ops"><button class="btn small ghost" data-ne-fs-resolve="${idx}">标记为本章回收</button><button class="btn small ghost" data-ne-fs-delay="${idx}">延后回收</button><button class="btn small ghost" data-ne-fs-del="${idx}">删除</button></div></div>`;
+    const fsNote = it.payoffNote ? `<div class="muted" style="font-size:11px">兑现提示：${esc(it.payoffNote)}</div>` : '';
+    return `<div class="ne-fs-item"><b>🪝 ${esc(it.text)}</b><div class="muted">埋于第 ${(it.chPlanted||0)+1} 章 · ${payTxt}</div>${fsNote}<div class="ne-fs-ops"><button class="btn small ghost" data-ne-fs-resolve="${idx}">标记为本章回收</button><button class="btn small ghost" data-ne-fs-delay="${idx}">延后回收</button><button class="btn small ghost" data-ne-fs-del="${idx}">删除</button></div></div>`;
   }).join('') || '<div class="empty">暂无埋下伏笔</div>';
   const resolved=(fs.resolved||[]).map(it=>`<div class="ne-fs-item"><b>✓ ${esc(it.text)}</b><div class="muted">回收于第 ${(it.chResolved||0)+1} 章</div></div>`).join('') || '<div class="empty">暂无已回收伏笔</div>';
   const overdue=(fs.overdue||[]).map((it,idx)=>{
     const sameCh = (it.expectedCh||0) <= (it.chPlanted||0);
     const payTxt = sameCh ? '应在本章内回收' : `预计第 ${(it.expectedCh||0)+1} 章回收`;
-    return `<div class="ne-fs-item"><b>⚠️ ${esc(it.text)}</b><div class="muted">${payTxt} · 已逾期</div><div class="ne-fs-ops"><button class="btn small ghost" data-ne-fs-resolve-od="${idx}">立即回收</button></div></div>`;
+    const fsNote = it.payoffNote ? `<div class="muted" style="font-size:11px">兑现提示：${esc(it.payoffNote)}</div>` : '';
+    return `<div class="ne-fs-item"><b>⚠️ ${esc(it.text)}</b><div class="muted">${payTxt} · 已逾期</div>${fsNote}<div class="ne-fs-ops"><button class="btn small ghost" data-ne-fs-resolve-od="${idx}">立即回收</button></div></div>`;
   }).join('') || '<div class="empty">暂无逾期伏笔</div>';
   openNeModal('伏笔看板', `
     <div class="ne-fs-board">
