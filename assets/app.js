@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.206';   // v1.0.206 阶段5.6（①默认模型换代：新增「智谱 GLM」默认组【glm-4.5-air 现用 + glm-4.5 旗舰】与 DeepSeek 并存，无存档默认选中 GLM、旧 DeepSeek 型号全部保留可选，旧单Key迁移仍落 DeepSeek 组；②分任务温度由主题面板并入设置弹窗「各任务温度」，与「各任务模型」集中管理，主题面板留提示入口；③正文卡「重生成/阅读」按钮饱和度降半）。原 v1.0.205 阶段5.5（①「优化构想」第一步·中国红渐变强调按钮；②后悔药：后大纲视图补优化版本历史/查看全部/重新优化入口，并用绑定点抽出修复按钮无回调；③书名提取放宽【书名/小说名/标题/:、《…》】，修「未命名作品」；④去掉「确认大纲，进入写正文」中间确认关卡，生成大纲自动进正文）：①词典达人重产同名去重(以现有为准：手工>逐章>词典达人)＋手工保护(被改条目升为手工优先级，_srcSnapshot 快照比对)；②词典达人建档案收紧(人物10维填满、地名type+note、专名note，关系/联系表按实情不强求非空)；③正文 L3 由「按章相关词典」改为「万物词典·全量名单+出场全字段」(词典=不可裁红线)，并新增 fullGlossaryChapterBlock；④budgetChapterContext 词典永不裁剪，超限改裁 L4→简介→衔接→节拍详述，仍超则提示提升上限；⑤叙事抽屉新增「一致性自检」一键报告(词典去重+时间线/节拍不悬空)。v1.0.203 阶段3：⑤流程重组——规划师回四步、新增③词典达人(dictmaster role、历史6次、锁定后悔药)、生成大纲纯搬运、正文注入全量词典、原始构想快照。v1.0.198 修复大纲多候选。
+const APP_VERSION = '1.0.211';   // v1.0.211 词典达人四类产出可选择性取用＋词典面板加查看入口：①「设定表·万物词典」卡片新增「📑 词典达人·关系/关联/世界观规则」入口按钮行（人物关系表/地名关联表/专名关联表/世界观规则，各带条数，点开只读完整内容）；②章节正文新增 fogWorldInject「世界情报·迷雾版」——世界观规则对每一章全量必给，人物关系表/地名关联表/专名关联表按迷雾只给本章已出场实体直接相关的部分，未揭示的留后续自然展开、避免提前剧透（规划/标题侧仍全量）。原 v1.0.210 词典达人新增「世界观规则」实际功能：按题材（现代职场/古代写实/江湖/神话仙侠等）提炼本书世界实际如何运转的具体规则（劳动作息/社会制度/力量体系/金钱物价/地理交通/秩序法则），并入万物词典、正文注入端作为硬约束且词典卡片与历史面板新增默认折叠的「世界观规则」折叠区。原 v1.0.209 分任务模型整合温度：移除已失效的「故事大纲」(genOutline 为纯搬运无AI调用)、新增「词典达人」「规划师·时间线」；每个任务行标题最右侧新增温度框(TM_TEMP)，随分任务模型保存一并落盘；资产生成改为用 assetsTemp；设置弹窗集中于全局温度。原 v1.0.208：habit 即【小习惯与习惯性动作】、catchphrase 即【口头禅】，relationshipTable/placeContacts/properContacts 分别即【人物关系表/地名关联表/专名关联表】，提示词与 UI 全链路统一精确名称（含正文注入端「地名关联表/专名关联表」）。原 v1.0.206 阶段5.6（①默认模型换代：新增「智谱 GLM」默认组【glm-4.5-air 现用 + glm-4.5 旗舰】与 DeepSeek 并存，无存档默认选中 GLM、旧 DeepSeek 型号全部保留可选，旧单Key迁移仍落 DeepSeek 组；②分任务温度由主题面板并入设置弹窗「各任务温度」，与「各任务模型」集中管理，主题面板留提示入口；③正文卡「重生成/阅读」按钮饱和度降半）。原 v1.0.205 阶段5.5（①「优化构想」第一步·中国红渐变强调按钮；②后悔药：后大纲视图补优化版本历史/查看全部/重新优化入口，并用绑定点抽出修复按钮无回调；③书名提取放宽【书名/小说名/标题/:、《…》】，修「未命名作品」；④去掉「确认大纲，进入写正文」中间确认关卡，生成大纲自动进正文）：①词典达人重产同名去重(以现有为准：手工>逐章>词典达人)＋手工保护(被改条目升为手工优先级，_srcSnapshot 快照比对)；②词典达人建档案收紧(人物10维填满、地名type+note、专名note，关系/联系表按实情不强求非空)；③正文 L3 由「按章相关词典」改为「万物词典·全量名单+出场全字段」(词典=不可裁红线)，并新增 fullGlossaryChapterBlock；④budgetChapterContext 词典永不裁剪，超限改裁 L4→简介→衔接→节拍详述，仍超则提示提升上限；⑤叙事抽屉新增「一致性自检」一键报告(词典去重+时间线/节拍不悬空)。v1.0.203 阶段3：⑤流程重组——规划师回四步、新增③词典达人(dictmaster role、历史6次、锁定后悔药)、生成大纲纯搬运、正文注入全量词典、原始构想快照。v1.0.198 修复大纲多候选。
 const KEY_CFG = 'fyp_cfg';
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -75,7 +75,7 @@ const state = {
   timeAnchorsAuto: true,  // v1.0.175 承接真相源（默认开）：正文落库后轻量模型回写本章末尾支线/时点，作下一章承接硬真相
   teamShape: 'solo',       // v1.0.186 叙事主体·团队：solo=主角线 / trio=铁三角(+2) / quad=四方(+3) / quint=五人团(+4)
   dictmasterHistory: [],   // 阶段3/3.3：词典达人历史（6 次，FIFO，独立体系）
-  dictmasterLatest: null,  // 阶段3/3.3：词典达人最近一次产物（含人物/关系表/地名专名联系表）
+  dictmasterLatest: null,  // 阶段3/3.3：词典达人最近一次产物（含人物/关系表/地名专名关联表/世界观规则）
   dictmasterRan: false,    // 阶段3/3.0：词典达人已触发并产出（②换方案锁定依据）
   originalIdeaSnapshot: '', // 阶段3/3.7：触发词典达人时锁存的用户原始构想快照（录入框从未被优化稿覆盖）
   titleWriteBack: false, // v225/P5-C 章节标题回填已取消：标题只由「全书规划师」生成/定稿；字段保留仅为兼容旧存档读取（UI 开关已移除）
@@ -302,7 +302,7 @@ function remainingEmptyChapters(){ return (state.chapters||[]).filter(c=> !(c.co
 function uid(p){ return (p||'id')+(++uidSeq)+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }   // v1.0.137 fix：原仅自增序号，刷新页面后 uidSeq 重置回 1000，新增组会与历史组拿到相同 ID（如两个 g1001），导致组间串名/串 Key。现追加时间戳+随机段保证跨会话唯一；会话内自增段保留，同会话也绝不重复。旧数据中的短 ID 仅作比较用、不解析格式，完全兼容。
 // v227「使用不同AI」分任务模型：任务档键清单（UI 分组渲染与 resolveActiveSpec 覆盖解析共用）。
 // 档位语义与 UI 分组见《使用不同ai.md》§3.2；调用点标注映射见同文 §1.3；测试连接（恒用全局）不在清单内。
-const TM_KEYS = ['chapter','outline','planBeats','plannerTitles','plannerAux',
+const TM_KEYS = ['chapter','dictmaster','planBeats','planTimeline','plannerTitles','plannerAux',
   'idea','titleAdvice','contentAdvice',
   'glossary','subplot','strip','rolling','audit',
   'assets','recipe'];
@@ -410,8 +410,9 @@ function resolveActiveSpec(taskKey){
     keyInBody: !!group.keyInBody,   // v1.0.136 传递方式：请求体 api_key（规避 Bearer 头）
     model: model.name || 'deepseek-v4-pro',
     temperature: (cfg.temperature==null ? 0.7 : cfg.temperature),
-    outlineTemp: (cfg.outlineTemp==null ? 0.7 : cfg.outlineTemp),   // v10.8 分任务温度：大纲
     ideaTemp:    (cfg.ideaTemp==null ? 0.5 : cfg.ideaTemp),          // v10.13 分任务温度：优化构想
+    dictmasterTemp: (cfg.dictmasterTemp==null ? 0.5 : cfg.dictmasterTemp),  // v1.0.207 新增分任务温度：词典达人（万物词典契约生成）
+    assetsTemp:  (cfg.assetsTemp==null ? 0.7 : cfg.assetsTemp),      // v1.0.208 分任务温度：封面/人物/场景/分镜等资产生成
     titleTemp:   (cfg.titleTemp==null ? 0.5 : cfg.titleTemp),        // v10.15 分任务温度：标题 AI
     chapterTemp: (cfg.chapterTemp==null ? 0.5 : cfg.chapterTemp),   // v10.8 分任务温度：章节
     qcTemp:      (cfg.qcTemp==null ? 0.2 : cfg.qcTemp),              // 分任务温度：词库提取（严谨低温）
@@ -1609,7 +1610,7 @@ function applyV45ToOutline(o, d){
   (d.seedCharacters||[]).forEach(c=>{
     const nm = String(c&&c.name||'').trim(); if(!nm) return;
     if(g.characters.some(x=>String(x&&x.name||'').trim()===nm)) return;
-    g.characters.push({ name:nm, identity:c.identity||'', age:String(c.age==null?'':c.age), gender:c.gender||'', appearance:c.appearance||'', hobby:c.hobby||'', mannerism:c.mannerism||'', relation:c.relation||'', trait:c.trait||'' });
+    g.characters.push({ name:nm, identity:c.identity||'', age:String(c.age==null?'':c.age), gender:c.gender||'', appearance:c.appearance||'', hobby:c.hobby||'', habit:c.habit||'', catchphrase:c.catchphrase||'', relation:c.relation||'', trait:c.trait||'' });
     nC++;
   });
   (d.seedPlaces||[]).forEach(p=>{
@@ -3156,12 +3157,12 @@ function banListViolation(nm){
 }
 
 const GLOSSARY_SYS = `\n\n【glossary 万物词典（必须一并输出）】请在返回的 JSON 顶层再追加一个 glossary 字段，作为全文保持一致性的权威基准：
-"glossary":{"characters":[{"name":"人物姓名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","mannerism":"习惯小动作/口头禅（有则写专属小动作或口头禅；判定没有则填「无」）","relation":"与该人的血缘/人际关联（妹妹/姐姐/朋友/仆人等）","trait":"性格要点"}],"places":[{"name":"地名/场景名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名/专属设定术语","note":"含义与拼写唯一约定"}]}
-必须列出本故事涉及的全部重要人物（含配角）、关键地域地名与专属设定术语；**全书正文一律只使用本词典中的人名/地名/专名，禁止自造或混用其他拼写**。每名人物**必须**标注 identity（身份/职业/社会身份）、age（岁数/年龄）、gender（性别）、appearance（外貌特征）、hobby（爱好/习惯）、mannerism（习惯小动作/口头禅），正文中人物的身份、年龄、性别、外貌、爱好、小动作/口头禅须与此保持一致。
+"glossary":{"characters":[{"name":"人物姓名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"与该人的血缘/人际关联（妹妹/姐姐/朋友/仆人等）","trait":"性格要点"}],"places":[{"name":"地名/场景名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名/专属设定术语","note":"含义与拼写唯一约定"}]}
+必须列出本故事涉及的全部重要人物（含配角）、关键地域地名与专属设定术语；**全书正文一律只使用本词典中的人名/地名/专名，禁止自造或混用其他拼写**。每名人物**必须**标注 identity（身份/职业/社会身份）、age（岁数/年龄）、gender（性别）、appearance（外貌特征）、hobby（爱好/习惯）、habit（小习惯与习惯性动作）与 catchphrase（口头禅），正文中人物的身份、年龄、性别、外貌、爱好、小动作/口头禅须与此保持一致。
 【relation 与 identity 务必区分，不可混淆】
 · identity 身份 = 她/他自己是谁：职业/职务/族群/社会地位，可独立成句——「她是捕快」「她是市长」「她是尼罗河努比亚族船女」「她是篮球运动员」；
 · relation 关系 = 她/他和谁是什么关联：血缘/姻亲/友伴/主仆，必须带"谁的"才成立——「林晚的妹妹」「她的仆人」「朋友：陈默」；禁止把身份词（捕快/市长/船女）写进 relation；
-人物条目中不设"职能/角色定位"字段。trait 归纳稳定性格以便后续各章保持一致。mannerism 记录该人物专属的习惯小动作/口头禅，供正文反复强化塑造；并非人人都有——主角/重要配角较常有，判定没有的配角填「无」。
+人物条目中不设"职能/角色定位"字段。trait 归纳稳定性格以便后续各章保持一致。habit 记录该人物专属的小习惯与习惯性动作、catchphrase 记录其口头禅，供正文反复强化塑造；并非人人都有——主角/重要配角较常有习惯小动作或口头禅，判定没有的配角填「无」。
 【人物字段自洽（硬约束）】同一人物的名字与其各字段必须相互自洽、并能容纳其剧情设定，禁止出现下列矛盾：
 · 已写明"在此地居住/任职/习武多年"，而 age 却小于该年限——例如"已在此住了30年"却仅23岁；应上调 age 或下调年限，取能自圆其说的一致值；
 · 履历类身份（当官/从军/任职）须让年龄能容纳任职时长——例如18岁却"当官5年"自相矛盾；任职起始须早于当前 age，身份与 age 区间匹配（太后/驸马/童养媳等对 age 亦有隐含约束）；
@@ -3195,7 +3196,7 @@ const CHAPTER_PLAN_SYS_PRO = `你是一位资深全书级叙事工程师，同�
     }
   ],
   "glossary": {
-    "characters": [{"name":"人名","identity":"身份","age":"岁数","gender":"性别","appearance":"外貌","hobby":"爱好","mannerism":"习惯小动作/口头禅","relation":"关系","trait":"性格"}],
+    "characters": [{"name":"人名","identity":"身份","age":"岁数","gender":"性别","appearance":"外貌","hobby":"爱好","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"关系","trait":"性格"}],
     "places": [{"name":"地名","type":"类型","note":"设定"}],
     "propernouns": [{"name":"专名","note":"含义"}]
   }
@@ -3206,7 +3207,7 @@ const CHAPTER_PLAN_SYS_PRO = `你是一位资深全书级叙事工程师，同�
 2. 每章 chapterPlans[i].beats 必须恰好包含 4 段，type 严格为 setup / rise / climax / hook，顺序不可变。
 3. 每段 beat.event 10—40 字；emotional 1—8 字。
 4. requiredEntities 与 foreshadowing 只能使用设定词典中已有人名/地名/专名，禁止自造新名。
-5. glossary 人物必须 8 字段齐全（name 之外：identity/age/gender/appearance/hobby/mannerism/relation/trait，mannerism 判无写「无」）；人物字段自洽（年龄与履历/居住年限不矛盾）。
+5. glossary 人物必须 9 字段齐全（name 之外：identity/age/gender/appearance/hobby/habit/catchphrase/relation/trait，habit/catchphrase 判无写「无」）；人物字段自洽（年龄与履历/居住年限不矛盾）。
 6. 若用户提示中出现【写作风格】块，标题措辞必须优先贴合。
 7. 若用户提示中出现【核心定位】与【深层主题】，节拍表必须优先服务于核心冲突。
 8. 阶段锚定（v1.0.141）：每章节拍表必须落在【大纲节拍的结构】所属阶段内，服务该阶段走向，不得越过当前阶段提前兑现后续阶段内容；相邻章推进连续递进。
@@ -3437,7 +3438,7 @@ const PLANNER_GLOSSARY_SYS = `你是一位长篇「设定词典构建师」。�
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
 {
   "glossary": {
-    "characters": [{"name":"人名","identity":"身份","age":"岁数","gender":"性别","appearance":"外貌","hobby":"爱好","mannerism":"习惯小动作/口头禅","relation":"关系","trait":"性格"}],
+    "characters": [{"name":"人名","identity":"身份","age":"岁数","gender":"性别","appearance":"外貌","hobby":"爱好","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"关系","trait":"性格"}],
     "places": [{"name":"地名","type":"类型","note":"设定"}],
     "propernouns": [{"name":"专名","note":"含义"}]
   }
@@ -3447,7 +3448,7 @@ const PLANNER_GLOSSARY_SYS = `你是一位长篇「设定词典构建师」。�
 2. 以章节标题/「大纲节拍的结构」阶段中出现的实体为主；不足下限时，允许依据题材惯例与本章节阶段职责合理衍生配角、地点、场景、组织、器物、术语等（衍生条目在 identity/note 末尾标注「（衍生）」），名称须符合本书题材与世界观的命名风格，禁止无意义凑数。
 3. 中国背景人物建议采用百家姓姓氏+两字名（柔性参考，不作强制）；其他文化背景人物按其世界观自然命名，程序不会因命名拦截任何条目。
 4. 若输入中已给出【现有词典】，同名条目不要重复输出，只补缺失条目。
-5. 人物必须输出全部 8 个字段：identity / age / gender / appearance / hobby / mannerism / relation / trait；mannerism（习惯小动作/口头禅）并非人人都有——主角/重要配角较常有专属小动作或口头禅，判定配角的没有就填「无」，禁止缺字段/留空。
+5. 人物必须输出全部 9 个字段：identity / age / gender / appearance / hobby / habit / catchphrase / relation / trait；habit（小习惯与习惯性动作）与 catchphrase（口头禅）并非人人都有——主角/重要配角较常有专属小动作或口头禅，判定配角的没有就填「无」，禁止缺字段/留空。
 6. 只输出上述 JSON。`;
 
 // ⑤ 伏笔网：跨章节设计伏笔—回收链，写入伏笔台账。（v1.0.141 断链：不再引用旧结构骨架/幕；改为基于「大纲节拍的结构」阶段）
@@ -4017,15 +4018,15 @@ const POLISH_MULTI_MODE = `\n\n【本次输出模式：多方案】在上述要�
 // 4.7 Pro（3.8/第7章指令2）：旧常量改名 GLOSSARY_EXTRACT_SYS_LEGACY 保留回退，新常量用旧名指向 GLOSSARY_EXTRACT_SYS_PRO。
 const GLOSSARY_EXTRACT_SYS_LEGACY = `你是长篇小说设定整理助手。给定【本章正文】与【现有词典】，提取正文中出现但现有词典【未收录】的新人物、新地名、新专名。
 请严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","mannerism":"习惯小动作/口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
+{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
 规则：
 1. 只提取正文中真实出现、且有明确所指（被命名）的实体；纯叙述性泛指不提取。
 2. 必须与现有词典逐名去重：同名条目一律不再输出。
-3. ★【人物必须输出全部 8 个字段：identity / age / gender / appearance / hobby / mannerism / relation / trait】
+3. ★【人物必须输出全部 9 个字段：identity / age / gender / appearance / hobby / habit / catchphrase / relation / trait】
    · 禁止只输出人名、禁止缺字段、禁止省略任何字段；
    · 从正文中提取该人物的身份、年龄、性别、外貌、爱好、习惯小动作/口头禅、关系、性格等信息，正文未明说的字段按上下文合理推断后填写；
    · 实在无法推断的字段填「未知」，不得留空、不得删除该字段；
-   · mannerism（习惯小动作/口头禅）：正文出现该人物的专属小动作/口头禅就写具体内容（如「手指敲桌｜口头禅'稳了'」），判定其没有就填「无」；
+   · habit（小习惯与习惯性动作）与 catchphrase（口头禅）：正文出现该人物的专属小动作/口头禅就写具体内容（如「手指敲桌｜口头禅'稳了'」），判定其没有就填「无」；
    · relation 与 identity 务必区分：身份词（捕快/市长/船女）归 identity；带"谁的"的人际关联（XX的妹妹/她的仆人）归 relation。
    · ★推断须自洽：填写的 age 与履历/居住年限类设定不得矛盾（如"在此已住30年"却23岁、"18岁却已当官5年"）；子代须小于亲代；转世/穿越/长生/修仙等特殊预设可豁免，但需有对应标注。
 4. 无明显新实体时输出 {"characters":[],"places":[],"propernouns":[]}。`;
@@ -4035,12 +4036,12 @@ const GLOSSARY_EXTRACT_SYS_PRO = `你是一位资深长篇小说「设定审计�
 【核心任务】给定本章正文与现有词典，提取正文中出现但现有词典未收录的新人物、新地名、新专名，并做字段自洽审查。
 
 【必须输出的 JSON 结构】
-{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","mannerism":"习惯小动作/口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
+{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
 
 【硬性约束】
 1. 只提取正文中真实出现、且有明确所指（被命名）的实体；纯叙述性泛指不提取。
 2. 与现有词典逐名去重：同名条目一律不再输出。
-3. 人物必须输出全部 8 个字段：identity / age / gender / appearance / hobby / mannerism / relation / trait；禁止缺字段、留空；无法推断的字段填「未知」。mannerism（习惯小动作/口头禅）并非人人都有：正文出现其专属小动作/口头禅就写具体内容，判定没有则填「无」。
+3. 人物必须输出全部 9 个字段：identity / age / gender / appearance / hobby / habit / catchphrase / relation / trait；禁止缺字段、留空；无法推断的字段填「未知」。habit（小习惯与习惯性动作）与 catchphrase（口头禅）并非人人都有：正文出现其专属小动作/口头禅就写具体内容，判定没有则填「无」。
 4. relation 与 identity 区分：身份词（捕快/市长/船女）归 identity；带"谁的"的人际关联归 relation。
 5. 字段自洽：age 与履历/居住年限不得矛盾；子代须小于亲代；特殊预设（转世/穿越/长生/修仙）可豁免但需标注。
 6. 无明显新实体时输出 {"characters":[], "places":[], "propernouns":[]}。
@@ -4053,7 +4054,7 @@ const GLOSSARY_EXTRACT_SYS = GLOSSARY_EXTRACT_SYS_PRO;
 function validateGlossaryExtract(j){
   if(!j) return {ok:false, code:'EMPTY'};
   for(const c of (j.characters || [])){
-    const missing = ['name','identity','age','gender','appearance','hobby','mannerism','relation','trait'].filter(k => !String(c[k]||'').trim());
+    const missing = ['name','identity','age','gender','appearance','hobby','habit','catchphrase','relation','trait'].filter(k => !String(c[k]||'').trim());
     if(missing.length) return {ok:false, code:'CHAR_FIELD_MISSING', details: c.name};
     const nameViol = nmNameRuleViolation(String(c.name||'').trim());
     if(nameViol) return {ok:false, code:'CHAR_NAME_RULE', details: nameViol};
@@ -4174,18 +4175,18 @@ function outlineGlossaryInject(g){
   if(!g || !sourceHasGlossary(g)) return GLOSSARY_SYS;
   const cs=(g.characters||[]).map(c=>{
     const head=[c.identity||'',(c.age?`${c.age}岁`:''),c.gender||''].filter(Boolean).join('·');
-    const tail=[c.appearance?`外貌:${c.appearance}`:'',c.hobby?`爱好:${c.hobby}`:'',(c.mannerism&&c.mannerism!=='无')?`小动作/口头禅:${c.mannerism}`:'',c.relation?`关系:${c.relation}`:'',c.trait?`性格:${c.trait}`:''].filter(Boolean).join('｜');
+    const tail=[c.appearance?`外貌:${c.appearance}`:'',c.hobby?`爱好:${c.hobby}`:'',(c.habit&&c.habit!=='无')?`小习惯与习惯性动作:${c.habit}`:'',(c.catchphrase&&c.catchphrase!=='无')?`口头禅:${c.catchphrase}`:'',c.relation?`关系:${c.relation}`:'',c.trait?`性格:${c.trait}`:''].filter(Boolean).join('｜');
     return `${c.name}${(head||tail)?`（${head}${tail?'｜'+tail:''}）`:''}`;
   }).join('； ');
   const ps=(g.places||[]).map(p=>`${p.name}${p.type?`（${p.type}）`:''}${p.note?`｜${p.note}`:''}`).join('； ');
   const pn=(g.propernouns||[]).map(p=>`${p.name}${p.note?`（${p.note}）`:''}`).join('； ');
   const fill = state.glossAllowFill ? '\n允许并鼓励你在不在底稿中的新设定上自由新增人物/地名/专名。' : '\n除非必要，避免无谓地新增与底稿无关的实体。';
   return `\n\n【复用词典 · 权威一致性底稿（v8）】以下是既有的权威词典，请在返回 JSON 顶层照常追加 glossary 字段，并以本底稿为主集：${adherenceSys(state.glossAdherence, state.glossAllowFill)}
-"glossary":{"characters":[{"name":"人物姓名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","mannerism":"习惯小动作/口头禅（判定没有填「无」）","relation":"与该人的血缘/人际关联（妹妹/姐姐/朋友/仆人等）","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定"}],"propernouns":[{"name":"专名","note":"含义"}]}
+"glossary":{"characters":[{"name":"人物姓名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"与该人的血缘/人际关联（妹妹/姐姐/朋友/仆人等）","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定"}],"propernouns":[{"name":"专名","note":"含义"}]}
 人物：${cs||'（无）'}
 地点：${ps||'（无）'}
 专名：${pn||'（无）'}
-底稿中已有人名/地名/专名一律沿用，不得推倒重造一套；只按本作大纲补充新增条目，新增条目 schema 与该类别保持一致。新增/沿用人物均须区分 relation（血缘/人际关联，带"谁的"，如「林晚的妹妹」「她的仆人」）与 identity（职业/社会身份，可独立成句，如「捕快」「市长」），禁止把身份词写进 relation。mannerism 记录习惯小动作/口头禅，判定没有则填「无」。${fill}`;
+底稿中已有人名/地名/专名一律沿用，不得推倒重造一套；只按本作大纲补充新增条目，新增条目 schema 与该类别保持一致。新增/沿用人物均须区分 relation（血缘/人际关联，带"谁的"，如「林晚的妹妹」「她的仆人」）与 identity（职业/社会身份，可独立成句，如「捕快」「市长」），禁止把身份词写进 relation。habit 记录小习惯与习惯性动作、catchphrase 记录口头禅，判定没有则填「无」。${fill}`;
 }
 // v8 阶段3：本体词典块（章节正文共同复用）。取合并后的大纲词典，生成「严格服从」一致性基准。
 // v8b（建议1）：正文也全量带词典详情（人物关系/身份/外貌/爱好/性格、地点类型/说明、专名含义），
@@ -4243,7 +4244,7 @@ function chapterGlossaryBlock(curN){
   const g = (o && o.glossary) || {};
   if(sourceHasGlossary(g)){
     const rf = glossaryForAI();
-    const cDetail = c => [c.identity?`身份:${c.identity}`:'', c.age?`岁数:${c.age}`:'', c.gender?`性别:${c.gender}`:'', c.appearance?`外貌:${c.appearance}`:'', c.hobby?`爱好:${c.hobby}`:'', (c.mannerism&&c.mannerism!=='无')?`小动作/口头禅:${c.mannerism}`:'', c.relation?`关系:${c.relation}`:'', c.trait?`性格:${c.trait}`:''].filter(Boolean).join('；');
+    const cDetail = c => [c.identity?`身份:${c.identity}`:'', c.age?`岁数:${c.age}`:'', c.gender?`性别:${c.gender}`:'', c.appearance?`外貌:${c.appearance}`:'', c.hobby?`爱好:${c.hobby}`:'', (c.habit&&c.habit!=='无')?`小习惯与习惯性动作:${c.habit}`:'', (c.catchphrase&&c.catchphrase!=='无')?`口头禅:${c.catchphrase}`:'', c.relation?`关系:${c.relation}`:'', c.trait?`性格:${c.trait}`:''].filter(Boolean).join('；');
     const pDetail = p => [p.type?`类型:${p.type}`:'', p.note?`说明:${p.note}`:''].filter(Boolean).join('；');
     const cs = rf.characters.map(c=> `${c.name}${cDetail(c)?`（${cDetail(c)}）`:''}`).join('、');
     const ps = rf.places.map(p=> `${p.name}${pDetail(p)?`（${pDetail(p)}）`:''}`).join('、');
@@ -4260,13 +4261,16 @@ function chapterGlossaryBlock(curN){
     const crossNote = rf.cross.length ? `\n【跨类同名提示】以下名称在多类中出现（系同一实体分属多类，原样保留，不要当成两条新增，也不要据此另造新名）：${rf.cross.map(x=>`${x.name}（${x.cats.join('+')}）`).join('、')}` : '';
     body += `\n·【设定词典】（给定的人/地/专名，正文一律采用，人名/地名/专名不可自造新名，人物关系/性格、地点类型、专名含义按此保持统一）\n人物：${cs||'（无）'}\n地点：${ps||'（无）'}\n专名：${pn||'（无）'}${repeatNote}${crossNote}`;
     // v1.0.203 阶段3/3.5：正文注入【全量万物词典】——除人/地/专名单外，追加词典达人产出的
-    // 人物关系表 / 地名联系表 / 专名联系表（有真实关联才列；正文人物关系、地域往来、专名用法须与此一致）。
+    // 人物关系表 / 地名关联表 / 专名关联表 / 世界观规则（有真实关联/规则才列；正文人物关系、地域往来、专名用法、世界逻辑须与此一致）。
     const relTable = (g._relationshipTable||[]).map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).filter(Boolean).join('；');
     const pcTable  = (g._placeContacts||[]).map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).filter(Boolean).join('；');
     const prcTable = (g._properContacts||[]).map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).filter(Boolean).join('；');
     if(relTable) body += `\n·【重要人物关系】（正文人物关系/立场须与此一致）\n${relTable}`;
-    if(pcTable)  body += `\n·【地名联系】（地域往来/通行逻辑须与此一致）\n${pcTable}`;
-    if(prcTable) body += `\n·【专名联系】（专名与专名、专名用法须与此一致）\n${prcTable}`;
+    if(pcTable)  body += `\n·【地名关联表】（地域往来/通行逻辑须与此一致，只列地名与地名之间的关联）\n${pcTable}`;
+    if(prcTable) body += `\n·【专名关联表】（专名与专名、专名用法须与此一致，只列专名与专名之间的关联）\n${prcTable}`;
+    // v1.0.210：正文注入【世界观规则】——本书世界实际如何运转的具体规则，正文一律遵守、不得违背该世界逻辑
+    const wrTable = (g._worldRules||[]).map(x=>`${x.cat?`[${x.cat}] `:''}${x.rule}`).filter(Boolean).join('；');
+    if(wrTable) body += `\n·【世界观规则】（本书世界实际如何运转的具体规则，正文据此写作、不得违背该世界逻辑：劳动作息/社会制度/力量体系/金钱物价/地理交通/秩序法则等）\n${wrTable}`;
   }
   body += subplotProgressBlock(curN);   // v1.0.113 副线进度块（无副线则返回空串，不占 token）
   return body;
@@ -4327,13 +4331,13 @@ function checkGlossaryCoverage(){
   scan(g.propernouns, summary.props);
   return summary;
 }
-// v2.4 人物字段契约（与大纲词典 GLOSSARY_SYS 完全一致：name + 8 字段〔v1.0.197 增 mannerism〕）；词典卡字段检查共用
-const CHAR_FIELDS = ['identity','age','gender','appearance','hobby','relation','trait','mannerism'];
-const CHAR_FIELD_LABEL = { identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', relation:'关系', trait:'性格', mannerism:'小动作/口头禅' };
-// v2.4 提取结果补全：空字段一律填「未知」（mannerism 判无则填「无」——并非人人都有专属小动作/口头禅），保证新人物字段齐全再入库（禁止"只有名字的新人物"）
+// v1.0.206 人物十维契约（与大纲词典一致：name + 9 字段 identity/age/gender/appearance/hobby/relation/trait/habit/catchphrase）；词典卡字段检查共用
+const CHAR_FIELDS = ['identity','age','gender','appearance','hobby','relation','trait','habit','catchphrase'];
+const CHAR_FIELD_LABEL = { identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', relation:'关系', trait:'性格', habit:'小习惯与习惯性动作', catchphrase:'口头禅' };
+// 提取结果补全：空字段一律填「未知」（habit/catchphrase 判无则填「无」——并非人人都有小习惯/口头禅），保证新人物字段齐全再入库（禁止"只有名字的新人物"）
 function completeCharFields(c){
   CHAR_FIELDS.forEach(k=>{
-    if(c[k]==null || String(c[k]).trim()==='') c[k] = (k==='mannerism') ? '无' : '未知';
+    if(c[k]==null || String(c[k]).trim()==='') c[k] = (k==='habit'||k==='catchphrase') ? '无' : '未知';
   });
   return c;
 }
@@ -5916,7 +5920,7 @@ function viewStory(){
           <p id="outlineStatus" class="status"></p>
         </div>
       </section>
-      ${ isLong() ? flowPlaceholderSec(3,'词典达人','生成完整人物 / 地名 / 专名词典与人物关系表','📘','词典达人：生成完整人物角色卡（十维：名称/身份/岁数/性别/外貌/爱好/关系/性格/习惯动作/口头禅）、地名专名细化与重要人物关系表。')
+      ${ isLong() ? flowPlaceholderSec(3,'词典达人','生成完整人物 / 地名 / 专名词典与人物关系表 / 世界观规则','📘','词典达人：生成完整人物角色卡（十维：名称/身份/岁数/性别/外貌/爱好/关系/性格/小习惯与习惯性动作/口头禅）、地名专名细化、重要人物关系表与世界观规则。')
         + flowPlaceholderSec(4,'规划师','全书标题 / 节拍表 / 时间表 / 伏笔','🗺️','规划师：一键生成全书标题、章内节拍表、全书时间表与伏笔网。')
         + flowPlaceholderSec(5,'正文','写作风格 / 配方助手 / 逐章正文','✍️','正文：按写作风格配方逐章生成正文，并回填万物词典。') : '' }
     </div>`;
@@ -5957,7 +5961,7 @@ function viewStory(){
       </div>
     </section>
     <section class="flow-sec" data-flow="3">
-      <div class="flow-sec-head"><span class="fs-no">3</span><span class="fs-name">词典达人</span><span class="fs-note">人物卡 / 关系表 / 地名专名联系表 · 万物词典</span></div>
+      <div class="flow-sec-head"><span class="fs-no">3</span><span class="fs-name">词典达人</span><span class="fs-note">人物卡 / 关系表 / 地名专名关联表 / 世界观规则 · 万物词典</span></div>
       ${ isLong() ? dictMasterBlockHtml() : '<div class="dict-master-placeholder">短片无需词典达人。</div>' }
     </section>
     <section class="flow-sec" data-flow="4">
@@ -7889,8 +7893,8 @@ function glossaryCardHtml(){
       </div>
     </div>`;
   };
-  const kLabel = k => ({name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明', question:'核心问题', pivot:'蝴蝶效应'}[k]||k);
-  const chars = (g.characters||[]).map((c,i)=>entry(c,'char',i,['identity','gender','age'],['name','identity','age','gender','appearance','hobby','mannerism','relation','trait'])).join('');
+  const kLabel = k => ({name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', habit:'小习惯与习惯性动作', catchphrase:'口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明', question:'核心问题', pivot:'蝴蝶效应'}[k]||k);
+  const chars = (g.characters||[]).map((c,i)=>entry(c,'char',i,['identity','gender','age'],['name','identity','age','gender','appearance','hobby','habit','catchphrase','relation','trait'])).join('');
   const places = (g.places||[]).map((p,i)=>entry(p,'place',i,['type','note'],['name','type','note'])).join('');
   const props = (g.propernouns||[]).map((p,i)=>entry(p,'proper',i,['note'],['name','note'])).join('');
   // v1.0.113 副线条目：名称可编辑 + status 三态 select + question/arc/pivot 可编辑 + 进度只读 + 「回退一步」
@@ -7920,6 +7924,17 @@ function glossaryCardHtml(){
   }).join('');
   const collapsed = !!state.gsCollapsed;
   const total = (g.characters||[]).length + (g.places||[]).length + (g.propernouns||[]).length + (g.subplots||[]).length;
+  // v1.0.211：词典达人四类「关系/关联/世界观规则」查看入口（只读弹窗，数据存于 glossary._relationshipTable/_placeContacts/_properContacts/_worldRules）
+  const vRel=(g._relationshipTable||[]).filter(x=>x&&(String(x.a||'').trim()||String(x.b||'').trim())).length;
+  const vPC=(g._placeContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())).length;
+  const vPRC=(g._properContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())).length;
+  const vWR=(g._worldRules||[]).filter(x=>x&&String(x.rule||'').trim()).length;
+  const viewGrid = (vRel||vPC||vPRC||vWR) ? `<div class="gs-viewgrid">
+    <button type="button" class="btn ghost gs-tool" data-gs-view="rel" ${vRel?'':'style="display:none"'} title="查看词典达人生成的完整人物关系表">👥 人物关系表${vRel?`（${vRel}）`:''}</button>
+    <button type="button" class="btn ghost gs-tool" data-gs-view="pc" ${vPC?'':'style="display:none"'} title="查看词典达人生成的完整地名关联表">🗺️ 地名关联表${vPC?`（${vPC}）`:''}</button>
+    <button type="button" class="btn ghost gs-tool" data-gs-view="prc" ${vPRC?'':'style="display:none"'} title="查看词典达人生成的完整专名关联表">📌 专名关联表${vPRC?`（${vPRC}）`:''}</button>
+    <button type="button" class="btn ghost gs-tool" data-gs-view="wr" ${vWR?'':'style="display:none"'} title="查看词典达人生成的完整世界观规则">⚙️ 世界观规则${vWR?`（${vWR}）`:''}</button>
+  </div>` : '';
   return `<div class="card gs-card${collapsed?' gs-collapsed':''}">
     <div class="gs-card-head">
       <h3 class="gs-card-title" role="button" tabindex="0" data-gs-card-toggle>
@@ -7928,6 +7943,7 @@ function glossaryCardHtml(){
     </div>
     <div class="gs-card-body"${collapsed?' style="display:none"':''}>
     ${tools}
+    ${viewGrid}
     <p class="sub">有改则改</p>
     <div class="gs-panel" id="gsHistory" hidden><div class="gs-panel-title">🕘 历史更改</div><div id="gsHistoryList"></div></div>
     ${(['char','place','proper','sub']).map(t=>{
@@ -8086,7 +8102,29 @@ function bindGlossary(){
     $$('.gs-panel').forEach(p=>{ if(p.id!=='gsHistory') p.hidden = true; }); // 与内容互斥显示
     if(show) b.classList.add('gs-tool-on'); else b.classList.remove('gs-tool-on');
   });
+  // v1.0.211：词典达人四类「人物关系表/地名关联表/专名关联表/世界观规则」查看入口
+  $$('[data-gs-view]').forEach(b=> b.onclick = ()=> openGlossaryTableView(b.dataset.gsView));
   }
+// v1.0.211：词典「关系/关联/世界观规则」只读查看弹窗（数据存于 glossary._relationshipTable/_placeContacts/_properContacts/_worldRules）
+function openGlossaryTableView(type){
+  const g = (state.outline && state.outline.glossary) || {};
+  const meta = {
+    rel: { name:'👥 人物关系表', rows:(g._relationshipTable||[]).filter(x=>x&&(String(x.a||'').trim()||String(x.b||'').trim())), empty:'暂无人物关系记录', row: x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'？')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>` },
+    pc:   { name:'🗺️ 地名关联表', rows:(g._placeContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())), empty:'暂无地名关联记录', row: x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>` },
+    prc:  { name:'📌 专名关联表', rows:(g._properContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())), empty:'暂无专名关联记录', row: x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>` },
+    wr:   { name:'⚙️ 世界观规则', rows:(g._worldRules||[]).filter(x=>x&&String(x.rule||'').trim()), empty:'暂无世界观规则（需词典达人生成）', row: x=>`<div class="dm-wr"><b>${esc(x.cat||'')}</b><div>${esc(x.rule||'')}</div></div>` }
+  };
+  const m = meta[type]; if(!m) return;
+  const rowsHtml = m.rows.map(m.row).join('');
+  const ov = document.createElement('div'); ov.className='gs-overlay';
+  ov.innerHTML = `<div class="gs-modal gs-view-modal">
+    <div class="gs-modal-head"><b>${m.name}（${m.rows.length} 条）</b><button class="gs-x" data-gsv-close>✕</button></div>
+    <div class="cv-body" style="max-height:62vh;overflow:auto">${rowsHtml || `<span class="muted">${m.empty}</span>`}</div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('[data-gsv-close]').onclick = ()=> ov.remove();
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.remove(); });
+}
 
 // 快照（项5）：记录任一条目改动前的整本词典，供「改动透明化弹窗」内的即时回退；最多保留 10 步防无限膨胀
 let gsUndoStack = [];
@@ -8418,7 +8456,7 @@ function openGlossaryPanel(info){
   const scan = scanGlossaryImpact(info);
   const hits = scan.hits || [];
 
-  const labels = {name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明'};
+  const labels = {name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', habit:'小习惯与习惯性动作', catchphrase:'口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明'};
   const kind = info.isName ? `「${info.oldVal||''}」→「${info.newVal||''}」`
     : `「${itemName}」的「${labels[info.key]||info.key||'详情'}」已修改（正文引用该条目 ${scan.word?('出现自 「'+scan.word+'」'):''}）`;
   const hitHtml = hits.length ? hits.map(h=>`
@@ -9968,7 +10006,7 @@ function buildOutlineFromPolishCandidate(cand){
 
 /* ==================== 阶段3/3.3+3.6：③ 词典达人（新 AI·dictmaster role） ====================
  * 输入 = ②所选方案的 九要素+书名（蓝本）→ 深化 + 补新；不注入全书节拍（词典是全局设定，元节拍无关）。
- * 产出 = 完整人物卡（十维）+ 人物关系表 + 地名联系表 + 专名联系表，一次生成，并入 state.outline.glossary。
+ * 产出 = 完整人物卡（十维）+ 人物关系表 + 地名关联表 + 专名关联表 + 世界观规则，一次生成，并入 state.outline.glossary。
  * ②已有角色/地名/专名不可改动；未提及的按慎重原则自动补充（避免乱加设定）。
  * 独立历史 6 次：第 7 次生成时最旧被挤出（FIFO）。
  */
@@ -9978,8 +10016,8 @@ const DICTMASTER_SYS = `你是一位资深长篇「词典达人」（全局设�
 2. 蓝本未提及、但为支撑该世界观/主线合理运转所必需的配角/地名/专名，可自行补全（如主角亲友、反派爪牙、关键地点/势力/宝器/功法），但**禁止无依据乱加**：每个新增都必须能从蓝本九要素或主线逻辑推出，且数量克制（建议 ≤ 蓝本已有量的 1.5 倍）。
 3. 不注入全书节拍/章节微拍（词典是全局设定，与元节拍无关）。
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{"characters":[{"name":"","identity":"","age":"","gender":"","appearance":"","hobby":"","relation":"","trait":"","habit":"","catchphrase":""}],"relationshipTable":[{"a":"名字","b":"名字","relation":"关系","note":"一句话"}],"places":[{"name":"","type":"","note":""}],"placeContacts":[{"from":"地名","to":"地名","relation":"联系","note":""}],"propernouns":[{"name":"","note":""}],"properContacts":[{"from":"专名","to":"专名","relation":"联系","note":""}],"summary":"1-2 句说明构成品亮点"}
-【要点】characters 每位必须给满 10 维且每维非空（name身份、identity身份定位、age年龄、gender性别、appearance外貌、hobby爱好、relation关系、trait性格、habit习惯动作、catchphrase口头禅；age/gender 无明确值也必须写"未知"）；places 每位必须给满 type（类型）+note（说明）；propernouns 每位必须给满 note（说明）；characters 建议 ≥6 位且含主角+反派+主要配角；relationshipTable / placeContacts / properContacts 内容多少按具体小说情况决定（有真实关联就列，没有就不硬凑）。`;
+{"characters":[{"name":"","identity":"","age":"","gender":"","appearance":"","hobby":"","relation":"","trait":"","habit":"小习惯与习惯性动作","catchphrase":"口头禅"}],"relationshipTable":[{"a":"名字","b":"名字","relation":"关系","note":"一句话"}],"places":[{"name":"","type":"","note":""}],"placeContacts":[{"from":"地名","to":"地名","relation":"联系","note":""}],"propernouns":[{"name":"","note":""}],"properContacts":[{"from":"专名","to":"专名","relation":"联系","note":""}],"worldRules":[{"cat":"规则类别","rule":"具体规则"}],"summary":"1-2 句说明构成品亮点"}
+【要点】characters 每位必须给满 10 维且每维非空（name身份、identity身份定位、age年龄、gender性别、appearance外貌、hobby爱好、relation关系、trait性格要点、habit【小习惯与习惯性动作】、catchphrase【口头禅】（habit 只写该人物独特的下意识/日常规律小动作，catchphrase 只写其反复挂在嘴边的口头语，两者严格分开禁止互混乱写；age/gender 无明确值也必须写"未知"）；places 每位必须给满 type（类型）+note（说明）；propernouns 每位必须给满 note（说明）；characters 建议 ≥6 位且含主角+反派+主要配角。三张关联表必须按各自名称的语义精确生成：relationshipTable 即【人物关系表】——只写人物↔人物之间的关联（血缘/身份/立场/恩怨等），不要写入地名或专名；placeContacts 即【地名关联表】——只写地名↔地名之间的关联（相邻/隶属/路程远近/往来通道/势力归属等）；properContacts 即【专名关联表】——只写专名↔专名之间的关联（来源/克制/配套/并列等）；三表内容多少按具体小说情况决定（有真实关联就列，没有就不硬凑，且禁止把"关系/关联类型"填成与语义无关的内容）。worldRules 即【世界观规则】：按本次故事的题材/时代背景/社会性质，把这本书里『世界实际怎么运转』的、贯穿全文必须遵守的具体规则提炼出来（要落成可执行的具体条目，不是空泛口号，正文据其写作不得违背）。要贴合该题材的真实世界逻辑，例如——现代都市/职场类：写明社会劳动作息（白领一周双休/单休/大小周、某些行业一月只休两三天、上下班时间、法定节假日、通勤等）、经济与货币、法律与治安、阶层、日用科技等实际运转规则；古代写实/历史类（如三国）：没有『上班双休』这类现代概念，应写明古代特有作息（农耕节令、集市与墟日、宵禁、驿站驿道、官衙卯时点卯）、军制军粮、赋税徭役、货币（铜钱/银两/粮布）、通信与出行速度等；古代江湖类：写明江湖规矩（门派帮派/武林盟约/快意恩仇的边界/镖局客栈驿道）、官府与江湖的关系、武艺内功体系等；神话仙侠类（如西游/封神）：写明天庭地府妖界方外世界体系、修炼境界与境界压制、法宝神通法则、天条因果、仙人鬼神不得干预凡俗等约束。worldRules 每位必须给满 cat（类别）+rule（规则）；凡该世界存在的工作作息、社会结构、力量体系、金钱物价、地理交通、风俗禁忌、秩序法则等都要按题材提炼成具体规则；某题材无某类规则就不列该类，禁止把现代职场概念生搬硬套到古代/仙侠世界；建议 ≥3 条并按类别分条列出。`;
 function buildDictMasterUser(ctx){
   const cand = ctx && ctx.candidate;
   const txt = String((cand && cand.text) || '').trim();
@@ -9994,7 +10032,7 @@ function buildDictMasterUser(ctx){
   if(known) parts.push(`【已在库词典（同名去重，勿重复收录）】\n${known}`);
   return parts.join('\n\n');
 }
-// 词典达人产物校验（决策3 收紧）：人物 10 维全填（age/gender 可为"未知"）、地名 type+note、专名 note 齐全；关系/联系表不强求非空
+// 词典达人产物校验（决策3 收紧）：人物 10 维全填（age/gender 可为"未知"）、地名 type+note、专名 note 齐全；关系/关联表不强求非空
 function validateDictMasterOutput(j){
   if(!j || typeof j !== 'object') return '返回不是对象';
   if(!Array.isArray(j.characters) || !j.characters.length) return '人物卡 characters 为空（应至少 1 位）';
@@ -10011,6 +10049,10 @@ function validateDictMasterOutput(j){
   if(!places.length && !props.length) return '缺少 places 或 propernouns';
   for(const p of places){ if(p && (!String(p.name||'').trim()||!String(p.type||'').trim()||!String(p.note||'').trim())) return `地名「${String(p&&p.name||'').trim()||'?'}」信息不全（需 type+note）`; }
   for(const p of props){ if(p && (!String(p.name||'').trim()||!String(p.note||'').trim())) return `专名「${String(p&&p.name||'').trim()||'?'}」缺 note`; }
+  // v1.0.210：世界观规则至少 1 条，且每条必须 cat（类别）+rule（规则）齐全
+  const wr = Array.isArray(j.worldRules)?j.worldRules:[];
+  if(!wr.length) return '缺少 worldRules（世界观规则，应 ≥1 条）';
+  for(const r of wr){ if(r && (!String(r.cat||'').trim()||!String(r.rule||'').trim())) return `世界观规则「${String(r&&r.cat||'').trim()||'?'}」缺失 cat 或 rule`; }
   return '';
 }
 // 一键生成万物词典（蓝色渐变→生成后绿渐变；重新生成=替换本 AI 上次贡献；历史 6 次）
@@ -10026,7 +10068,7 @@ async function genDictMaster(btn){
   if(btn) busy(btn,true,'生成万物词典中…');
   if(btn && btn.parentNode) showStopBtn(btn.parentNode);
   try{
-    const txt = await callAIGuarded('dictmaster', {}, {temperature: resolveActiveSpec().ideaTemp, maxTokens: 8192, signal: _abortCtl?.signal});
+    const txt = await callAIGuarded('dictmaster', {}, {temperature: resolveActiveSpec().dictmasterTemp, maxTokens: 8192, signal: _abortCtl?.signal});
     const j = extractJsonObject(txt);
     if(!j){ throw new Error('AI 未返回可用的词典 JSON'); }
     const v = validateDictMasterOutput(j);
@@ -10034,7 +10076,7 @@ async function genDictMaster(btn){
     // v1.0.204 阶段4/4.2 合并进 glossary：
     // 决策1a 同名去重（以现有为准：手工>逐章提取>词典达人）；决策8 手工保护（只清本 AI 从未被改动的旧条目）
     o.glossary = o.glossary || { characters:[], places:[], propernouns:[], subplots:[] };
-    const snapKeys = { characters:['name','identity','age','gender','appearance','hobby','relation','trait','mannerism'], places:['name','type','note'], propernouns:['name','note'] };
+    const snapKeys = { characters:['name','identity','age','gender','appearance','hobby','relation','trait','habit','catchphrase'], places:['name','type','note'], propernouns:['name','note'] };
     const entryJson = (x,k)=>{ const o2={}; (snapKeys[k]||[]).forEach(f=> o2[f]=String((x && x[f])!=null ? x[f] : '').trim()); try{ return JSON.stringify(o2); }catch(e){ return ''; } };
     ['characters','places','propernouns'].forEach(k=>{
       const kept=[];
@@ -10064,15 +10106,17 @@ async function genDictMaster(btn){
         o.glossary[k].push(e); existing.add(nm);
       });
     };
-    push(j.characters, 'characters', c=>({ name:String(c.name||'').trim(), identity:String(c.identity||'').trim(), age:String(c.age||'').trim(), gender:String(c.gender||'').trim(), appearance:String(c.appearance||'').trim(), hobby:String(c.hobby||'').trim(), relation:String(c.relation||'').trim(), trait:String(c.trait||'').trim(), mannerism:[String(c.habit||'').trim(), String(c.catchphrase||'').trim()].filter(Boolean).join('；') }));
+    push(j.characters, 'characters', c=>({ name:String(c.name||'').trim(), identity:String(c.identity||'').trim(), age:String(c.age||'').trim(), gender:String(c.gender||'').trim(), appearance:String(c.appearance||'').trim(), hobby:String(c.hobby||'').trim(), relation:String(c.relation||'').trim(), trait:String(c.trait||'').trim(), habit:String(c.habit||'').trim(), catchphrase:String(c.catchphrase||'').trim() }));
     push(j.places, 'places', p=>({ name:String(p.name||'').trim(), type:String(p.type||'').trim(), note:String(p.note||'').trim() }));
     push(j.propernouns, 'propernouns', p=>({ name:String(p.name||'').trim(), note:String(p.note||'').trim() }));
-    // 关系表 / 联系表存入 glossary 专用字段（★万物词典卡与 ⑤正文 可读取）
+    // 关系表 / 关联表存入 glossary 专用字段（★万物词典卡与 ⑤正文 可读取）
     o.glossary._relationshipTable = (j.relationshipTable||[]).map(x=>({ a:String(x.a||'').trim(), b:String(x.b||'').trim(), relation:String(x.relation||'').trim(), note:String(x.note||'').trim() }));
     o.glossary._placeContacts = (j.placeContacts||[]).map(x=>({ from:String(x.from||'').trim(), to:String(x.to||'').trim(), relation:String(x.relation||'').trim(), note:String(x.note||'').trim() }));
     o.glossary._properContacts = (j.properContacts||[]).map(x=>({ from:String(x.from||'').trim(), to:String(x.to||'').trim(), relation:String(x.relation||'').trim(), note:String(x.note||'').trim() }));
+    // v1.0.210：世界观规则（本书世界实际如何运转的硬约束，正文注入端读取，供全文一致遵守）
+    o.glossary._worldRules = (j.worldRules||[]).map(x=>({ cat:String(x.cat||'').trim(), rule:String(x.rule||'').trim() }));
     // 存档最近产物 + 历史 6 次（FIFO）
-    const result = { ts: Date.now(), book: (o.title)||'', summary:String(j.summary||'').trim(), nChar:(j.characters||[]).length, nPlace:(j.places||[]).length, nProp:(j.propernouns||[]).length, nRel:(j.relationshipTable||[]).length, nPC:(j.placeContacts||[]).length, nPRC:(j.properContacts||[]).length, characters:j.characters||[], rel:j.relationshipTable||[], places:j.places||[], pc:j.placeContacts||[], props:j.propernouns||[], prc:j.properContacts||[] };
+    const result = { ts: Date.now(), book: (o.title)||'', summary:String(j.summary||'').trim(), nChar:(j.characters||[]).length, nPlace:(j.places||[]).length, nProp:(j.propernouns||[]).length, nRel:(j.relationshipTable||[]).length, nPC:(j.placeContacts||[]).length, nPRC:(j.properContacts||[]).length, nWR:(j.worldRules||[]).length, characters:j.characters||[], rel:j.relationshipTable||[], places:j.places||[], pc:j.placeContacts||[], props:j.propernouns||[], prc:j.properContacts||[], wr:j.worldRules||[] };
     state.dictmasterLatest = result;
     state.dictmasterHistory = Array.isArray(state.dictmasterHistory) ? state.dictmasterHistory : [];
     state.dictmasterHistory.unshift(result);
@@ -10080,7 +10124,7 @@ async function genDictMaster(btn){
     state.dictmasterRan = true;
     persist(); render();
     markAIDone('dictmaster');
-    toast(`万物词典已生成：人物 ${result.nChar} 位 · 地名 ${result.nPlace} · 专名 ${result.nProp} · 关系表 ${result.nRel} 条（已并入万物词典）`);
+    toast(`万物词典已生成：人物 ${result.nChar} 位 · 地名 ${result.nPlace} · 专名 ${result.nProp} · 关系表 ${result.nRel} 条 · 世界观规则 ${result.nWR} 条（已并入万物词典）`);
     return true;
   }catch(e){
     if(e.name !== 'AbortError') addToFixQueue({kind:'dictmaster', error:e.message});
@@ -10102,20 +10146,29 @@ function dictMasterBlockHtml(){
   if(hasOut){
     const r = state.dictmasterLatest || {};
     const relRows = (r.rel||[]).slice(0,8).map(x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>`).join('');
+    const contactRow = x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>`;
+    const pcRows = ((g&&g._placeContacts)||[]).map(contactRow).join('');
+    const prcRows = ((g&&g._properContacts)||[]).map(contactRow).join('');
+    const wrRows = ((g&&g._worldRules)||[]).map(x=>`<div class="dm-wr"><b>${esc(x.cat||'')}</b><div>${esc(x.rule||'')}</div></div>`).join('');
     return `<div class="card dm-card">
-      <div class="dm-head">📖 词典达人 · 万物词典生成器<span class="muted" style="font-weight:400">（已生成 人物 ${r.nChar||0} · 地名 ${r.nPlace||0} · 专名 ${r.nProp||0} · 关系表 ${r.nRel||0} 条）</span></div>
+      <div class="dm-head">📖 词典达人 · 万物词典生成器<span class="muted" style="font-weight:400">（已生成 人物 ${r.nChar||0} · 地名 ${r.nPlace||0} · 专名 ${r.nProp||0} · 关系表 ${r.nRel||0} 条 · 世界观规则 ${r.nWR||0} 条）</span></div>
       ${r.summary?`<p class="sub" style="margin:8px 0 4px">${esc(r.summary)}</p>`:''}
       <div class="btn-row" style="margin:8px 0 0">
         <button id="btnGenDictMaster" class="btn block dm-btn-on">🔄 重新生成万物词典</button>
         ${histN?`<button id="btnDictMasterHist" class="btn small ghost">🕘 历史版本(${histN}/6)</button>`:''}
       </div>
-      ${relRows.length?`<div class="dm-rel-table" style="margin-top:10px"><b>重要人物关系表（前 ${Math.min(relRows.length,8)} 条）</b>${relRows}</div>`:''}
+      ${(wrRows||relRows||pcRows||prcRows)?`<div class="dm-tables" style="margin-top:10px">
+        <details class="dm-fold"><summary>世界观规则（${wrRows.length} 条）</summary><div class="dm-rel-table">${wrRows||'<span class="muted">（无）</span>'}</div></details>
+        <details class="dm-fold"><summary>人物关系表（${relRows.length} 条）</summary><div class="dm-rel-table">${relRows||'<span class="muted">（无）</span>'}</div></details>
+        <details class="dm-fold"><summary>地名关联表（${pcRows.length} 条）</summary><div class="dm-rel-table">${pcRows||'<span class="muted">（无）</span>'}</div></details>
+        <details class="dm-fold"><summary>专名关联表（${prcRows.length} 条）</summary><div class="dm-rel-table">${prcRows||'<span class="muted">（无）</span>'}</div></details>
+      </div>`:''}
       ${status}
     </div>`;
   }
   return `<div class="card dm-card">
     <div class="dm-head">📖 词典达人 · 万物词典生成器</div>
-    <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0">输入源：②所选方案的 书名 + 九要素（题材/主角/冲突/世界观/对手/动机/风格/结构/核心词），作为蓝本 → 深化 + 补新。一键产出：完整人物卡（十维：名称/身份/岁数/性别/外貌/爱好/关系/性格/习惯动作/口头禅）· 重要人物关系表 · 地名联系表 · 专名联系表，直接并入「万物词典」供 ④规划师 / ⑤正文 消费。②已有的角色/地名/专名不可改动；未提及的会按慎重原则自动补充（避免乱加设定）。</p>
+    <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0">输入源：②所选方案的 书名 + 九要素（题材/主角/冲突/世界观/对手/动机/风格/结构/核心词），作为蓝本 → 深化 + 补新。一键产出：完整人物卡（十维：名称/身份/岁数/性别/外貌/爱好/关系/性格/小习惯与习惯性动作/口头禅）· 重要人物关系表 · 地名关联表 · 专名关联表 · 世界观规则（按题材提炼本书世界实际如何运转的具体规则：劳动作息/社会结构/力量体系/金钱物价/秩序法则等），直接并入「万物词典」供 ④规划师 / ⑤正文 消费。②已有的角色/地名/专名不可改动；未提及的会按慎重原则自动补充（避免乱加设定）。</p>
     ${locked?`<div class="dm-locked" style="margin:6px 0;color:#2e9e5b;font-size:12px">②方案已锁定：本词典已生成，可「重新生成」独自迭代（历史 6 次对比）。</div>`:''}
     <div class="btn-row"><button id="btnGenDictMaster" class="btn block ${locked?'dm-btn-on':'dm-btn'}">📖 生成万物词典</button></div>
     ${status}
@@ -10134,11 +10187,15 @@ function openDictMasterHistoryPanel(){
     const rel=(h.rel||[]).map(x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>`).join('')||'<span class="muted">（无）</span>';
     const pc=(h.pc||[]).map(x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}</span></div>`).join('')||'<span class="muted">（无）</span>';
     const prc=(h.prc||[]).map(x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}</span></div>`).join('')||'<span class="muted">（无）</span>';
-    return `<div class="dm-prev-meta">${fmtTs(h.ts)} · ${h.book?('《'+esc(h.book)+'》'):''} 人物 ${h.nChar||0} · 地名 ${h.nPlace||0} · 专名 ${h.nProp||0} · 关系表 ${h.nRel||0} 条</div>
+    const wr=(h.wr||[]).map(x=>`<div class="dm-wr"><b>${esc(x.cat||'')}</b><div>${esc(x.rule||'')}</div></div>`).join('')||'<span class="muted">（无）</span>';
+    return `<div class="dm-prev-meta">${fmtTs(h.ts)} · ${h.book?('《'+esc(h.book)+'》'):''} 人物 ${h.nChar||0} · 地名 ${h.nPlace||0} · 专名 ${h.nProp||0} · 关系表 ${h.nRel||0} 条 · 世界观规则 ${h.nWR||0} 条</div>
       <div class="dm-prev-chars"><b>人物卡（${h.nChar||0}）</b><span class="muted">${(h.characters||[]).map(c=>esc(c&&c.name||'')).join('、')}</span></div>
-      <div class="dm-sec"><b>重要人物关系表</b>${rel}</div>
-      <div class="dm-sec"><b>地名联系表</b>${pc}</div>
-      <div class="dm-sec"><b>专名联系表</b>${prc}</div>`;
+      <div class="dm-tables">
+        <details class="dm-fold"><summary>世界观规则</summary><div class="dm-rel-table">${wr}</div></details>
+        <details class="dm-fold"><summary>人物关系表</summary><div class="dm-rel-table">${rel}</div></details>
+        <details class="dm-fold"><summary>地名关联表</summary><div class="dm-rel-table">${pc}</div></details>
+        <details class="dm-fold"><summary>专名关联表</summary><div class="dm-rel-table">${prc}</div></details>
+      </div>`;
   };
   ov.innerHTML = `<div class="gs-modal dm-hist-modal">
     <div class="gs-modal-head"><b>🕘 词典达人 · 万物词典历史（${hist.length}/6）</b><button class="gs-x" data-dmh-close>✕</button></div>
@@ -11583,6 +11640,9 @@ function buildChapterUser(i, opt={}){
   // v1.0.204 阶段4/4.4：L3 改为「万物词典·全量名单 + 出场全字段」（不可裁红线），替代原按章相关词典
   const dmBlock = fullGlossaryChapterBlock(i);
   if(dmBlock) parts.push(`【L3 设定词典（万物词典·全量名单+出场全字段，不可裁）】\n${dmBlock}`);
+  // v1.0.211：本章「世界情报·迷雾版」选择性注入——世界观规则全量必给；关系/关联表只给本章已出场实体相关部分，避免提前剧透
+  const fog = fogWorldInject(i);
+  if(fog) parts.push(fog);
   // L4 滚动摘要
   const rolling = buildRollingSummary(i);
   if(rolling) parts.push(`【L4 前文滚动摘要】\n${rolling}`);
@@ -11755,7 +11815,7 @@ ${ob2.join('\n')}
   // v1.0.204 阶段4/4.4：词典不可裁红线——若预算器置红标（词典+节拍完整保留但仍超），提示提升上限（不静默降质）
   _dictRedlineOver = false;
   const _b = budgetChapterContext(parts, 24000);
-  if(_dictRedlineOver){ setTimeout(()=>toast('设定词典(含关系/联系表)与节拍为不可裁红线，已完整保留；当前上下文超出建议预算，若频繁出现请提高输出上限。'), 0); }
+  if(_dictRedlineOver){ setTimeout(()=>toast('设定词典(含关系/关联表)与节拍为不可裁红线，已完整保留；当前上下文超出建议预算，若频繁出现请提高输出上限。'), 0); }
   return _b.join('\n\n');
 }
 
@@ -11782,7 +11842,8 @@ function fullGlossaryChapterBlock(i){
       if(c&&c.trait) tail.push(`性格：${c.trait}`);
       if(c&&c.relation) tail.push(`关系：${c.relation}`);
       if(c&&c.hobby) tail.push(`爱好：${c.hobby}`);
-      if(c&&c.mannerism) tail.push(`习惯/口头禅：${c.mannerism}`);
+      if(c&&c.habit && c.habit!=='无') tail.push(`小习惯与习惯性动作：${c.habit}`);
+      if(c&&c.catchphrase && c.catchphrase!=='无') tail.push(`口头禅：${c.catchphrase}`);
       return `\n· ${head}${tail.length?('；'+tail.join('；')):''}`;
     }
     return `\n· ${n}（${(c&&c.identity)||'人物'}）`;
@@ -11796,12 +11857,15 @@ function fullGlossaryChapterBlock(i){
     lines.push(`重要人物关系（全量）：${g._relationshipTable.map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).join('；')}`);
   }
   if(Array.isArray(g._placeContacts) && g._placeContacts.length){
-    lines.push(`地名联系（全量）：${g._placeContacts.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
+    lines.push(`地名关联（全量）：${g._placeContacts.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
   }
   if(Array.isArray(g._properContacts) && g._properContacts.length){
-    lines.push(`专名联系（全量）：${g._properContacts.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
+    lines.push(`专名关联（全量）：${g._properContacts.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
   }
-  return '请全程遵循本设定词典（人名/地名/专名不可自造、人物关系/性格/地域往来/专名用法与此保持统一）：\n' + lines.join('\n');
+  if(Array.isArray(g._worldRules) && g._worldRules.length){
+    lines.push(`世界观规则（全量·正文须遵守不违背）：${g._worldRules.map(x=>`${x.cat?`[${x.cat}] `:''}${x.rule}`).join('；')}`);
+  }
+  return '请全程遵循本设定词典（人名/地名/专名不可自造、人物关系/性格/地域往来/专名用法与世界规则与此保持统一）：\n' + lines.join('\n');
 }
 
 // 4.5：为第 i 章（0 基）生成相关词典，只返回与本周相关的条目 + 主角条目
@@ -11871,6 +11935,35 @@ function relevantGlossaryForChapter(i){
 }
 function escapeRegExp(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
+// v1.0.211：章节正文「世界情报·迷雾版」选择性注入——世界观规则全量必给（对每一章都全文给出），
+// 人物关系表/地名关联表/专名关联表按「迷雾」只注入与本章已出场实体直接相关的条目，
+// 其余留给后续章节自然揭示，避免本章正文 AI 提前剧透尚未展示的关系网。
+function fogWorldInject(i){
+  const o = state.outline; if(!o) return '';
+  const g = o.glossary || {};
+  const seg = [];
+  // 世界观规则：全量必给（世界实际运转规则，无剧透风险、务必一致遵守，不裁剪）
+  const wr = (g._worldRules||[]).filter(x=> x && String(x.rule||'').trim());
+  if(wr.length) seg.push(`【世界观规则·全量】（本书世界实际如何运转的具体规则，对每一章都全文给出，本章写作必须遵守、不得违背该世界逻辑）\n${wr.map(x=>`${x.cat?`[${x.cat}] `:''}${x.rule}`).join('\n')}`);
+  // 迷雾依据：本章已出场实体（relevantGlossaryForChapter 反哺）
+  const rg = relevantGlossaryForChapter(i);
+  const mk = k => new Set((rg[k]||[]).map(x=>String(x&&x.name||'').trim()).filter(Boolean));
+  const chars = mk('characters'), pls = mk('places'), prps = mk('propernouns');
+  // 关系/关联表：仅保留两端至少一端在本章出场的条目（迷雾）
+  const rel = (g._relationshipTable||[]).filter(x=> x && (chars.has(x.a)||chars.has(x.b)));
+  const pc  = (g._placeContacts||[]).filter(x=> x && (pls.has(x.from)||pls.has(x.to)));
+  const prc = (g._properContacts||[]).filter(x=> x && (prps.has(x.from)||prps.has(x.to)));
+  let any = false;
+  if(rel.length){ seg.push(`【人物关系表·迷雾】（仅本章已出场人物直接相关的关系，正文据此写、未揭示的不得提前写）\n${rel.map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).join('\n')}`); any = true; }
+  if(pc.length){ seg.push(`【地名关联表·迷雾】（仅本章已出场地点直接相关的关联）\n${pc.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('\n')}`); any = true; }
+  if(prc.length){ seg.push(`【专名关联表·迷雾】（仅本章已出场专名直接相关的关联）\n${prc.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('\n')}`); any = true; }
+  if(any || wr.length){
+    const fogNote = any ? `\n（注：上述关系/关联为「迷雾」版，只列出与本章已出场实体直接相关的部分；未在本章出现或尚未揭示的关系，正文一律不得提前书写、留待后续章节自然展开，以免提前剧透。）` : '';
+    return `${seg.join('\n')}${any ? fogNote : ''}`;
+  }
+  return '';
+}
+
 // v243/910-⑵：人物条目 7 字段上桌（对齐人设防火墙审计的 7 字段）——此前生成只见 identity/age/gender，
 // 审计却按 appearance/hobby/relation/trait 全量判漂移，供给/审计不对称。空值与「未知」不输出，不浪费 token。
 function formatRelevantGlossary(rg){
@@ -11884,7 +11977,8 @@ function formatRelevantGlossary(rg){
       if(c.appearance && c.appearance !== '未知') segs.push('外貌:'+c.appearance);
       if(c.trait && c.trait !== '未知') segs.push('性格:'+c.trait);
       if(c.hobby && c.hobby !== '未知') segs.push('爱好:'+c.hobby);
-      if(c.mannerism && c.mannerism !== '未知' && c.mannerism !== '无') segs.push('小动作/口头禅:'+c.mannerism);
+      if(c.habit && c.habit !== '未知' && c.habit !== '无') segs.push('小习惯与习惯性动作:'+c.habit);
+      if(c.catchphrase && c.catchphrase !== '未知' && c.catchphrase !== '无') segs.push('口头禅:'+c.catchphrase);
       if(c.relation && c.relation !== '未知') segs.push('关系:'+c.relation);
       return '（'+segs.join('，')+'）';
     }).join(''));
@@ -12369,7 +12463,8 @@ function buildAiRefineCtx(i){
     if(c.gender) parts.push('性别:'+c.gender);
     if(c.appearance) parts.push('外貌:'+c.appearance);
     if(c.hobby) parts.push('爱好:'+c.hobby);
-    if(c.mannerism && c.mannerism !== '无') parts.push('小动作/口头禅:'+c.mannerism);
+    if(c.habit && c.habit !== '无') parts.push('小习惯与习惯性动作:'+c.habit);
+    if(c.catchphrase && c.catchphrase !== '无') parts.push('口头禅:'+c.catchphrase);
     if(c.relation) parts.push('关系:'+c.relation);
     if(c.trait) parts.push('性格:'+c.trait);
     return (c.name||'')+(parts.length?'（'+parts.join('；')+'）':'');
@@ -12990,7 +13085,7 @@ async function genCharacters(){
   try{
     // P1-3 覆盖前快照
     if(state.characters && state.characters.length) pushAssetHist('characters', state.characters);
-    const txt = unwrapAIResult(await callDeepSeek(PROMPTS.characterSys, '【完整故事】\n'+fullStoryText(), {taskKey:'assets'}));
+    const txt = unwrapAIResult(await callDeepSeek(PROMPTS.characterSys, '【完整故事】\n'+fullStoryText(), {temperature: resolveActiveSpec().assetsTemp, taskKey:'assets'}));
     state.raw.characters = txt;
     const j = parseJson(txt);
     state.characters = j.characters || [];
@@ -13006,7 +13101,7 @@ async function genScenes(){
   try{
     // P1-3 覆盖前快照
     if(state.scenes && state.scenes.length) pushAssetHist('scenes', state.scenes);
-    const txt = unwrapAIResult(await callDeepSeek(PROMPTS.sceneSys, '【完整故事】\n'+fullStoryText(), {taskKey:'assets'}));
+    const txt = unwrapAIResult(await callDeepSeek(PROMPTS.sceneSys, '【完整故事】\n'+fullStoryText(), {temperature: resolveActiveSpec().assetsTemp, taskKey:'assets'}));
     state.raw.scenes = txt;
     const j = parseJson(txt);
     state.scenes = (j.scenes || []).map(s=>{
@@ -13037,7 +13132,7 @@ async function genCover(){
   try{
     // P1-3 覆盖前快照
     if(state.coverPrompt) pushAssetHist('cover', state.coverPrompt);
-    const txt = unwrapAIResult(await callDeepSeek(sys, user, {taskKey:'assets'}));
+    const txt = unwrapAIResult(await callDeepSeek(sys, user, {temperature: resolveActiveSpec().assetsTemp, taskKey:'assets'}));
     state.coverPrompt = txt.trim();
     persist(); render();
     toast(state.coverWithTitle?'已生成含书名封面提示词':'已生成纯画面封面提示词');
@@ -13064,7 +13159,7 @@ async function genStoryboard(){
       const content = ch.content||'';
       const user = `【本章】第${i+1}章 ${ch.title||oc.title||''}\n本章正文：\n${content.slice(0,50000)}${content.length>50000?'…':''}\n\n${base}`;
       try{
-        const txt = unwrapAIResult(await callDeepSeek(PROMPTS.storyboardSys, user, {taskKey:'assets'}));
+        const txt = unwrapAIResult(await callDeepSeek(PROMPTS.storyboardSys, user, {temperature: resolveActiveSpec().assetsTemp, taskKey:'assets'}));
         const j = parseJson(txt);
         (j.shots||[]).forEach(s=>{
           s.章节 = i+1;
@@ -13746,36 +13841,18 @@ function closeSettings(){ $('#settingsModal').classList.add('hidden'); }
 function echoTemps(){
   const c = editCfg || getCfg();
   $('#cfgTemp').value = (c.temperature==null ? '' : c.temperature);
-  $('#cfgTempOutline').value = (c.outlineTemp==null ? '' : c.outlineTemp);
-  $('#cfgTempIdea').value = (c.ideaTemp==null ? '' : c.ideaTemp);
-  $('#cfgTempTitle').value = (c.titleTemp==null ? '' : c.titleTemp);
-  $('#cfgTempPlan').value = (c.planTemp==null ? '' : c.planTemp);
-  $('#cfgTempStrip').value = (c.stripTemp==null ? '' : c.stripTemp);
-  $('#cfgTempChapter').value = (c.chapterTemp==null ? '' : c.chapterTemp);
-  $('#cfgTempQC').value = (c.qcTemp==null ? '' : c.qcTemp);
-  $('#cfgAiRecipeTemp').value = (c.aiRecipeTemp==null ? '' : c.aiRecipeTemp);   // v1.0.122 AI配方助手温度（默认0.9）
-  $('#cfgTempSubplot').value = (c.subplotTemp==null ? '' : c.subplotTemp);   // 支线进度
-  $('#cfgTempAudit').value = (c.auditTemp==null ? '' : c.auditTemp);         // 审校/锚点提取
-  $('#cfgTempRolling').value = (c.rollingTemp==null ? '' : c.rollingTemp);   // 滚动摘要
-  $('#cfgTempContent').value = (c.contentAdviseTemp==null ? '' : c.contentAdviseTemp);   // 内容建议
+  // v1.0.208 各任务温度已并入「分任务模型」面板（每行标题右侧的温度框），此处仅回显全局温度
 }
 
 // v10.16 温度保存（从 saveSettings 拆出，主题面板「保存温度」与设置弹窗「保存」共用）
 function saveTemps(){
   const rd = (id, def)=>{ const v=parseFloat($(id) && $(id).value); return isNaN(v)?def:v; };
   editCfg.temperature = rd('#cfgTemp', 0.7);
-  editCfg.outlineTemp = rd('#cfgTempOutline', 0.7);
-  editCfg.ideaTemp    = rd('#cfgTempIdea', 0.5);
-  editCfg.titleTemp   = rd('#cfgTempTitle', 0.5);
-  editCfg.planTemp    = rd('#cfgTempPlan', 0.4);
-  editCfg.stripTemp   = rd('#cfgTempStrip', 1.0);
-  editCfg.chapterTemp = rd('#cfgTempChapter', 0.5);
-  editCfg.qcTemp      = rd('#cfgTempQC', 0.2);
-  editCfg.aiRecipeTemp = rd('#cfgAiRecipeTemp', 0.9);   // v1.0.122 AI配方助手温度（默认0.9）
-  editCfg.subplotTemp = rd('#cfgTempSubplot', 0.25);
-  editCfg.auditTemp   = rd('#cfgTempAudit', 0.2);
-  editCfg.rollingTemp = rd('#cfgTempRolling', 0.3);
-  editCfg.contentAdviseTemp = rd('#cfgTempContent', 0.6);
+  // v1.0.208 各任务温度现由「分任务模型」面板以 getCfg 直接维护；此处把 editCfg 与 live cfg 同步，
+  // 避免「保存设置」用陈旧快照覆盖掉分任务面板已改的温度。
+  const live = getCfg();
+  const TM_FIELDS = ['ideaTemp','dictmasterTemp','assetsTemp','titleTemp','planTemp','stripTemp','chapterTemp','qcTemp','aiRecipeTemp','subplotTemp','auditTemp','rollingTemp','contentAdviseTemp'];
+  TM_FIELDS.forEach(f=>{ if(live && typeof live[f]==='number') editCfg[f]=live[f]; });
 }
 
 function _curSpec(){
@@ -13806,8 +13883,9 @@ function updateCfgBadge(){
 const TM_GROUPS = [
   { title:'✍️ 重创作（要质量，费用大头，建议主力模型）', keys:[
     ['chapter','正文生成（强）','全书正文质量与费用大头；所选模型须支持流式（stream）'],
-    ['outline','故事大纲（强）','决定全书骨架，建议质量优先'],
+    ['dictmaster','词典达人 · 万物词典（强）','JSON 契约：人物十维＋人物关系表＋地名关联表＋专名关联表＋世界观规则，供正文一致消费'],
     ['planBeats','规划师 · 节拍表（强）','JSON，逐章情节节拍'],
+    ['planTimeline','规划师 · 时间线（强）','JSON，全局章节时间线分段'],
     ['plannerTitles','规划师 · 标题定稿（中）','JSON，全书章节标题；短文本创意，中档够且省费'],
     ['plannerAux','规划师 · 词典播种/伏笔（中）','JSON 任务；体量小但需严谨']
   ]},
@@ -13828,7 +13906,17 @@ const TM_GROUPS = [
     ['recipe','配方产物（中）','AI 配方助手；候选配方需判断力']
   ]}
 ];
+
+// v1.0.208 分任务模型内嵌温度：taskKey → [温度字段, 建议缺省]。多个任务可共享同一温度字段（规划师系列共用 planTemp）。
+const TM_TEMP = {
+  chapter:['chapterTemp',0.5], dictmaster:['dictmasterTemp',0.5],
+  planBeats:['planTemp',0.4], planTimeline:['planTemp',0.4], plannerTitles:['planTemp',0.4], plannerAux:['planTemp',0.4],
+  idea:['ideaTemp',0.5], titleAdvice:['titleTemp',0.5], contentAdvice:['contentAdviseTemp',0.6],
+  glossary:['qcTemp',0.2], subplot:['subplotTemp',0.25], strip:['stripTemp',1.0],
+  rolling:['rollingTemp',0.3], audit:['auditTemp',0.2], assets:['assetsTemp',0.7], recipe:['aiRecipeTemp',0.9]
+};
 let editTM = null;          // 面板暂存：保存前绝不落盘（对齐设置弹窗 editCfg 模式）
+let editTemps = {};         // v1.0.208 面板内每个温度字段暂存（按字段存值）；保存前不落盘
 let _tmEscHandler = null;   // ESC 关闭挂钩（现有 modal 无全局 ESC，本面板自持）
 function tmCustomCount(tm){ return TM_KEYS.filter(k=> tm && tm[k]).length; }
 function updateTmBadge(){
@@ -13847,6 +13935,9 @@ function tmResolvePreview(triple){
 }
 function openTaskModelPanel(){
   editTM = JSON.parse(JSON.stringify(getCfg().taskModels || {}));
+  editTemps = {};   // v1.0.208 载入各任务温度暂存（按温度字段；规划师系列共享 planTemp）
+  const g0 = getCfg();
+  Object.keys(TM_TEMP).forEach(k=>{ const f=TM_TEMP[k][0]; if(f && !(f in editTemps)) editTemps[f]=(g0[f]==null?TM_TEMP[k][1]:g0[f]); });
   $('#taskModelModal').classList.remove('hidden');
   const st=$('#tmStatus'); if(st){ st.className='status'; st.textContent=''; }
   renderTaskModelPanel();
@@ -13856,7 +13947,7 @@ function openTaskModelPanel(){
 function closeTaskModelPanel(){
   $('#taskModelModal').classList.add('hidden');
   if(_tmEscHandler){ document.removeEventListener('keydown', _tmEscHandler); _tmEscHandler=null; }
-  editTM = null;
+  editTM = null; editTemps = {};
 }
 // 关闭保护：有未保存差异时确认放弃（现有设置弹窗无此保护，本面板新增）
 function requestCloseTaskModelPanel(){
@@ -13887,8 +13978,12 @@ function renderTaskModelPanel(){
     const grp = cfg.groups.find(g=>g.id===gid);
     const kid = tm ? tm.keyId : '';
     const mid = tm ? tm.model : '';
+    const tf = TM_TEMP[key];
+    const tval = tf ? (editTemps[tf[0]]==null ? tf[1] : editTemps[tf[0]]) : '';
     return `<div class="tm-row${tm?' tm-custom':''}" data-tm-row="${key}">
-      <div class="tm-head"><span class="tm-name">${esc(name)}</span><span class="tm-note">${esc(note||'')}</span></div>
+      <div class="tm-head"><span class="tm-name">${esc(name)}</span><span class="tm-note">${esc(note||'')}</span>
+        ${tf?`<input type="number" inputmode="decimal" step="0.05" min="0" max="2" class="tm-temp" data-tm-temp="${key}" value="${tval}" placeholder="温度 ${tf[1]}" title="${esc(name)} 的 AI 温度（留空并保存＝恢复建议值）">`:'<span class="tm-temp-void"></span>'}
+      </div>
       <div class="tm-sels">
         <select data-tm-sel="group" data-tm-key="${key}">
           <option value="">跟随全局</option>
@@ -13901,7 +13996,7 @@ function renderTaskModelPanel(){
     </div>`;
   };
   body.innerHTML = `
-    <div class="cv-div">全书费用大头 = <b>正文生成</b>；把轻维护任务换成 flash 通常能省一半以上。所有任务仍是单出口串行请求，不会并发多个 AI。deepseek-v4-flash-vision-exp 为带视觉模型，本应用全站纯文本请求，选它无额外收益。</div>
+    <div class="cv-div">全书费用大头 = <b>正文生成</b>；把轻维护任务换成 flash 通常能省一半以上。所有任务仍是单出口串行请求，不会并发多个 AI。deepseek-v4-flash-vision-exp 为带视觉模型，本应用全站纯文本请求，选它无额外收益。<br>v1.0.208：每一行标题最右侧的<b>温度框</b>即为该任务 AI 温度（留空并保存＝恢复建议值），随本面板「保存」一并生效；规划师系列（节拍表/时间线/标题/播种伏笔）共用同一温度。</div>
     <div class="set-block">
       <div class="set-block-head"><span>◆ 全局默认（未单独设置的任务都用它）</span></div>
       <div class="tm-preview">${esc((curGroup.label||'AI') + ' · ' + (curKey?(curKey.label||'账号'):'⚠️ 无账号') + ' · ' + (curModel?curModel.name:'⚠️ 无模型'))}（只读；去上方「AI 模型配置」修改）</div>
@@ -13927,6 +14022,16 @@ function renderTaskModelPanel(){
       refreshTmResetBtn();
     };
   });
+  // v1.0.208 温度输入：失焦写入 editTemps（按温度字段），随即重渲染以同步共享同一字段的多任务与提示
+  $$('#tmBody [data-tm-temp]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const tf = TM_TEMP[inp.dataset.tmTemp]; if(!tf) return;
+      const v = parseFloat(inp.value);
+      editTemps[tf[0]] = (inp.value==='' || isNaN(v)) ? tf[1] : v;
+      renderTaskModelPanel();
+      refreshTmResetBtn();
+    });
+  });
   refreshTmResetBtn();
 }
 function saveTaskModels(){
@@ -13938,11 +14043,15 @@ function saveTaskModels(){
     const ok = v && typeof v==='object' && v.groupId && v.keyId && v.model && cfg.groups.some(g=>g.id===v.groupId);
     clean[k] = ok ? { groupId:v.groupId, keyId:v.keyId, model:v.model } : '';
   });
-  const c = getCfg(); c.taskModels = clean; saveCfg(c);
+  const c = getCfg(); c.taskModels = clean;
+  // v1.0.208 一并保存各任务温度（分任务模型面板右侧温度框；按温度字段写入）
+  Object.keys(TM_TEMP).forEach(k=>{ const f=TM_TEMP[k][0]; if(f && editTemps && (f in editTemps)) c[f]=editTemps[f]; });
+  saveCfg(c);
   const n = tmCustomCount(clean);
+  const nT = Object.keys(TM_TEMP).filter(k=>{ const f=TM_TEMP[k][0]; return f && editTemps && editTemps[f]!=null; }).length;
   closeTaskModelPanel();
   updateCfgBadge();
-  toast(n ? ('分任务模型已保存：'+n+' 项自定义，其余跟随全局') : '分任务模型已保存：全部跟随全局');
+  toast(n ? ('分任务模型已保存：'+n+' 项自定义，其余跟随全局') : '分任务模型已保存：全部跟随全局')+(nT?('；已同步 '+nT+' 项任务温度'):'');
 }
 
 /* --- 第一段：服务列表 --- */
