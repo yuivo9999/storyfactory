@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.246';   // v1.0.246 大纲 AI 链路彻底退役清理：大纲早已无 AI 化（genOutline=纯搬运），其整套 AI 管道已成死代码——删除 OUTLINE_GEN_SYS/PRO/LEGACY、JSON_HEADER、buildOutlineSys、buildOutlineUser、formatNavBeaconForOutline、outlineCoreTerms、validateOutlineOutput/gradeOutlineCandidate/fillOutlineSoftFields/validateOutlineFaithful、AIValidators.outline、callAIGuarded 的 tolerateFaithOutline 兼容块，以及 getSystemPrompt/buildAIPrompt/AIBus.get 的 outline 分支；死状态字段 _lastPolishIdeaText 全量移除；保留仍被纯搬运 genOutline 消费的活字段 _lastPolishBrief（回填 navBeacon）。canRunAI/markAIRunning 中的 'outline' 仅为依赖进度状态标记，非 AI 调用，不受影响。v1.0.245 死代码清理：随「大纲无 AI 化」与「规划师四段拆分（v1.0.138）不再产出词典」，删除已无调用点的 GLOSSARY_SYS / outlineGlossaryInject / adherenceSys / NM_NAME_RULE_TEXT，并移除规划师 CHAPTER_PLAN_SYS_PRO 中遗留的 glossary 输出段（JSON schema / 硬性约束5 / 输出示例，该输出无人校验入库），核心任务与注释同步修正为「产出两样产物」。v1.0.244 人物卡 relation 去重（方案乙+丙）：(1)人物卡 relation 契约收紧为「一句话关系摘要（≤20字）」，多组关系的逐条明细一律由「人物关系表」承载——词典达人 prompt 收紧 + 生成校验护栏（>40字阻断并提示改走关系表），词典提取(LEGACY+PRO)的 relation 约束同步统一；(2)人物卡 UI 的 relation 改为只读展示（摘要·只读）+「✏️ 去人物关系表编辑」一键打开人物关系表弹窗，彻底消除人物卡与关系表的内容重复；(3)词典达人 summary 改为可空（空则省略展示），设计亮点说明改为整篇描述由词典达人卡片呈现。v1.0.243 万物词典正文注入去冗余：(1)人物关系/地名关联/专名关联三表不再在 L3 全量注入（与 fog 迷雾版双写纯冗余，且全量关系表会提前剧透），改由 fog 独家承担「按本章出场过滤的迷雾版」（同受预算红线保护，零丢失）；(2)人物行改用 fmtCharFullFields 7 字段上桌（与「人设防火墙」审计字段对齐），age/gender 等「未知」占位不再注入正文；(3)提取 fmtCharFullFields 供 L3 与 formatRelevantGlossary 共用，消除重复实现并接线 v243 预留函数。v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.248';   // v1.0.248 写作风格「标题(tone)/梗概(texture)」残留清除：写风配色收敛为单色（内置方案与自定义新建均只保留章节风格 element 色，取色器/新建表单改单色，旧三色数据读取取末槽=章节色，向后兼容）；删除从未被任何规则消费的 --c-tone/--c-texture CSS 变量及注入；剔除已收敛的 tone/texture 分组继承兜底与阅读器过滤、wsGroupStyleTags 不再需要 group 参数，并清理相关旧注释。v1.0.247 写作风格「节奏/浓度」范式残留清除：删除孤儿字段 out.recipe 与 chapterStyle.intensity（含预设/draft/快照/preset/覆盖全链路）、空占位函数 writeStyleIntHtml、死字段 elemOpen 与 WS_CONC_TXT 浓度注入，修剪 wsStyleNoteBlock 未用参数 st/demoLabel 并同步修正相关旧注释；注入链只保留 tags 驱动的章节风格(element)。v1.0.246 大纲 AI 链路彻底退役清理：大纲早已无 AI 化（genOutline=纯搬运），其整套 AI 管道已成死代码——删除 OUTLINE_GEN_SYS/PRO/LEGACY、JSON_HEADER、buildOutlineSys、buildOutlineUser、formatNavBeaconForOutline、outlineCoreTerms、validateOutlineOutput/gradeOutlineCandidate/fillOutlineSoftFields/validateOutlineFaithful、AIValidators.outline、callAIGuarded 的 tolerateFaithOutline 兼容块，以及 getSystemPrompt/buildAIPrompt/AIBus.get 的 outline 分支；死状态字段 _lastPolishIdeaText 全量移除；保留仍被纯搬运 genOutline 消费的活字段 _lastPolishBrief（回填 navBeacon）。canRunAI/markAIRunning 中的 'outline' 仅为依赖进度状态标记，非 AI 调用，不受影响。v1.0.245 死代码清理：随「大纲无 AI 化」与「规划师四段拆分（v1.0.138）不再产出词典」，删除已无调用点的 GLOSSARY_SYS / outlineGlossaryInject / adherenceSys / NM_NAME_RULE_TEXT，并移除规划师 CHAPTER_PLAN_SYS_PRO 中遗留的 glossary 输出段（JSON schema / 硬性约束5 / 输出示例，该输出无人校验入库），核心任务与注释同步修正为「产出两样产物」。v1.0.244 人物卡 relation 去重（方案乙+丙）：(1)人物卡 relation 契约收紧为「一句话关系摘要（≤20字）」，多组关系的逐条明细一律由「人物关系表」承载——词典达人 prompt 收紧 + 生成校验护栏（>40字阻断并提示改走关系表），词典提取(LEGACY+PRO)的 relation 约束同步统一；(2)人物卡 UI 的 relation 改为只读展示（摘要·只读）+「✏️ 去人物关系表编辑」一键打开人物关系表弹窗，彻底消除人物卡与关系表的内容重复；(3)词典达人 summary 改为可空（空则省略展示），设计亮点说明改为整篇描述由词典达人卡片呈现。v1.0.243 万物词典正文注入去冗余：(1)人物关系/地名关联/专名关联三表不再在 L3 全量注入（与 fog 迷雾版双写纯冗余，且全量关系表会提前剧透），改由 fog 独家承担「按本章出场过滤的迷雾版」（同受预算红线保护，零丢失）；(2)人物行改用 fmtCharFullFields 7 字段上桌（与「人设防火墙」审计字段对齐），age/gender 等「未知」占位不再注入正文；(3)提取 fmtCharFullFields 供 L3 与 formatRelevantGlossary 共用，消除重复实现并接线 v243 预留函数。v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -85,8 +85,6 @@ let gglib = [];                  // v8 词典库：[{id, name, note, savedAt, g:
 
 const state = {
   mode: 'shortfilm',    // 'shortfilm' 短片 / 'longnovel' 经典长篇小说
-  recipe: 'mesh',       // (兼容旧字段) 旧式单一范式 id；新项目用 recipeSet
-  recipeSet: {},   // 内含 recFold 等界面状态；节奏/标题风格范式已整体移除
   wordRange: null,      // (兼容遗留) 不再作为长篇必填；保留字段避免旧快照破坏
   chapterRange: null,   // (兼容遗留) 同上
   totalWords: null,     // (兼容遗留) 同上
@@ -124,7 +122,7 @@ const state = {
   expSel: [],           // 长篇导出勾选的章节索引（随项目快照持久化，P3-4）
   expOpenGroups: [],    // 长篇导出章节选择：手动展开的分组序号（配合限高内滚+分组折叠，缓解超长章节列表，P5）
   hist: { characters:[], scenes:[], cover:[], storyboard:[] },  // P1-3 角色/场景/封面/分镜覆盖前快照（各上限10）
-  chapterStyle: { tags: [], intensity: 2, collapsed: false, elemOpen: false },   // 写作风格（v2.0）：tags=风格id数组（多选，分 标题/梗概/章节 三组）；elemOpen=卡片内「章节风格」组是否展开（默认收拢）
+  chapterStyle: { tags: [], collapsed: false },   // 写作风格（v2.0）：tags=风格id数组（多选，归入章节风格组）
   scenes: [],           // [{name, 作用, description, prompt}]
   storyboard: [],       // [{镜号,章节,时长,景别,角度,运镜,主体,构图,光线,画面描述,对白,转场,出图提示词,连续性,剪辑动机}]
   boardConcepts: [],    // 每章一条 {视觉概念, 母题}（分镜生成时随章节返回）
@@ -515,8 +513,6 @@ function makeId(){ return 'p' + Date.now().toString(36) + Math.random().toString
 function projectSnapshot(){
   return {
     mode: state.mode || 'shortfilm',
-    recipe: state.recipe || 'mesh',
-    recipeSet: state.recipeSet || {},
     wordRange: state.wordRange || null,
     chapterRange: state.chapterRange || null,
     totalWords: state.totalWords || null,
@@ -548,7 +544,7 @@ function projectSnapshot(){
     contentAdviceHist: Array.isArray(state.contentAdviceHist) ? state.contentAdviceHist : [],   // v10.59 章节内容 AI 建议快照
     expSel: Array.isArray(state.expSel) ? state.expSel : [],
     hist: state.hist || { characters:[], scenes:[], cover:[], storyboard:[] },
-    chapterStyle: state.chapterStyle || { tags: [], intensity: 2, collapsed: false },
+    chapterStyle: state.chapterStyle || { tags: [], collapsed: false },
     fcCollapsed: !!state.fcCollapsed,   // 4.6 Plus 事实看板卡折叠
     rsCollapsed: !!state.rsCollapsed,   // 4.6 Plus 滚动摘要卡折叠
     _fixQueue: Array.isArray(state._fixQueue) ? state._fixQueue : [],   // 4.6 Plus 正文修复队列
@@ -575,8 +571,6 @@ function projectSnapshot(){
 // 把项目快照写入当前 state；内容缺失/损坏时切到空白但保持调用方可控
 function applyProject(p){
   state.mode = (p.mode === 'longnovel') ? 'longnovel' : 'shortfilm';
-  state.recipe = p.recipe || 'mesh';
-  state.recipeSet = migrateRecipeSet(p.recipeSet, p.recipe);
   state.wordRange = (p.wordRange && p.wordRange.min && p.wordRange.max) ? {min:+p.wordRange.min, max:+p.wordRange.max} : (p.chapterRange ? null : null);
   state.chapterRange = (p.chapterRange && p.chapterRange.min && p.chapterRange.max) ? {min:+p.chapterRange.min, max:+p.chapterRange.max} : null;
   state.totalWords = (p.totalWords && +p.totalWords>0) ? +p.totalWords : null;
@@ -622,8 +616,8 @@ function applyProject(p){
     storyboard: Array.isArray(p.hist.storyboard)?p.hist.storyboard:[]
   } : { characters:[], scenes:[], cover:[], storyboard:[] };
   state.chapterStyle = (p.chapterStyle && typeof p.chapterStyle === 'object')
-    ? { tags: Array.isArray(p.chapterStyle.tags)?p.chapterStyle.tags:[], intensity: (p.chapterStyle.intensity===1||p.chapterStyle.intensity===3)?p.chapterStyle.intensity:2, collapsed: !!p.chapterStyle.collapsed, elemOpen: p.chapterStyle.elemOpen === true }
-    : { tags: [], intensity: 2, collapsed: false, elemOpen: false };
+    ? { tags: Array.isArray(p.chapterStyle.tags)?p.chapterStyle.tags:[], collapsed: !!p.chapterStyle.collapsed }
+    : { tags: [], collapsed: false };
   wsDraft = null;   // v2.1 切作品后草稿重置（以新作品的生效配置为起点）
   state.scenes = p.scenes || [];
   state.storyboard = p.storyboard || [];
@@ -650,8 +644,6 @@ function applyProject(p){
 }
 function clearState(){
   state.mode = 'shortfilm';
-  state.recipe = 'mesh';
-  state.recipeSet = {};
   state.wordRange = null; state.chapterRange = null; state.totalWords = null; state.chapterCount = null;
   state.idea = ''; state.outline = null; state.coverPrompt = ''; state.coverWithTitle = false; state.outlineConfirmed = false;
   state.glossAdherence = 60; state.glossAllowFill = false; state.glossAutoFill = true; state.gsCollapsed = true;
@@ -663,7 +655,7 @@ function clearState(){
   state.ctAdviceHist = []; state.contentAdviceHist = [];   // v10.59 随项目的 AI 建议快照（章节标题 / 章节内容）
   state.expSel = [];
   state.hist = { characters:[], scenes:[], cover:[], storyboard:[] };
-  state.chapterStyle = { tags: [], intensity: 2, collapsed: false, elemOpen: false };
+  state.chapterStyle = { tags: [], collapsed: false };
   state.fcCollapsed = true; state.rsCollapsed = true;   // v1.0.163 折叠态重置（默认收合）
   state._fixQueue = [];   // 4.6 Plus 修复队列重置
   state._lastPolishBrief = null;   // 4.7 Pro 优化构想简报重置
@@ -679,14 +671,6 @@ function clearState(){
   state._lastTitlesRaw = '';
   wsDraft = null;   // v2.1 新项目草稿重置
   currentStep = 1;
-}
-// 兼容旧档 recipe/recipeSet → 现用 recipeSet（节奏/标题风格范式已移除）
-function migrateRecipeSet(set, legacyRecipe){
-  // 节奏/标题风格范式已整体移除（遗留清理）：仅保留 recFold 等对象字段，丢弃已废弃的 rhythm/titleStyle
-  const safe = (set && typeof set === 'object') ? { ...set } : {};
-  delete safe.rhythm;
-  delete safe.titleStyle;
-  return safe;
 }
 // ============ 存储层 v12：每项目一条 localStorage，超限单条自动降级 IndexedDB ============
 // 设计（保持内存模型 lib={curId,items} 不变，仅换落盘/加载通道，调用方无需改动）：
@@ -842,7 +826,6 @@ function normalizeLegacyProject(p){
   out.mode = (s.mode === 'longnovel' || s.mode === 'long') ? 'longnovel' : (s.mode || 'shortfilm');
   out.mode = (out.mode === 'long') ? 'longnovel' : out.mode;
   out.mode = (out.mode === 'short' || out.mode === 'shortfilm') ? 'shortfilm' : out.mode;
-  out.recipe = s.recipe || 'mesh';
   out.idea = s.idea != null ? s.idea : '';
   out.outline = s.outline || null;
   out.outlineConfirmed = !!s.outlineConfirmed;
@@ -853,8 +836,8 @@ function normalizeLegacyProject(p){
   out.qcRecord = undefined;   // 无残留
   if(out.outline) delete out.outline.titleQC;
   out.chapterStyle = (s.chapterStyle && typeof s.chapterStyle === 'object')
-    ? { tags: Array.isArray(s.chapterStyle.tags)?s.chapterStyle.tags:[], intensity:(s.chapterStyle.intensity===1||s.chapterStyle.intensity===3)?s.chapterStyle.intensity:2, collapsed:!!s.chapterStyle.collapsed }
-    : { tags:[], intensity:2, collapsed:false };
+    ? { tags: Array.isArray(s.chapterStyle.tags)?s.chapterStyle.tags:[], collapsed:!!s.chapterStyle.collapsed }
+    : { tags:[], collapsed:false };
   out.glossAdherence = (typeof s.glossAdherence === 'number') ? s.glossAdherence : 60;
   out.glossAutoFill = (s.glossAutoFill === undefined) ? true : !!s.glossAutoFill;
   out.langLayer = (s.langLayer === undefined) ? true : !!s.langLayer;
@@ -2580,10 +2563,10 @@ function applyChosenCandidate(c, opts){
   const libIds = writeStyleLib().map(s=>s.id);
   // v10.48 选用即应用：替换写生效配置并持久化；回退依赖「收藏当前」预设或本配方仍存于「我的配方」
   const st2 = writeStyleState();
-  const d2 = wsDraftInit();                       // 从生效配置取 intensity
+  const d2 = wsDraftInit();                       // 从生效配置取 tags
   d2.tags = (c.tags||[]).filter(id=> libIds.includes(id));   // 替换而非并集
   (c.gap||[]).forEach(g=>{ if(g && g.id && libIds.includes(g.id) && !d2.tags.includes(g.id)) d2.tags.push(g.id); });
-  st2.tags = d2.tags.slice(); st2.intensity = d2.intensity||2;
+  st2.tags = d2.tags.slice();
   persist();
   wsDraft = null;                                 // 草稿与生效合一 -> 卡片显示「✔已生效」
   if(!opts || opts.render !== false) aiRp = null;
@@ -2668,18 +2651,18 @@ function writeStyleLib(){
   const added = Array.isArray(c && c.added) ? c.added : [];
   // v10.19 系统内置词条保留原始来源 cat（语气基调/文风质感/语言元素），供章节风格组内分块展示
   const base = WRITE_STYLES.filter(s=> !removed.includes(s.id)).map(s=>{
-    const cat = s.cat || (s.group==='tone' ? 'tone' : (s.group==='texture' ? 'texture' : 'element'));
+    const cat = s.cat || 'element';
     return { ...s, group:'element', cat, note: notes[s.id] || s.note };
   });
   const customs = added.map(a=>{
     // v10.52 优先用入库时持久化的五维；老数据（无独立 tips/avoid/check）回退 parseCustomStyleNote 从 note 拆
     const hasStruc = (Array.isArray(a.tips)&&a.tips.length) || (Array.isArray(a.avoid)&&a.avoid.length) || (Array.isArray(a.check)&&a.check.length);
     const parsed = hasStruc ? { tips:a.tips||[], avoid:a.avoid||[], check:a.check||[], demo:a.demo||'' } : parseCustomStyleNote(a.note||'');
-    // v10.20 自定义项归入用户选择的五大类分类；老数据（tone/texture/element）映射到自定义兜底
+    // v10.20 自定义项归入用户选择的五大类分类；老数据（未命五大类）映射到自定义兜底
     const cat = ['语言质感','情绪与张力','节奏与网感','叙事技法','台词设计'].includes(a.group) ? a.group : 'custom';
     return { id:a.id, group:'element', name:a.name||'未命名', note:a.note||'', custom:true, cat, tips:parsed.tips||[], avoid:parsed.avoid||[], check:parsed.check||[], demo:parsed.demo||a.demo||'', seal:(a.seal===undefined?0:a.seal), warning:a.warning||'' };
   });
-  // v11 移除「标题风格(tone)/梗概风格(texture)」残留分组：写作风格收敛为章节风格(element)，按五大类 cat 组织展示。
+  // v11 起写作风格收敛为章节风格(element)，按五大类 cat 组织展示。
   return base.concat(customs);
 }
 function writeStyleById(id){
@@ -2701,23 +2684,18 @@ function wiseWhyText(txt){
 }
 // 当前生效的写作风格配置：override 优先（单章覆盖/对比用），缺省用 state.chapterStyle
 function curWriteStyle(override){
-  if(override && Array.isArray(override.tags)) return { tags: override.tags, intensity: (override.intensity===1||override.intensity===3)?override.intensity:2 };
+  if(override && Array.isArray(override.tags)) return { tags: override.tags };
   const s = state.chapterStyle || {};
-  return { tags: Array.isArray(s.tags)?s.tags:[], intensity: (s.intensity===1||s.intensity===3)?s.intensity:2 };
+  return { tags: Array.isArray(s.tags)?s.tags:[] };
 }
-// v10.17 按使用目标分组取所选风格对象：章节风格(element)/标题风格(tone)/梗概风格(texture)
-function wsGroupStyleTags(override, group){
+// 取所选章节风格(element)对象（写作风格已收敛为章节风格一组）
+function wsGroupStyleTags(override){
   const st = curWriteStyle(override);
   const lib = writeStyleLib();
-  return (Array.isArray(st.tags) ? st.tags : []).map(id=> lib.find(s=>s.id===id)).filter(s=> s && s.group === group);
+  return (Array.isArray(st.tags) ? st.tags : []).map(id=> lib.find(s=>s.id===id)).filter(Boolean);
 }
-const WS_CONC_TXT = {
-  1:'浓度（轻）：全章约三分之一段落体现风格，其余按常规写作；每段最多 1-2 处风格痕迹。写完自查：不足处不必强补，保持自然。',
-  2:'浓度（中）：全章大部分段落（约三分之二）体现风格，每段至少 1 处明显痕迹；开头段落必须体现以立住基调。写完自查：不达标段落补强。',
-  3:'浓度（重）：全章每一段都要体现风格，对话与叙述几乎句句带痕迹，形成统一文风。写完自查：无风格痕迹的段落一律重写。'
-};
-// 生成注入块：最高优先指令 + 浓度量化 + 四件套配方（仅展开选中项）；无选中返回空串
-function wsStyleNoteBlock(items, st, headTitle, intro, demoLabel){
+// 生成注入块：最高优先指令 + 四件套配方（仅展开选中项）；无选中返回空串
+function wsStyleNoteBlock(items, headTitle, intro){
   if(!items.length) return '';
   const lines = ['【' + headTitle + '（用户指定 · 最高优先指令）】', intro];
   items.forEach(s=>{
@@ -2732,18 +2710,15 @@ function wsStyleNoteBlock(items, st, headTitle, intro, demoLabel){
 }
 // 章节风格（element 组）注入：用于章节正文生成（单章/批量/重生成；含角色扮演对比）
 function chapterStyleNote(override){
-  const items = wsGroupStyleTags(override, 'element');
-  const st = curWriteStyle(override);
-  return wsStyleNoteBlock(items, st, '写作风格', '本指令为本章写作的最高优先要求（第一优先，压过本次人工干预）：当它与节奏、篇幅、原创性等任何其他要求冲突时，以本指令为准；唯一不可逾越的红线：不得破坏人名/地名/专名一致性、不得违反基础剧情逻辑与人物设定。');
+  const items = wsGroupStyleTags(override);
+  return wsStyleNoteBlock(items, '写作风格', '本指令为本章写作的最高优先要求（第一优先，压过本次人工干预）：当它与节奏、篇幅、原创性等任何其他要求冲突时，以本指令为准；唯一不可逾越的红线：不得破坏人名/地名/专名一致性、不得违反基础剧情逻辑与人物设定。');
 }
-// v11 规划师轻量风格注入：只给所选章节风格(element)的名称 + 浓度，不给 note/五维（规划师只需风格基调锚点，避免与正文完整版重复）。
+// v11 规划师轻量风格注入：只给所选章节风格(element)的名称，不给 note/五维（规划师只需风格基调锚点，避免与正文完整版重复）。
 function writeStyleNamesBlock(){
-  const items = wsGroupStyleTags(null, 'element');
+  const items = wsGroupStyleTags(null);
   if(!items.length) return '';
   const names = items.map(s=>s.name).join('、');
-  const st = curWriteStyle();
-  const conc = WS_CONC_TXT[st.intensity] ? `浓度：${WS_CONC_TXT[st.intensity]}` : '';
-  return `【写作风格（第一优先）】写作风格：${names}${conc?('，'+conc):''}。\n本指令为本章规划的最高优先要求：当其与其它要求冲突时以本指令为准；唯一不可逾越红线：不破坏人名/地名/专名一致性、不违反基础剧情逻辑与人物设定。`;
+  return `【写作风格（第一优先）】写作风格：${names}。\n本指令为本章规划的最高优先要求：当其与其它要求冲突时以本指令为准；唯一不可逾越红线：不破坏人名/地名/专名一致性、不违反基础剧情逻辑与人物设定。`;
 }
 
 
@@ -4903,24 +4878,24 @@ const CYBER_HOME_GRID = `
  * v2.0 写作风格选择器：主卡片 + 预设 + 收藏 + 词库管理
  * ========================================================= */
 const WRITE_PRESETS = [
-  { id:'clear',          name:'🧹 默认（无风格）', tags:[], intensity:2 },
-  { id:'preset-humor',   name:'😆 网感轻喜',  tags:['roast','webman','fast'], intensity:2 },
-  { id:'preset-art',     name:'🌸 文艺唯美',  tags:['wenyi','poetic','minimal'], intensity:2 },
-  { id:'preset-classic', name:'🏮 古典文学',  tags:['jinyong','ornate','storyteller'], intensity:3 },
-  { id:'preset-mystery', name:'🕵️ 悬疑压抑',  tags:['suspense2','jifeng','multipov'], intensity:2 },
-  { id:'preset-passion', name:'🔥 热血燃向',  tags:['fast','sliceoflife'], intensity:3 }
+  { id:'clear',          name:'🧹 默认（无风格）', tags:[] },
+  { id:'preset-humor',   name:'😆 网感轻喜',  tags:['roast','webman','fast'] },
+  { id:'preset-art',     name:'🌸 文艺唯美',  tags:['wenyi','poetic','minimal'] },
+  { id:'preset-classic', name:'🏮 古典文学',  tags:['jinyong','ornate','storyteller'] },
+  { id:'preset-mystery', name:'🕵️ 悬疑压抑',  tags:['suspense2','jifeng','multipov'] },
+  { id:'preset-passion', name:'🔥 热血燃向',  tags:['fast','sliceoflife'] }
 ];
-function writeStyleState(){ return state.chapterStyle = state.chapterStyle || { tags:[], intensity:2, collapsed:false }; }
+function writeStyleState(){ return state.chapterStyle = state.chapterStyle || { tags:[], collapsed:false }; }
 // v2.1 主卡「生效确认」：草稿态（内存，不参与生成）vs 生效态（state.chapterStyle）
 let wsDraft = null;   // null=未编辑（与生效一致）；非 null=有草稿待应用
 function wsDraftInit(){
-  if(!wsDraft){ const st = writeStyleState(); wsDraft = { tags:(st.tags||[]).slice(), intensity: st.intensity||2 }; }
+  if(!wsDraft){ const st = writeStyleState(); wsDraft = { tags:(st.tags||[]).slice() }; }
   return wsDraft;
 }
 function wsDraftDirty(d, st){
   const a = ((d&&d.tags)||[]).slice().sort().join(',');
   const b = ((st&&st.tags)||[]).slice().sort().join(',');
-  return a !== b || ((d&&d.intensity)||2) !== ((st&&st.intensity)||2);
+  return a !== b;
 }
 // 局部刷新主卡 UI（不重建 DOM，避免丢焦点）：chips 高亮 / 摘要行双态 / 应用按钮 / 提示行
 function refreshWsUI(){
@@ -4951,25 +4926,25 @@ function refreshWsUI(){
   const hint = $('.ws-dirty-hint');
   if(hint) hint.style.display = dirty ? '' : 'none';
 }
-// 通用 chips / 浓度段选渲染（主卡片与重生成弹窗复用；dataPrefix 区分绑定域）
+// 通用 chips 段选渲染（主卡片与重生成弹窗复用；dataPrefix 区分绑定域）
 // opts.plus：每组末尾加「＋」添加入口；opts.cardFold：主卡启用「章节风格」折叠（默认收拢）
-// v10.19 写作风格三组配色方案：色序固定 [标题(tone), 梗概(texture), 章节(element)]（即上/中/下）
-// 来自用户提供的 11 套三色搭配图；空字符串代表「默认无配色」。存入 cfg.styleCustom.colorScheme（存索引，''=默认）
+// 写作风格配色：v1.0.248 起仅章节风格(element)消费配色，方案收敛为单色（原「标题(tone)/梗概(texture)」通道已退役）；旧三色数据末槽即章节色，读取一律取末槽兼容
+// 来自用户提供的 11 套配色；空字符串代表「默认无配色」。存入 cfg.styleCustom.colorScheme（存索引，''=默认）
 const WS_COLOR_SCHEMES = [
   { id:'none',    name:'默认（无配色）', c:[] },
-  { id:'s1',  name:'活力橙紫青', c:['#f84914','#59187e','#2fb4af'] },
-  { id:'s2',  name:'海洋蓝青',   c:['#1e95d4','#78cede','#b1e4e7'] },
-  { id:'s3',  name:'皇家蓝绛红', c:['#0176bb','#c42536','#dcb582'] },
-  { id:'s4',  name:'蔷薇粉紫',   c:['#f6afad','#c49ee4','#e2d8ef'] },
-  { id:'s5',  name:'绯红玫紫',   c:['#f83177','#c6979c','#fcbed4'] },
-  { id:'s6',  name:'绯红钢青',   c:['#fa2742','#7384af','#f8b79a'] },
-  { id:'s7',  name:'青黄珊瑚',   c:['#54d5c7','#edba38','#f65150'] },
-  { id:'s8',  name:'深蓝明黄',   c:['#17519e','#f7dd2f','#4fcbe9'] },
-  { id:'s9',  name:'薄荷明黄',   c:['#8fedc2','#fdd741','#24b4a5'] },
-  { id:'s10', name:'暖金珊瑚',   c:['#f4d474','#ef5a56','#f9e9da'] },
-  { id:'s11', name:'自然翠金',   c:['#67d47e','#efeb86','#f5b11e'] },
+  { id:'s1',  name:'活力橙紫青', c:['#2fb4af'] },
+  { id:'s2',  name:'海洋蓝青',   c:['#b1e4e7'] },
+  { id:'s3',  name:'皇家蓝绛红', c:['#dcb582'] },
+  { id:'s4',  name:'蔷薇粉紫',   c:['#e2d8ef'] },
+  { id:'s5',  name:'绯红玫紫',   c:['#fcbed4'] },
+  { id:'s6',  name:'绯红钢青',   c:['#f8b79a'] },
+  { id:'s7',  name:'青黄珊瑚',   c:['#f65150'] },
+  { id:'s8',  name:'深蓝明黄',   c:['#4fcbe9'] },
+  { id:'s9',  name:'薄荷明黄',   c:['#24b4a5'] },
+  { id:'s10', name:'暖金珊瑚',   c:['#f9e9da'] },
+  { id:'s11', name:'自然翠金',   c:['#f5b11e'] },
 ];
-/* ===== 配色管理（v10.20）：内置11套 + 我的自定义；支持删除 / 撤销 / 恢复全部 / 新建三色 ===== */
+/* ===== 配色管理（v10.20）：内置11套 + 我的自定义；支持删除 / 撤销 / 恢复全部 / 新建配色 ===== */
 function wsColorCfgOf(c){ c.styleCustom = c.styleCustom || { notes:{},added:[],removed:[] }; c.styleCustom.colorSchemes = c.styleCustom.colorSchemes || { custom:[], removedCustom:[], removedBuiltin:[], undo:[] }; return c.styleCustom.colorSchemes; }
 function wsColorCfg(){ return wsColorCfgOf(getCfg()); }               // 只读访问
 function wsCustomColors(){ return wsColorCfg().custom || []; }        // 未删除的自定义
@@ -4981,7 +4956,7 @@ function wsColorSchemesList(){
   const rm = wsRemovedBuiltin();
   return WS_COLOR_SCHEMES.filter(s=>!rm.includes(s.id)).concat(wsCustomColors());
 }
-// 取某方案的三色（含已删除的自定义，供撤销恢复用）；无配色返回空数组
+// 取某方案的配色（旧数据三色取末槽=章节色；含已删除的自定义，供撤销恢复用）；无配色返回空数组
 function wsSchemeColors(id){
   if(id==='none') return [];
   const s = WS_COLOR_SCHEMES.find(x=>x.id===id) || wsCustomColors().find(x=>x.id===id) || wsRemovedCustom().find(x=>x.id===id);
@@ -5001,16 +4976,16 @@ function wsColorSchemeId(){
   if(wsCustomColors().find(s=>s.id===id)) return id;
   return 'none';
 }
-// 重建「我的自定义」配色的注入 CSS（[data-cs="cu_*"] → 三色变量），供卡片/重生成弹窗即时着色
+// 重建「我的自定义」配色的注入 CSS（[data-cs="cu_*"] → --c-element），供卡片/重生成弹窗即时着色；旧三色数据取末槽=章节色
 function rebuildCustomColorCss(){
   let el = document.getElementById('wsCustomCss');
   if(!el){ el = document.createElement('style'); el.id='wsCustomCss'; document.head.appendChild(el); }
-  el.textContent = wsCustomColors().map(s=>`[data-cs="${s.id}"]{--c-tone:${s.c[0]};--c-texture:${s.c[1]};--c-element:${s.c[2]}}`).join('\n');
+  el.textContent = wsCustomColors().map(s=>{ const col=(s.c&&s.c.length)? s.c[s.c.length-1] : ''; return col ? `[data-cs="${s.id}"]{--c-element:${col}}` : ''; }).filter(Boolean).join('\n');
 }
 function writeStyleChipsHtml(sel, dataPrefix, opts){
   opts = opts || {};
   const lib = writeStyleLib();
-  // v10.19 直接以五大类文风（cat）排列，不再分「标题/梗概/章节」三组
+  // 直接以五大类文风（cat）排列章节风格(element)词条
   const CAT_LABEL = { '语言质感':'① 语言质感', '情绪与张力':'② 情绪与张力', '节奏与网感':'③ 节奏与网感', '叙事技法':'④ 叙事技法', '台词设计':'⑤ 台词设计', custom:'⭐ 我的自定义' };
   const CAT_ORDER = ['语言质感','情绪与张力','节奏与网感','叙事技法','台词设计','custom'];
   const items = lib.filter(s=>s.group==='element');
@@ -5069,7 +5044,7 @@ function writeStyleChipsHtml(sel, dataPrefix, opts){
     ? `<div class="ws-chips">${opts.showTip !== false ? '<span class="ws-group-tip">可多选</span>' : ''}${plus}</div>` : '';
   return `${comboBar}${blocks}${chipsTail}`;
 }
-function writeStyleIntHtml(){} // v2.6 浓度已整体移除，保留空占位避免外部引用误伤
+
 // 风格 chip 切换公共逻辑：五大类词条可多选、可清空
 function toggleWriteTag(sel, id){
   const s = writeStyleById(id); if(!s) return;
@@ -5107,7 +5082,7 @@ function writeStyleCard(){
         <button type="button" class="btn small ghost" data-ws-clear>✕ 清空</button>
       </div>
       <p class="ws-dirty-hint" style="display:${dirty?'':'none'}">⚠️ 当前为草稿（${(draft.tags||[]).length} 项未生效），点「✔ 应用并保存」后开始生效；生成章节读的是已生效配置。</p>
-      <p class="muted" style="margin:6px 0 0;font-size:11px">按五大类文风多选，可同取多个词条叠加效果（如「文艺/范儿」＋「金句」）；浓度默认「中」，生成章节正文时生效。选完点「✔ 应用并保存」才生效。</p>
+      <p class="muted" style="margin:6px 0 0;font-size:11px">按五大类文风多选，可同取多个词条叠加效果（如「文艺/范儿」＋「金句」）；生成章节正文时生效。选完点「✔ 应用并保存」才生效。</p>
     </div>
   </div>`;
 }
@@ -5119,7 +5094,7 @@ function bindWriteStyle(){
     const body = $('.ws-body'); if(body) body.hidden = st.collapsed;
     const ico = head.querySelector('.sc-fold-ico'); if(ico) ico.textContent = st.collapsed?'▸':'▾';
   };
-  // v2.1：chips/浓度/预设/清空 一律改「草稿」→ 局部刷新 → 点「✔ 应用并保存」才生效
+  // v2.1：chips/预设/清空 一律改「草稿」→ 局部刷新 → 点「✔ 应用并保存」才生效
   $$('[data-ws-tag]').forEach(b=> b.onclick = ()=>{
     toggleWriteTag(wsDraftInit(), b.dataset.wsTag);
     refreshWsUI();
@@ -5183,7 +5158,7 @@ function bindWriteStyle(){
   if(ap) ap.onclick = ()=>{
     if(!wsDraft) return;
     const st2 = writeStyleState();
-    st2.tags = wsDraft.tags.slice(); st2.intensity = wsDraft.intensity;
+    st2.tags = wsDraft.tags.slice();
     persist();
     const name = wsDraft.tags.map(id=>{ const s=writeStyleById(id); return s?s.name:id; }).join(' + ') || '无';
     wsDraft = null;
@@ -5198,7 +5173,7 @@ function bindWriteStyle(){
     const cfg = getCfg(); if(!Array.isArray(cfg.stylePresets)) cfg.stylePresets = [];
     const name = prompt('给这个风格组合起个名字：', '我的风格'+(cfg.stylePresets.length+1));
     if(!name || !name.trim()) return;
-    cfg.stylePresets.push({ id:'sp'+Date.now().toString(36), name:name.trim(), tags:cur.tags.slice(), intensity:cur.intensity });
+    cfg.stylePresets.push({ id:'sp'+Date.now().toString(36), name:name.trim(), tags:cur.tags.slice() });
     saveCfg(cfg); render();
     toast('已收藏：'+name.trim());
   };
@@ -5206,7 +5181,7 @@ function bindWriteStyle(){
   if(lb) lb.onclick = (e)=>{ e.stopPropagation(); openStyleLibPanel(); };
   // 清空：只清草稿，点应用才生效（语义统一）
   const cl = $('[data-ws-clear]');
-  if(cl) cl.onclick = ()=>{ const d = wsDraftInit(); d.tags=[]; d.intensity=2; refreshWsUI(); toast('已清空草稿，点「✔ 应用并保存」生效'); };
+  if(cl) cl.onclick = ()=>{ const d = wsDraftInit(); d.tags=[]; refreshWsUI(); toast('已清空草稿，点「✔ 应用并保存」生效'); };
   // v10.22 五大类分类折叠（主卡，事件委托处理动态渲染）：点类标题展开/收起，偏好持久化到 state.chapterStyle.catOpen
   // 兼容重生成面板（.ws-subcat-t 无 role，不响应）；render 重建后 .ws-card 为新节点，dataset 为空会重新绑定一次
   const wsCard = $('.ws-card');
@@ -5309,14 +5284,14 @@ function closeStyleNewDialog(){ const p=$('#wsNewPanel'); if(p) p.remove(); }
 // v2.1 预设 → 填入草稿（不直接生效）
 function applyWritePresetDraft(v){
   const d = wsDraftInit();
-  if(v === 'clear'){ d.tags=[]; d.intensity=2; }
+  if(v === 'clear'){ d.tags=[]; }
   else if(v.indexOf('u:')===0){
     const cfg = getCfg();
     const p = (Array.isArray(cfg.stylePresets)?cfg.stylePresets:[]).find(x=>x.id===v.slice(2));
-    if(p){ d.tags = (p.tags||[]).slice(); d.intensity = p.intensity||2; }
+    if(p){ d.tags = (p.tags||[]).slice(); }
   } else {
     const p = WRITE_PRESETS.find(x=>x.id===v);
-    if(p){ d.tags = p.tags.slice(); d.intensity = p.intensity; }
+    if(p){ d.tags = p.tags.slice(); }
   }
   refreshWsUI();
 }
@@ -5352,7 +5327,7 @@ function openStyleLibPanel(){
   const mine = (Array.isArray(cfg.stylePresets)?cfg.stylePresets:[]).map((p,i)=>`
     <div class="ws-lib-item">
       <div class="ws-lib-name">⭐ ${esc(p.name||'未命名')}</div>
-      <span class="muted" style="font-size:11px">${(p.tags||[]).map(id=>{const s=writeStyleById(id); return s?s.name:id;}).join('+')||'无'} · ${['','轻','中','重'][p.intensity]||'中'}</span>
+      <span class="muted" style="font-size:11px">${(p.tags||[]).map(id=>{const s=writeStyleById(id); return s?s.name:id;}).join('+')||'无'}</span>
       <button type="button" class="btn small ghost del" data-sp-del="${i}">删</button>
     </div>`).join('') || '<p class="muted">暂无收藏。</p>';
   // v10.50 全部配方查看：内置🎬 + 我的配方🏷 + AI配方（availableCombos 已合并），展示完整原始信息
@@ -5541,8 +5516,8 @@ function closeStyleLibPanel(){ const p=$('#wsLibPanel'); if(p) p.remove(); }
 /* ---------- 写作风格配方 · 阅读视图（独立函数，复用 gs 浮层 + reader 排版） ---------- */
 function openStyleLibReader(){
   closeStyleLibReader();
-  // v10.55 方案B：阅读器仅展示五大类章节风格 + 我的自定义；过滤内置「标题风格(tone)/梗概风格(texture)」组（用户自定义旧数据已归入 element 组，不受影响）
-  const lib = writeStyleLib().filter(s=> s.group !== 'tone' && s.group !== 'texture');
+  // v10.55 方案B：阅读器展示已收敛为章节风格(element)的五大类 + 我的自定义
+  const lib = writeStyleLib();
   const CAT_LABEL = { '语言质感':'① 语言质感', '情绪与张力':'② 情绪与张力', '节奏与网感':'③ 节奏与网感', '叙事技法':'④ 叙事技法', '台词设计':'⑤ 台词设计', custom:'⭐ 我的自定义' };
   const groups = {};
   lib.forEach(s=>{
@@ -7228,7 +7203,7 @@ function titlesGenUser(opts){
   }
   const _dict = chapterGlossaryBlock(undefined, {names:true});   // v1.0.241：标题只注入词典名称清单（防引入新名），不再全量注入人物细节/关系表/世界观/副线
   if(_dict && _dict.trim()) parts.push(_dict.trim());
-  // v1.0.241：风格块改用轻量版（只给风格名+浓度），不再注入正文向 note/五维
+  // v1.0.241：风格块改用轻量版（只给风格名），不再注入正文向 note/五维
   const styleNote = writeStyleNamesBlock();
   if(styleNote) parts.push(styleNote);
   // B fix: 禁则清单注入标题出口，使「生效范围→标题」选项真正生效（banListBlockFor('title') 内部已按 scope/开关/长篇门控）
@@ -9591,7 +9566,7 @@ function bindView(){
   bindChapterPlan();  // v10.11 全书规划师区块绑定
   bindChapterPlanFold(); // v10.14 梗概卡折叠绑定
   bindChapterTitles();// v10.14 章节标题编辑 + 复制绑定
-  bindWriteStyle();   // v2.0 写作风格卡片绑定（chips/浓度/预设/收藏/管理/清空）
+  bindWriteStyle();   // v2.0 写作风格卡片绑定（chips/预设/收藏/管理/清空）
   // v241/908-4（A2）：确认大纲时若 state.chapters 与 outline.chapters 数量错位（v225/P5-B 断裂存量），先对齐再置标志
   const btnCO = $('#btnConfirmOutline'); if(btnCO) btnCO.onclick = ()=>{ syncChaptersFromOutline(); state.outlineConfirmed=true; persist(); render(); };
   const btnRO = $('#btnReOutline'); if(btnRO) btnRO.onclick = ()=>{ state.outline=null; state.outlineConfirmed=false; state.chapters=[]; persist(); render(); };
@@ -12101,8 +12076,8 @@ function openChapterRegenPanel(i){
   // v2.0 本章风格覆盖 + 双风格对比的局部状态（一次性，不持久化）
   const rpOv = { on:false, tags:[] };
   const rpCmpB = { tags:[] };
-  let rpOvApplied = null;     // 覆盖块「应用」确认快照 {on,tags,intensity}；null=未确认（未点应用则重生成不生效）
-  let rpCmpBApplied = null;   // 对比块「应用」确认快照 {tags,intensity}；null=未确认（未点应用则 B 稿不生效）
+  let rpOvApplied = null;     // 覆盖块「应用」确认快照 {on,tags}；null=未确认（未点应用则重生成不生效）
+  let rpCmpBApplied = null;   // 对比块「应用」确认快照 {tags}；null=未确认（未点应用则 B 稿不生效）
   const ov = document.createElement('div');
   ov.id = 'regenPanel'; ov.className = 'gs-overlay';
   ov.setAttribute('data-cs', wsColorSchemeId());   // v10.19 让重生成弹窗内 chips 跟随所选配色
@@ -12220,7 +12195,7 @@ function openChapterRegenPanel(i){
     refreshRpCmpApply();
     toast('B 稿对比风格已应用，生成 A/B 两稿时生效');
   };
-  // v2.0 本章覆盖：radio 切换 + chips + 浓度（任一改动后清空确认态，须重新点「应用」）
+  // v2.0 本章覆盖：radio 切换 + chips（任一改动后清空确认态，须重新点「应用」）
   ov.querySelectorAll('[data-rpov-val]').forEach(el=> el.onclick = ()=>{
   ov.querySelectorAll('[data-rpov-val]').forEach(x=> x.classList.remove('active'));
   el.classList.add('active');
@@ -12455,7 +12430,7 @@ function closeComparePanel(){ const p=$('#cmpPanel'); if(p) p.remove(); }
 
 // 单章生成（🔄 重生成，决策5：只重写目标章，注入上章结尾+下章概要+全局词典）
 // opt.advice：可选的人工干预要求（建议3·此轮），随 buildChapterUser 注入模型
-// opt.styleOverride：可选的本章风格覆盖 {tags,intensity}（v2.0：仅本章生效，一次性消费）
+// opt.styleOverride：可选的本章风格覆盖 {tags}（v2.0：仅本章生效，一次性消费）
 async function genOneChapter(i, btn, opt={}){
   chState[i] = 'generating'; state.generating = true; patchChapter(i);
   if(btn) busy(btn,true,'生成中…');
@@ -13266,14 +13241,14 @@ function importProjectFile(file){
   r.readAsText(file);
 }
 
-/* ===== 配色弹层（顶栏 🎨 颜色）：选择 / 删除 / 撤销 / 恢复全部 / 新建三色 v10.20 ===== */
+/* ===== 配色弹层（顶栏 🎨 颜色）：选择 / 删除 / 撤销 / 恢复全部 / 新建配色 v10.20 ===== */
 function wsColorToolbarHtml(){
   const undoN = wsUndoLog().length, rmB = wsRemovedBuiltin().length;
   return `<div class="ws-cs-toolbar">
     <button type="button" class="cs-tool" data-cs-undo ${undoN?'':'disabled'} title="撤销上一步删除">↩ 撤销</button>
     <button type="button" class="cs-tool" data-cs-restore ${rmB?'':'disabled'} title="仅恢复项目自带的 11 套内置配色（不影响你自建的配色）">↺ 恢复全部</button>
     <span class="ws-cs-spacer"></span>
-    <button type="button" class="cs-tool cs-tool-new" data-cs-new title="新建一套三色配色">＋ 新建配色</button>
+    <button type="button" class="cs-tool cs-tool-new" data-cs-new title="新建一套配色">＋ 新建配色</button>
   </div>`;
 }
 function wsColorGridHtml(){
@@ -13295,9 +13270,7 @@ function wsColorGridHtml(){
 function wsColorNewFormHtml(){
   return `<div id="wsCsForm" class="ws-cs-form hidden">
     <div class="ws-cs-form-row"><label>名称</label><input id="csName" class="cs-inp" type="text" maxlength="12" placeholder="例如：晚霞粉蓝"></div>
-    <div class="ws-cs-form-row"><label>上 · 标题</label><input id="csC0" class="cs-color" type="color" value="#e25a6a"></div>
-    <div class="ws-cs-form-row"><label>中 · 梗概</label><input id="csC1" class="cs-color" type="color" value="#5b8def"></div>
-    <div class="ws-cs-form-row"><label>下 · 章节</label><input id="csC2" class="cs-color" type="color" value="#3fc6a0"></div>
+    <div class="ws-cs-form-row"><label>章节 · 风格色</label><input id="csC0" class="cs-color" type="color" value="#3fc6a0"></div>
     <div class="ws-cs-form-ops">
       <button type="button" class="btn" data-cs-cancel>取消</button>
       <button type="button" class="btn primary" data-cs-confirm>确认新建</button>
@@ -13350,10 +13323,10 @@ function wsColorRestoreAll(){
 }
 function wsColorCreate(){
   const name=((($('#csName')||{}).value)||'').trim();
-  const c0=(($('#csC0')||{}).value)||'', c1=(($('#csC1')||{}).value)||'', c2=(($('#csC2')||{}).value)||'';
+  const c0=(($('#csC0')||{}).value)||'#3fc6a0';
   if(!name){ toast('请先填写配色名称'); return; }
   const c=getCfg(); const cs=wsColorCfgOf(c);
-  cs.custom=cs.custom.concat([{id:'cu_'+(Date.now()), name:name, c:[c0,c1,c2]}]);
+  cs.custom=cs.custom.concat([{id:'cu_'+(Date.now()), name:name, c:[c0]}]);
   saveCfg(c); rebuildCustomColorCss();
   const f=$('#wsCsForm'); if(f) f.classList.add('hidden');
   wsColorRepaint(); toast('已新建配色：'+name);

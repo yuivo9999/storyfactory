@@ -1127,24 +1127,24 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 .ws-fold-tools{display:flex;gap:8px;margin:2px 0 8px;flex-wrap:wrap}
 .ws-group{margin-bottom:10px}
 .ws-group-t{font-size:11.5px;font-weight:700;color:rgba(255,255,255,.52);margin-bottom:6px;letter-spacing:.3px}
-/* v10.19 写作风格三组区块配色（[data-cs=方案id] 由顶栏「🎨 颜色」选择，默认无色） */
+/* 写作风格配色（[data-cs=方案id] 由顶栏「🎨 颜色」选择，默认无色；仅章节风格 element 消费） */
 .ws-group[data-g]{border-left:3px solid transparent}
-[data-cs="s1"]{--c-tone:#f84914;--c-texture:#59187e;--c-element:#2fb4af}
-[data-cs="s2"]{--c-tone:#1e95d4;--c-texture:#78cede;--c-element:#b1e4e7}
-[data-cs="s3"]{--c-tone:#0176bb;--c-texture:#c42536;--c-element:#dcb582}
-[data-cs="s4"]{--c-tone:#f6afad;--c-texture:#c49ee4;--c-element:#e2d8ef}
-[data-cs="s5"]{--c-tone:#f83177;--c-texture:#c6979c;--c-element:#fcbed4}
-[data-cs="s6"]{--c-tone:#fa2742;--c-texture:#7384af;--c-element:#f8b79a}
-[data-cs="s7"]{--c-tone:#54d5c7;--c-texture:#edba38;--c-element:#f65150}
-[data-cs="s8"]{--c-tone:#17519e;--c-texture:#f7dd2f;--c-element:#4fcbe9}
-[data-cs="s9"]{--c-tone:#8fedc2;--c-texture:#fdd741;--c-element:#24b4a5}
-[data-cs="s10"]{--c-tone:#f4d474;--c-texture:#ef5a56;--c-element:#f9e9da}
-[data-cs="s11"]{--c-tone:#67d47e;--c-texture:#efeb86;--c-element:#f5b11e}
+[data-cs="s1"]{--c-element:#2fb4af}
+[data-cs="s2"]{--c-element:#b1e4e7}
+[data-cs="s3"]{--c-element:#dcb582}
+[data-cs="s4"]{--c-element:#e2d8ef}
+[data-cs="s5"]{--c-element:#fcbed4}
+[data-cs="s6"]{--c-element:#f8b79a}
+[data-cs="s7"]{--c-element:#f65150}
+[data-cs="s8"]{--c-element:#4fcbe9}
+[data-cs="s9"]{--c-element:#24b4a5}
+[data-cs="s10"]{--c-element:#f9e9da}
+[data-cs="s11"]{--c-element:#f5b11e}
 [data-cs] .ws-group[data-g="element"]{border-left-color:var(--c-element)}
 [data-cs] .ws-group[data-g="element"] .ws-group-t{color:var(--c-element)}
 [data-cs] .ws-group[data-g="element"] .ws-chip:hover{border-color:var(--c-element)}
 [data-cs] .ws-group[data-g="element"] .ws-chip.on{background:var(--c-element);border-color:var(--c-element)}
-/* 配色选择面板（v10.20：工具栏/可删除卡片/新建三色表单） */
+/* 配色选择面板（v10.20：工具栏/可删除卡片/新建配色表单） */
 .ws-cs-body{display:flex;flex-direction:column;gap:8px}
 .ws-cs-toolbar{display:flex;align-items:center;gap:8px}
 .cs-tool{font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);cursor:pointer;font-weight:600}
