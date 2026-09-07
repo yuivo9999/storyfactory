@@ -674,7 +674,8 @@ body.reader-lock{overflow:hidden}
 /* v1.0.236 小说简介成型排版：对齐优化构想候选卡——每字段一行（标签横栏 + 内容），整齐易读 */
 .so-logline{margin:6px 0 4px;display:flex;flex-direction:column;gap:4px;padding:8px 10px;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;font-size:13px;line-height:1.55;color:var(--txt);user-select:text}
 .so-logline .so-line{display:flex;align-items:flex-start;gap:8px}
-.so-logline .so-line .so-lb{flex:0 0 auto;min-width:56px;padding:2px 8px;border-radius:6px;background:color-mix(in srgb, var(--accent) 12%, transparent);color:var(--accent);font-weight:700;font-size:12px;white-space:nowrap}
+.so-logline .so-line .so-lb{flex:0 0 auto;min-width:58px;padding:3px 9px;border-radius:7px;background:linear-gradient(135deg, hsl(var(--h,220) 45% 96%), hsl(var(--h,220) 30% 90%));color:hsl(var(--h,220) 65% 88%);font-weight:800;font-size:12px;line-height:1.25;white-space:nowrap;text-align:center;-webkit-text-fill-color:transparent;background-clip:text;-webkit-background-clip:text;-webkit-text-stroke:0.2em hsl(var(--h,220) 55% 42%)}
+.so-logline .so-line .so-lb::selection{background:transparent}
 .so-logline .so-line .so-txt{flex:1;min-width:0;word-break:break-word}
 .so-logline .so-line.so-plain{color:var(--txt)}
 .orig-body{margin-top:8px}
