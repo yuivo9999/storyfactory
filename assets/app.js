@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.233';   // v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注，消除计划/实际脱节。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.234';   // v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -5975,12 +5975,12 @@ function viewStory(){
         <h3 style="margin:0">📋 故事大纲</h3>
         ${titleManagerHtml()}
       </div>
-      <p class="sub" style="font-size:12px;color:var(--muted)">输入：用户构想 + 第 1 格设置的 全书章节数 / 全书拍子。产出：书名、小说简介（题材/主角/冲突/世界观/对手/动机/风格/结构/核心词）、全书节拍结构。选定候选点「生成大纲」后由②原样搬入；书名仅用户可改。</p>
+      <p class="sub" style="font-size:12px;color:var(--muted)">输入：用户构想 + 第 1 格设置的 全书章节数 / 全书拍子。产出：书名、小说简介（题材/主角/冲突/世界观/对手/动机/风格/核心词；节拍结构并入下方「全书节拍」，不再混入简介）、全书节拍结构。选定候选点「生成大纲」后由②原样搬入；书名仅用户可改。</p>
       <div class="so-fold-head" id="soLoglineBox" data-so-toggle role="button" tabindex="0" title="展开/收起小说简介" style="display:flex">
         <span class="so-fold">${state.soCollapsed?'▸':'▾'}</span><b>📌 小说简介</b>
         <button type="button" class="btn small ghost" id="btnLoglineEdit" title="编辑小说简介" style="margin-left:auto;padding:1px 8px;font-size:12px">✎ 编辑</button>
       </div>
-      <p class="sub so-logline" ${state.soCollapsed?'hidden':''}>${esc(o.logline||'')}</p>
+      <p class="sub so-logline" ${state.soCollapsed?'hidden':''}>${esc(stripStructureFromIntro(o.logline||''))||'（暂无简介，点✎编辑或重新生成大纲）'}</p>
       ${ isLong() ? anchorEditHtml() : '' }
       ${ isLong() ? beatStructureCardHtml() : '' }   <!-- v1.0.145 全书节拍（本地按全书拍子映射章节阶段） -->
       </div>
@@ -6502,7 +6502,7 @@ function bindLoglineEdit(){
     if(!p) return;
     const ta = document.createElement('textarea');
     ta.className = 'logline-ta';
-    ta.value = String((state.outline||{}).logline||'');
+    ta.value = stripStructureFromIntro(String((state.outline||{}).logline||''));
     ta.rows = 4;
     ta.style.width = '100%';
     ta.style.marginTop = '6px';
@@ -10123,6 +10123,8 @@ const genOutline = async function(){
     state.outlineConfirmed = true;
     markAIDone('outline');   // 成功后标记完成
     persist(); render();
+    // v1.0.234：采用大纲时自动触发一次 核心定位/深层命题 提取（后台轻量，不阻塞；短文自动跳过）
+    void extractStoryAnchors({ force: true });
     toast('已生成大纲：书名 / 小说简介 / 全书节拍已搬入，直接进入正文写作（书名仅用户可改）');
   }catch(e){
     if(e.name==='AbortError'){ if(st){ st.className='status'; st.textContent='已停止生成'; } }
@@ -10162,6 +10164,26 @@ function extractCandidateBookName(txt){
   if(bk && bk[1]) return bk[1].trim().replace(/[】\]\)]/g,'');
   return '';
 }
+// v1.0.234：简介不再「手啃结构/平铺重复节拍」——把候选文本里的「结构（…）：…」段从简介中剔除，
+// 结构落位交给下方「全书节拍」模块（本地按全书拍子映射章节阶段）。仅删该字段段，其余字段原样保留。
+function stripStructureFromIntro(txt){
+  const s = String(txt||'');
+  if(!s) return s;
+  const lines = s.split('\n');
+  const out = [];
+  let skip = false;
+  const fieldHead = /^\s*(?:书名|小说名|标题|题材|主角|核心冲突|核心定位|深层命题|世界观|对手|动机|风格|落地方式|目标|核心词|推荐理由|简介|评分|一句话|定位|优势|亮点)\s*[:：]/;
+  for(const ln of lines){
+    if(!skip && /^\s*结构(?:\s*（[^）]*）)?\s*[:：]/.test(ln)){ skip = true; continue; }
+    if(skip){
+      // 遇到下一个已知字段标签 → 结束跳过并保留该行
+      if(fieldHead.test(ln)){ skip = false; out.push(ln); }
+      continue;
+    }
+    out.push(ln);
+  }
+  return out.join('\n').replace(/\n{2,}/g, '\n').trim() || s.trim();
+}
 // 用②候选的 书名/简介/结构 构建 outline 骨架（纯本地，无 AI）
 function buildOutlineFromPolishCandidate(cand){
   const txt = String((cand && cand.text) || '').trim();
@@ -10171,7 +10193,7 @@ function buildOutlineFromPolishCandidate(cand){
   const prevGloss = (o && o.glossary && sourceHasGlossary(o.glossary)) ? o.glossary : null;
   const build = {
     title,
-    logline: txt || (o && o.logline) || '',
+    logline: stripStructureFromIntro(txt) || (o && o.logline) || '',
     userIdea: String(state.idea || '').trim(),
     tone: (o && o.tone) || ''
   };
