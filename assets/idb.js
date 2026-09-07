@@ -10,10 +10,27 @@
  * ========================================================= */
 'use strict';
 
-const IDB_NAME  = 'fyp_db';
+// ===== 存储命名空间（v1.0.221，方案B：多站隔离） =====
+// 同一 origin 下不同部署路径共享 localStorage / IndexedDB，会造成多站数据串流。
+// 以当前部署路径的第一段（GitHub Pages 即仓库名）派生命名空间，各站读写各自独立、互不干扰。
+// 例如 /tellme123-main/ 与 /tellme123-v2/ → ns 分别为 tellme123_main / tellme123_v2。
+// 冷升级时 app.js 会把旧「共享裸 key（fyp_*）」复制一份进本命名空间作为起点（详见 app.js migrateSharedOnce）。
+const IDB_NAME        = 'fyp_' + storageNs() + '_db';
+const IDB_LEGACY_NAME = 'fyp_db';   // 旧版共享库名，仅用于一次性迁移
 const IDB_STORE = 'projects';   // 项目快照库
 const IDB_META  = 'meta';       // 当前项目指针
 const IDB_VERSION = 1;
+
+// 基于当前部署路径派生命名空间前缀；与 app.js 完全同源逻辑。
+function storageNs(){
+  try{
+    const p = String(location.pathname || '/').replace(/^\/+|\/+$/g, '');
+    const seg = (p.split('/')[0] || 'root').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 32);
+    return seg || 'root';
+  }catch(e){ return 'root'; }
+}
+// 把裸 key 转成当前命名空间下的实际存储 key（localStorage 与本文件 IDB 共用同一前缀）
+function nsKey(bare){ return storageNs() + '_' + bare; }
 
 // 缓存 open 的 Promise，避免重复打开
 let _idbReady = null;
@@ -92,6 +109,41 @@ function idbList(){
       req.onsuccess = function(){ resolve(Array.isArray(req.result) ? req.result : []); };
       req.onerror   = function(){ reject(req.error || new Error('idb-list-error')); };
     });
+  });
+}
+
+// 读旧共享库（IDB_LEGACY_NAME=fyp_db）全部项目（v1.0.221 方案B：冷升级一次性迁移用）。
+// 旧版多站在同一 fyp_db 库读写；升级后各站用各自的 <ns>_db，此函数仅供迁移时读取旧数据一次。
+function idbListLegacy(){
+  return new Promise(function(resolve, reject){
+    if(!idbAvailable()){ resolve([]); return; }
+    let req;
+    try{ req = indexedDB.open(IDB_LEGACY_NAME, IDB_VERSION); }
+    catch(e){ resolve([]); return; }
+    req.onupgradeneeded = function(){};   // 只读不建库
+    req.onsuccess = function(ev){
+      const db = ev.target.result;
+      try{
+        if(!db.objectStoreNames.contains(IDB_STORE)){ db.close(); resolve([]); return; }
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const store = tx.objectStore(IDB_STORE);
+        const g = store.getAll();
+        g.onsuccess = function(){
+          const list = Array.isArray(g.result) ? g.result : [];
+          try{ db.close(); }catch(e){}
+          resolve(list);
+        };
+        g.onerror = function(){
+          try{ db.close(); }catch(e){}
+          resolve([]);
+        };
+      }catch(e){
+        try{ db.close(); }catch(e){}
+        resolve([]);
+      }
+    };
+    req.onerror = function(){ resolve([]); };
+    req.onblocked = function(){ resolve([]); };
   });
 }
 

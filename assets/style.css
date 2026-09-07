@@ -816,6 +816,9 @@ body.reader-lock{overflow:hidden}
 .cp-stage-all:hover{background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%)}
 .cp-stage-all.running{opacity:.7;cursor:wait}
 .cp-stage-hint{font-size:10.5px;color:var(--muted);margin:-2px 0 8px}
+/* v1.0.226 节拍表/全局时间线 重试次数红色角标 */
+.cp-stage .cp-retry-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;margin-left:2px;border-radius:20px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;line-height:1;font-style:normal;animation:gvtPop .2s ease}
+@keyframes gvtPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 /* v246：微拍选择区（竖向卡片，标题+作用描述）——自卡片内独立，适配所有主题 */
 .cp-micropick{margin-bottom:8px}
 .cp-micropick-title{font-size:12px;font-weight:700;color:currentColor;margin-bottom:6px;display:flex;align-items:baseline;gap:6px}
@@ -953,6 +956,22 @@ body.reader-lock{overflow:hidden}
 #app .gs-viewgrid::before{content:'📑 词典达人·关系/关联/世界观规则';font-size:11px;color:var(--muted);width:100%}
 #app .gs-viewgrid .gs-tool{font-size:12px} 
 #app .gs-view-modal{max-width:560px}
+/* v1.0.225 4表可编辑 + 历史 */
+#app .gvt-grid-inner{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#app .gs-viewgrid .gvt-hist-pos{margin-right:auto;display:inline-flex}
+#app .gvt-modal{max-width:640px}
+#app .gvt-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+#app .gvt-row{display:flex;flex-direction:column;gap:4px;padding:8px;border:1px solid var(--line, rgba(120,120,120,.18));border-radius:8px;background:var(--panel2, rgba(120,120,120,.04))}
+#app .gvt-fields{display:flex;flex-wrap:wrap;gap:6px}
+#app .gvt-in{flex:1 1 130px;min-width:120px;padding:5px 8px;font-size:12px;border:1px solid var(--line, rgba(120,120,120,.25));border-radius:6px;background:var(--field2, rgba(120,120,120,.08));color:var(--ink, #222)}
+#app .gvt-prev{font-size:12px;color:var(--muted)}
+#app .gvt-ops{display:flex;justify-content:flex-end}
+#app .gvt-add{font-size:12px}
+#app .gs-actions{padding:10px 14px;border-top:1px solid var(--line, rgba(120,120,120,.18));display:flex;justify-content:flex-end}
+#app .gvt-save{font-size:13px}
+#app .gvt-hist-item{padding:10px;border:1px solid var(--line, rgba(120,120,120,.18));border-radius:10px;background:var(--panel2, rgba(120,120,120,.04))}
+#app .gvt-restore{font-size:12px;margin-top:8px}
+#app .gvt-hist-modal{max-width:640px}
 .gs-card-arrow{display:inline-block;font-size:11px;color:var(--muted);margin-right:4px;transition:transform .15s}
 .gs-card-t{display:inline-flex;align-items:center}
 .gs-card-body{padding-top:2px}
@@ -1751,7 +1770,8 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 .cp-tl-resume{ flex-shrink:0; }
 
 /* ============ v1.0.201 5格主流程排版 ============ */
-.flow-wrap{position:relative;max-width:1024px;margin:0 auto;padding-right:56px}
+/* v1.0.222 侧边导航改为纯悬浮：不再为它预留右侧内边距，主页面恢复最大宽度；侧边条 fixed 悬浮于其上 */
+.flow-wrap{position:relative;max-width:1024px;margin:0 auto}
 .flow-gap{height:10px}
 .flow-sec{border:1px solid var(--line);border-radius:var(--radius);background:transparent;padding:6px 12px 6px 12px;margin-bottom:8px;scroll-margin-top:14px}
 .flow-sec > .flow-sec-head{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:8px 4px 0;border-bottom:1px solid var(--line)}
@@ -1764,7 +1784,7 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 .flow-sidenav .fsd-btn{width:30px;height:30px;line-height:30px;text-align:center;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,transform .15s}
 .flow-sidenav .fsd-btn:hover{background:color-mix(in srgb, var(--accent2) 22%, var(--panel2));transform:scale(1.08)}
 .flow-sidenav .fsd-btn.cur{background:var(--accent2);color:var(--on-accent,#fff);border-color:var(--accent2)}
-@media (max-width:720px){ .flow-sidenav{right:6px;padding:6px 4px} .flow-sidenav .fsd-btn{width:26px;height:26px;line-height:26px;font-size:12px} .flow-wrap{padding-right:34px} }
+@media (max-width:720px){ .flow-sidenav{right:6px;padding:6px 4px} .flow-sidenav .fsd-btn{width:26px;height:26px;line-height:26px;font-size:12px} }
 /* 词典达人占位（v1.0.201 阶段1排版占位，阶段3接真实能力） */
 .dict-master-placeholder{border:1px dashed var(--line);border-radius:12px;padding:16px;color:var(--muted);font-size:13px;line-height:1.7;background:color-mix(in srgb, var(--panel2) 50%, transparent)}
 /* 一致性自检（v1.0.204 阶段4/CD-4） */
