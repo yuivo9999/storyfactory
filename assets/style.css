@@ -1719,6 +1719,7 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 .tl-chip.bad{ border-color:color-mix(in srgb,#e5534b 60%,var(--line)); background:color-mix(in srgb,#e5534b 8%,transparent); }
 .tl-chip i{ font-style:normal; color:var(--muted,var(--sub)); }
 .tl-warn{ color:#e5534b; font-weight:600; font-style:normal; }
+.tl-chip em.tl-real{ color:#c76a00; font-style:normal; font-weight:600; margin-left:2px; border:1px solid color-mix(in srgb,#c76a00 40%,var(--line)); border-radius:4px; padding:0 3px; font-size:10px; }
 .tl-legend{ font-size:11px; color:var(--muted,var(--sub)); margin-top:6px; }
 .tl-legend-dot.ok{ color:var(--accent); }
 .tl-legend-dot.bad{ color:#e5534b; }

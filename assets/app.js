@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.231';   // v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次），失败自动重跑、成功进入下一步。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.233';   // v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注，消除计划/实际脱节。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -139,11 +139,13 @@ state.fcCollapsed = (typeof state.fcCollapsed === 'boolean') ? state.fcCollapsed
 state.rsCollapsed = (typeof state.rsCollapsed === 'boolean') ? state.rsCollapsed : true;   // v1.0.163「滚动摘要」默认折叠
 state._fixQueue = state._fixQueue || [];
 state._chapterPartial = state._chapterPartial || {};   // 4.8 旗舰版（板块一-3）：流式中断续写缓存
-// v1.0.175：时间锚 / 承接真相源 字段兜底与默认值（旧存档无此字段时默认启用）
-state.timeAnchor = (typeof state.timeAnchor === 'boolean') ? state.timeAnchor : true;
+// v1.0.232（方案 B）：时间职能重构——节拍表已不再自产时间（v1.0.224），全书时间统一由 ④ 全局时间线唯一权威排定。
+// 「时间锚」不再是独立开关，而是等于「全局时间线是否已排定」：跑了时间线=有时间、正文自动注入；没跑=无时间、正文不注入。
+// 原「⏱ 时间锚」开关已从规划师工具栏移除。只保留「承接真相源」一个开关（timeAnchorsAuto）。
 state.timeAnchorsAuto = (typeof state.timeAnchorsAuto === 'boolean') ? state.timeAnchorsAuto : true;
-function _timeAnchorOn(){ return isLong() && state.timeAnchor !== false; }
-function _timeAnchorsAutoOn(){ return _timeAnchorOn() && state.timeAnchorsAuto !== false; }
+state.timeAnchor = true; // 遗留兼容：已弃用，时间是否生效改为以 outline._globalTimeline 是否存在为准
+function _timeAnchorOn(){ const _gt = state.outline && state.outline._globalTimeline; return !!( _gt && Array.isArray(_gt.chapters) && _gt.chapters.length ); }
+function _timeAnchorsAutoOn(){ return isLong() && state.timeAnchorsAuto !== false; }
 // v1.0.175：时间锚解析与倒流检测（启发式，仅供 UI 警示，不作硬校验）
 function _timeBranch(s){ s = String(s||'').trim(); if(!s) return ''; const i = s.search(/[·|｜.．:：－\-]/); return i>0 ? s.slice(0,i).trim() : s; }
 function _cnDayNum(n){ const t={'零':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12,'十三':13,'十四':14,'十五':15,'十六':16,'十七':17,'十八':18,'十九':19,'二十':20}; return t[n]!=null ? t[n] : null; }
@@ -158,7 +160,8 @@ function _timeOrdinal(s){
   let hr=-1; for(const [w,h] of hrWords){ if(s.includes(w)){ hr=h; break; } }
   if(hr===-1){ const hf=s.match(/第\s*(\d+)\s*个?小时|(\d+)\s*(?:点|时)/); if(hf&&(hf[1]||hf[2])) hr = +(hf[1]||hf[2]); }
   if(day==null && hr===-1) return null;
-  return ((day==null?0:day-1)*24) + (hr===-1?12:hr);
+  // v1.0.233：无时段的整日默认取「当日起点」而非正午——避免『第N天』整日 被误判为比『第N天·上午』更晚（修复时间线看板/承接条的倒流误报）
+  return ((day==null?0:day-1)*24) + (hr===-1?0:hr);
 }
 // 相邻两段时间锚是否「疑似倒流」：同支线且都能解析出序号，且 prev > cur
 function _timeRewind(a, b){
@@ -4745,6 +4748,15 @@ async function autoUpdateTimeAnchors(){
         if(ext.time){
           fc.timeAnchors = fc.timeAnchors.filter(x => x.ch !== i);
           fc.timeAnchors.push({ ch: i, time: ext.time, src: 'ai' });
+          // v1.0.233：把真实章末时点同步回「全局时间线」该章 to（保留原计划于 planTo，标记 realEnd），正文落库后看板不再显示过时计划章末
+          const _gt = o._globalTimeline;
+          if(_gt && Array.isArray(_gt.chapters)){
+            const _gc = _gt.chapters.find(x => Number(x.index) === i);
+            if(_gc && String(_gc.to||'').trim() !== String(ext.time||'').trim()){
+              if(!('planTo' in _gc)) _gc.planTo = String(_gc.to||'');
+              _gc.to = ext.time; _gc.realEnd = true;
+            }
+          }
           updated++;
         }
       }
@@ -4810,6 +4822,9 @@ function openTimelineBoard(){
   const groups = {};
   nodes.forEach(n => { (groups[n.branch] = groups[n.branch]||[]).push(n); });
   Object.keys(groups).forEach(k=> groups[k].sort((a,b)=> (a.ch-b.ch)||(a.bi-b.bi)));
+  const _gtL = (o._globalTimeline && o._globalTimeline.chapters) || [];
+  const _realMap = {};
+  _gtL.forEach(g=>{ if(g && g.realEnd) _realMap[Number(g.index)] = String(g.to||'').trim(); });
   const sections = Object.keys(groups).map(branch=>{
     const arr = groups[branch];
     const bad = new Set();
@@ -4817,7 +4832,11 @@ function openTimelineBoard(){
     const chips = arr.map(n=>{
       const cid = n.ch+':'+n.bi;
       const isBad = bad.has(cid);
-      return `<button type="button" class="tl-chip${isBad?' bad':''}" data-tb-goto="${n.ch}" title="${isBad?'⚠ 与相邻节点疑似时间倒流':'第 '+(n.ch+1)+' 章 · 拍 '+(n.bi+1)}">第${n.ch+1}章·拍${n.bi+1}<i>${esc(n.time)}</i>${isBad?'<em class="tl-warn">倒流?</em>':''}</button>`;
+      const _beats = o.chapterPlans[n.ch].beats;
+      const _isLast = n.bi === _beats.length-1;
+      const _real = (_isLast && _realMap[n.ch]!==undefined && _realMap[n.ch]) ? _realMap[n.ch] : '';
+      const _tTxt = _real || n.time;
+      return `<button type="button" class="tl-chip${isBad?' bad':''}" data-tb-goto="${n.ch}" title="${isBad?'⚠ 与相邻节点疑似时间倒流':'第 '+(n.ch+1)+' 章 · 拍 '+(n.bi+1)}">第${n.ch+1}章·拍${n.bi+1}<i>${esc(_tTxt)}</i>${_real?'<em class="tl-real">实际</em>':''}${isBad?'<em class="tl-warn">倒流?</em>':''}</button>`;
     }).join('');
     return `<div class="tl-group"><div class="tl-branch">${esc(branch)} <span class="tl-count">${arr.length}</span></div><div class="tl-chips">${chips}</div></div>`;
   }).join('');
@@ -4826,7 +4845,7 @@ function openTimelineBoard(){
     <div class="gs-modal" style="max-width:780px">
       <div class="gs-modal-head"><b>⏱ 时间线看板（支线分组 · 时间锚）</b><button class="gs-x" data-tb-close>✕</button></div>
       <div class="gs-body">
-        <p class="muted" style="margin:0 0 8px">按「支线」分组展示全书每拍的时间锚；同一支线内相邻节点疑似倒流会标红 ⚠。点击某拍可展开并定位到对应章节节拍表。正文落库后，本章真实收尾时点（AI 提取）会据此判断承接。</p>
+        <p class="muted" style="margin:0 0 8px">按「支线」分组展示全书每拍的时间锚；同一支线内相邻节点疑似倒流会标红 ⚠。点击某拍可展开并定位到对应章节节拍表。看板=④全局时间线的计划；正文已落库的章，其章末时点会按正文实际回写并以「实际」标注。</p>
         ${sections || '<span class="muted">暂无可显示的时间锚</span>'}
         <div class="tl-legend"><span class="tl-legend-dot ok">●</span> 正常 <span class="tl-legend-dot bad">●</span> 疑似倒流</div>
       </div>
@@ -7592,8 +7611,7 @@ function chapterPlanBlock(){
       ${hasPlans ? `<div class="cp-plans-tool">
           <button type="button" class="btn small ghost" data-cp-beat-expand title="展开全部章节的节拍表">▾ 全部展开</button>
           <button type="button" class="btn small ghost" data-cp-beat-collapse title="收起全部章节的节拍表（长书默认）">▸ 全部收起</button>
-          <label class="gs-autofill cp-time-toggle" title="时间锚（默认开）：规划师为每拍给定「支线·时点」，正文据此承接章节/支线时间；关则不生成、不要求时间锚。"><input type="checkbox" data-cp-time-toggle ${state.timeAnchor?'checked':''} /> ⏱ 时间锚</label>
-          <button type="button" class="btn small ghost" data-cp-time-board title="按支线分组纵览全书时间锚，跨章/同支线疑似倒流高亮">⏱ 时间线</button>
+          <button type="button" class="btn small ghost" data-cp-time-board title="按支线分组纵览全书时间锚（来自④全局时间线），跨章/同支线疑似倒流高亮">⏱ 时间线</button>
           <button type="button" class="btn small ghost" data-cp-time-fill title="为现有节拍表缺失的时间锚批量补齐（守护已标注拍）">＋ 补时间</button>
           <span class="cp-plans-tool-tip muted">节拍表默认折叠，点章节表头展开查看/编辑；长书（多章）时划动更省力。</span>
         </div>
@@ -7679,8 +7697,6 @@ function bindBeatSheet(){
   const _btCo = document.querySelector('[data-cp-beat-collapse]');
   if(_btCo) _btCo.onclick = ()=>{ state.cpBeatOpen={}; render(); };
   // v1.0.175：时间锚开关 / 时间线看板 / 批量补时间
-  const _tmTg = document.querySelector('[data-cp-time-toggle]');
-  if(_tmTg) _tmTg.onchange = ()=>{ state.timeAnchor = _tmTg.checked; persist(); render(); toast(state.timeAnchor?'时间线已开启（由全局时间线唯一权威规划全书时间，正文据此承接）':'时间线已关闭（不再规划/注入时间）'); };
   const _tmBd = document.querySelector('[data-cp-time-board]');
   if(_tmBd) _tmBd.onclick = ()=> openTimelineBoard();
   const _tmFl = document.querySelector('[data-cp-time-fill]');
@@ -10791,7 +10807,10 @@ const PLANNER_TIMELINE_SYS = `你是一位资深长篇「全局时间统筹师�
 2. 现实（主线）支线：本批第一个现实时点（anchor）必须晚于或衔接上一批末尾（给了就严禁倒退）；本批现实支线内部全程单调不倒退；回忆/梦境/穿越等非主线支线各自独立计时、互不干扰，切换须由剧情出入点解释。
 3. 每章 from 应落在该章首拍现实时点，to 落在该章末拍现实时点；若章以非主线支线开章/收章，可用该章主线落点作 from/to，支线时点在 beats 里表达。
 4. 时间节奏要有起伏：本批里有的章时间基本不流动（同日内推进），有的章跨数天/旬/月/季/年，绝不均匀；确需大跨度跳跃的章在 jump 中标出跳变。
-5. 每个 time / from / to 只写"支线名 + 一个时点"（≤14 字），用·分隔，不要多余解释；jump 为空串表示与前章自然顺延，否则描述跳变（≤10字）。`;
+5. 每个 time / from / to 只写"支线名 + 一个时点"（≤14 字），用·分隔，不要多余解释；jump 为空串表示与前章自然顺延，否则描述跳变（≤10字）。
+6. 同一场戏的多拍共享同一时点：同一场景内连续动作的拍，time 写相同的「支线·时点」（如拍1、拍2 都写 现实·第2天·上午）。只有时间真的推移（转场/多日间隔/昼夜更替/赶路/养伤）才写更晚的时点。严禁为凑内容给每拍硬排一个递增时段（禁止把同一上午拆成 上午/中午/下午）。
+7. 中间拍若无独立时间意义，time 可留空('')或照抄上一拍；但每章首拍与末拍必须给出时点（首=章首承接锚、末=章末承接锚）。
+8. 同章内时间粒度保持一致：用时段就整章都带时段（凌晨/上午/中午/下午/傍晚/晚上/深夜）；当日首拍直接写『现实·第N天·凌晨』，不要『第N天』整日没有时段 与 后续『第N天·上午』混用，避免同日内被误判为倒流。`;
 
 // 分段输出校验：结构 + 每章 beat 数/type 顺序/必填 time + anchor/end 非空
 function validateTimelineSegOutput(j, expectedCount){
@@ -10807,7 +10826,11 @@ function validateTimelineSegOutput(j, expectedCount){
     if(!Array.isArray(cp.beats) || cp.beats.length !== beatCnt()) return `本批第 ${ci+1} 章 beats 应为 ${beatCnt()} 段，实得 ${Array.isArray(cp.beats)?cp.beats.length:'非数组'}`;
     for(let i=0;i<cp.beats.length;i++){
       const b = cp.beats[i];
-      if(!b || !String(b.time||'').trim()) return `本批第 ${ci+1} 章第 ${i+1} 拍缺失 time`;
+      if(!b) return `本批第 ${ci+1} 章第 ${i+1} 拍缺失`;
+      // v1.0.233：每拍 time 由「必填」放宽为「按需」——只强制章首/章末拍给时点（承接锚点），中间拍可留空或与上拍同值（同一场戏共享时点）
+      const isFirst = (i===0), isLast = (i===cp.beats.length-1);
+      if(isFirst && !String(b.time||'').trim()) return `本批第 ${ci+1} 章首拍缺失 time（章首时点，作承接锚）`;
+      if(isLast && !String(b.time||'').trim()) return `本批第 ${ci+1} 章末拍缺失 time（章末时点，作章末锚）`;
       if(keys[i] && b.type !== keys[i]) return `本批第 ${ci+1} 章第 ${i+1} 拍 type 应为 ${keys[i]}，实得 ${b.type}`;
     }
   }
@@ -10826,7 +10849,7 @@ function buildTimelineSegUser(s, e, prevEnd){
   const _stg=chapterPlanStages(o);
   if(_stg&&_stg.length) parts.push(`【大纲节拍的结构】全书按阶段推进：${_stg.map(x=>`第 ${x.first}—${x.last} 章「${x.name}」`).join('；')}`);
   if(prevEnd) parts.push(`【上一批已排定的现实主线末尾时点】${prevEnd}\n本批第一个现实时点（anchor）必须晚于或衔接它，严禁整体倒退；回忆/梦境/穿越等非主线支线各自独立计时、不受此限。`);
-  parts.push(`【时间单位说明】本批需你（时间线权威）独立从剧情规划时间：时点可用 时刻/日/旬/月/季/年，由事件真实耗时决定，严禁锁死"第N天"；跨度跳跃按剧情需要 + 在 jump 标注。`);
+  parts.push(`【时间单位说明】本批需你（时间线权威）独立从剧情规划时间：时点可用 时刻/日/旬/月/季/年，由事件真实耗时决定，严禁锁死"第N天"；跨度跳跃按剧情需要 + 在 jump 标注。同一场戏的多拍可给相同 time，只有时间推移才更新；每章首拍/末拍必给时点，中间拍可同值或留空，不要为凑每拍硬排递增时段。`);
   const rows=[];
   for(let i=s;i<e;i++){
     const c=o.chapters[i]||{};
