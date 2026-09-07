@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.234';   // v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.236';   // v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -91,7 +91,6 @@ const state = {
   chapterRange: null,   // (兼容遗留) 同上
   totalWords: null,     // (兼容遗留) 同上
   chapterCount: null,   // 全书章节数量（整数 1-200，生成大纲前唯一必填数字；null=未设）
-  loglineRange: {min:100, max:300},   // v11 小说简介字数范围（生成大纲前用户可调）：{min,max}，max 上限 5000，min>max 自动对调；v230/T4 默认 100–300
   idea: '',
   coverPrompt: '',      // 整部小说封面提示词（场景页生成 / 长篇模式用）
   coverWithTitle: false,// 封面提示词是否包含「汉字书名」（false=纯画面无文字）
@@ -3072,7 +3071,7 @@ const OUTLINE_GEN_SYS_LEGACY = `你是一位能驾驭超长篇的小说架构师
 
 【硬性约束】
 1. title 必须有记忆点，不与常见网文重名。
-2. logline 必须包含：主角、核心冲突、核心动机、代价/悬念；字数严格落在【简介字数约束】区间内。
+2. logline 必须包含：主角、核心冲突、核心动机、代价/悬念。
 3. anchor 必须包含 navBeacon.genre + protagonist + coreConflict 三要素，≤50字。
 4. thesis 必须点出作品要探讨的核心主题/情感内核，≤80字。
 5. 严禁输出 chapters 字段；章节标题在后续独立步骤生成。`;
@@ -3085,7 +3084,7 @@ const OUTLINE_GEN_SYS_PRO = `你是一位资深长篇小说架构师，同时担
 【必须输出的 JSON 结构】
 {
   "title": "小说名（≤12字，有记忆点，不套路）",
-  "logline": "小说简介：必须包含 题材+主角+核心冲突+深层命题，控制在【简介字数约束】区间内",
+  "logline": "小说简介：必须包含 题材+主角+核心冲突+深层命题，说清核心看点，言简意赅",
   "anchor": "核心一句话定位：题材+主角+核心冲突，≤50字",
   "thesis": "深层主题命题，≤80字，点出作品要探讨的核心主题/情感内核",
   "genreTags": ["题材标签1", "题材标签2"],
@@ -3094,7 +3093,7 @@ const OUTLINE_GEN_SYS_PRO = `你是一位资深长篇小说架构师，同时担
 
 【硬性约束】
 1. title ≤ 12 字；不得使用高频套路书名（如《重生之xxx》《xxx系统》《xxx的xxx》）。
-2. logline 必须点明核心冲突与深层命题，篇幅严格落在末尾【简介字数约束】区间内，偏差不得超过 5%。
+2. logline 必须点明核心冲突与深层命题，篇幅精炼，说清核心看点即可，不得空泛。
 3. genreTags 只能出现 2-4 个，且必须与 logline 一致。
 4. anchor 必须包含 题材+主角+核心冲突 三要素，≤50字；thesis 必须点出作品的核心主题/情感内核，≤80字；二者均不得为空。
 5. 忠实度硬约束：用户构想中出现的专名、称谓、设定、意象与关键情节点，必须在输出中原样保留；不得替换、改名或省略；如需调整须以用户原文为基准做增量扩展。
@@ -3681,7 +3680,7 @@ const AIBus = {
       // v235/E3：删除 userParams 死配置（chapterCount||30 等，全库零消费者，且避免"||30"误导后来维护者）
     };
     switch(kind){
-      case 'idea': return { ...base, rawIdea: state.idea || '', loglineRange: state.loglineRange };
+      case 'idea': return { ...base, rawIdea: state.idea || '' };
       case 'recipe': return { ...base, outline: o, existingTags: (state.chapterStyle?.tags||[]) };
       case 'outline': return { ...base, polishBrief: state._lastPolishBrief || null };
       case 'titles': return { ...base, outline: o, glossary: o.glossary, expectedN: extra?.n || (o.chapters||[]).length };
@@ -4148,7 +4147,7 @@ function validateSubplotOutput(j){
 // v1.0.144：原 CHAPTER_PLAN_FREE_SYS / STRUCTURE_MAIN_SYS / STRUCTURE_PLAN_SYS 三个「结构章节分组」契约常量
 // 已随 structure（subLines/hiddenLine/chapterPlan）彻底移除——全书拍子改为纯节奏指导注入（见 buildOutlineSys），不再要求 AI 输出任何 structure 字段。
 
-// 4.7 Pro（3.2）大纲 Sys 组装改造：PRO 提示词 + 防套路 + 简介字数约束（N 未填按默认 30 章）
+// 4.7 Pro（3.2）大纲 Sys 组装改造：PRO 提示词 + 防套路（N 未填按默认 30 章）
 function buildOutlineSys(){
   const parts = [];
   parts.push(OUTLINE_GEN_SYS_PRO);          // 新书目+简介+结构
@@ -4158,10 +4157,6 @@ function buildOutlineSys(){
 用户在【用户构想】中用引号或书名号标出的专名与固定短语（如「被贬马夫」「社稷倾覆」），属于该作者自造或明确定义的核心词，含义与拼写唯一。
 必须：逐字原样写入书名/简介/叙事锚点等任一可见位置，一字不改，禁止改写为同义词或换字换序。
 禁止：弃用该词、擅自改名、或把多个核心词揉成模糊表达。`);
-  const lr = state.loglineRange;
-  const _m = Number.isFinite(lr&&lr.min)?Math.max(1,Math.floor(lr.min)):100;
-  const _x = Number.isFinite(lr&&lr.max)?Math.min(5000,Math.max(1,Math.floor(lr.max))):300;
-  const _lo = Math.min(_m,_x), _hi = Math.max(_m,_x);
   const N = chapterCountVal();              // v235/E1：未填时不取默认 30，避免"30 章"提示词污染（AI 误以为真是 30 章）
   // 全书拍子与防套路疲劳约束（v1.0.143：structure 已移除，改为纯节奏指导，不再要求输出结构字段）
   const bbCfg = currentBookBeatCfg();
@@ -4182,7 +4177,7 @@ function buildOutlineSys(){
 1. 主角每次遇到困难的解决方式不能都一样：不同阶段的高潮事件必须是不同性质的收获/代价/认知转变。
 2. 允许在主要推进阶段之间插入「缓冲/情感休整段」：该段没有大转折、没有大燃点，只用于人物关系、生活细节或情绪沉淀。
 3. 约 70% 的章节走标准推进节奏，30% 的章节允许使用变形结构（视角切换、缓冲、合并、跳拍）。`);
-  parts.push(`\n\n【简介字数约束】本作小说简介总字数必须控制在 ${_lo}—${_hi} 字之间，严格遵守区间，不得超出。` + (N
+  parts.push('\n\n' + (N
     ? `全书共 ${N} 章，章节标题将在后续独立步骤生成，不得在此输出 chapters 字段。`
     : `用户尚未确定全书总章数，不要预设具体章数。`));
   const banNote = banListBlockFor('outline');
@@ -5906,7 +5901,6 @@ function viewStory(){
             </div>
           </div>
           ${ bookBeatHtml() }
-          ${ loglineRangeHtml() }
           ` : '' }
           <h4 style="margin:18px 0 6px">叙事主体<em style="font-weight:400;font-style:normal;color:#8b95a7;font-size:12px">（默认 主角线；团队线会全链路落实团队设定）</em></h4>
           <div class="team-pick" id="teamPick">
@@ -5980,7 +5974,7 @@ function viewStory(){
         <span class="so-fold">${state.soCollapsed?'▸':'▾'}</span><b>📌 小说简介</b>
         <button type="button" class="btn small ghost" id="btnLoglineEdit" title="编辑小说简介" style="margin-left:auto;padding:1px 8px;font-size:12px">✎ 编辑</button>
       </div>
-      <p class="sub so-logline" ${state.soCollapsed?'hidden':''}>${esc(stripStructureFromIntro(o.logline||''))||'（暂无简介，点✎编辑或重新生成大纲）'}</p>
+      <div class="so-logline" ${state.soCollapsed?'hidden':''}>${renderLoglineHtml(o.logline||'')||'（暂无简介，点✎编辑或重新生成大纲）'}</div>
       ${ isLong() ? anchorEditHtml() : '' }
       ${ isLong() ? beatStructureCardHtml() : '' }   <!-- v1.0.145 全书节拍（本地按全书拍子映射章节阶段） -->
       </div>
@@ -9731,22 +9725,6 @@ function bindView(){
   const _p2 = $('#polishCards2'); if(_p2) renderPolishCards(_p2);
   $$('[data-gen-outline]').forEach(b=> b.onclick = ()=> genOutline());
   bindDictMaster();
-  // v11 简介字数范围（生成大纲前、仅长篇）：双数字输入，min>max 自动对调、max 上限 5000
-  const llMin = $('#llMin'), llMax = $('#llMax');
-  if(isLong() && llMin && llMax){
-    const commitLL = ()=>{
-      let mn = Math.floor(Number(llMin.value)), mx = Math.floor(Number(llMax.value));
-      if(!Number.isFinite(mn) || mn<1) mn = 100;   // v230/T4 默认 100–300
-      if(!Number.isFinite(mx) || mx<1) mx = 300;
-      if(mn>5000){ mn = 5000; llMin.value = 5000; }
-      if(mx>5000){ mx = 5000; llMax.value = 5000; }
-      if(mn>mx){ const _t=mn; mn=mx; mx=_t; llMin.value=mn; llMax.value=mx; }   // 兜底：自动对调
-      state.loglineRange = {min:mn, max:mx};
-      persist();
-    };
-    llMin.addEventListener('change', commitLL);
-    llMax.addEventListener('change', commitLL);
-  }
   // v10.18 结构骨架 / 可复用词典折叠（默认收起，点标题展开）
   $$('[data-rec-fold]').forEach(h=> h.onclick = ()=>{
     const key = h.dataset.recFold;
@@ -10008,12 +9986,6 @@ function applyOutlineObject(o, opts){
   state.outline = o;
   normalizeOutline(state.outline);   // 4.6 Plus：outline 防御归一化
   state.outlineConfirmed = false;
-  // 简介字数检查（toast-only 非阻断；v230/T4 默认区间 100–300）
-  const _ll = String(o.logline||'').trim().length;
-  const _lr = state.loglineRange||{};
-  const _lo = Math.min(Number.isFinite(_lr.min)?_lr.min:100, Number.isFinite(_lr.max)?_lr.max:300);
-  const _hi = Math.max(Number.isFinite(_lr.min)?_lr.min:100, Number.isFinite(_lr.max)?_lr.max:300);
-  if(_ll < _lo || _ll > _hi){ toast(`提示：简介当前 ${_ll} 字，目标 ${_lo}—${_hi} 字，未落在区间内。`); }
   if(prevGloss) o.glossary = prevGloss;
   else if(!o.glossary) o.glossary = {characters:[], places:[], propernouns:[]};
   // 4.9 修复：应用「导入设定」暂存的结构化设定（生成大纲前点击导入设定时暂存于 state.pendingV45），
@@ -10164,8 +10136,9 @@ function extractCandidateBookName(txt){
   if(bk && bk[1]) return bk[1].trim().replace(/[】\]\)]/g,'');
   return '';
 }
-// v1.0.234：简介不再「手啃结构/平铺重复节拍」——把候选文本里的「结构（…）：…」段从简介中剔除，
-// 结构落位交给下方「全书节拍」模块（本地按全书拍子映射章节阶段）。仅删该字段段，其余字段原样保留。
+// v1.0.236 简介剔除：既去掉候选里的「结构（…）：…」整段（节拍归下方「全书节拍」模块），
+//   也去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（属候选营销文案，不进简介）。
+//   仅删这些字段段/行，其余字段原样保留。
 function stripStructureFromIntro(txt){
   const s = String(txt||'');
   if(!s) return s;
@@ -10173,6 +10146,7 @@ function stripStructureFromIntro(txt){
   const out = [];
   let skip = false;
   const fieldHead = /^\s*(?:书名|小说名|标题|题材|主角|核心冲突|核心定位|深层命题|世界观|对手|动机|风格|落地方式|目标|核心词|推荐理由|简介|评分|一句话|定位|优势|亮点)\s*[:：]/;
+  const dropLine = /^\s*(?:书名|小说名|标题|推荐理由)\s*[:：]/;   // 单行命名字段：直接剔除
   for(const ln of lines){
     if(!skip && /^\s*结构(?:\s*（[^）]*）)?\s*[:：]/.test(ln)){ skip = true; continue; }
     if(skip){
@@ -10180,9 +10154,26 @@ function stripStructureFromIntro(txt){
       if(fieldHead.test(ln)){ skip = false; out.push(ln); }
       continue;
     }
+    if(dropLine.test(ln)) continue;
     out.push(ln);
   }
   return out.join('\n').replace(/\n{2,}/g, '\n').trim() || s.trim();
+}
+// v1.0.236 简介展示排版：把剔除后的文本按「标签：内容」拆成整齐的字段行（对齐优化构想候选卡的样式），
+//   无标签的普通行原样输出；供简介卡显示用（编辑态仍用原始文本）。
+function renderLoglineHtml(txt){
+  const s = stripStructureFromIntro(txt);
+  const ls = String(s||'').trim().split('\n');
+  if(!ls.length || !(ls[0]||'').trim()) return '';
+  const labelSet = new Set(['书名','小说名','标题','题材','主角','核心缺陷','钩点','核心冲突','风格','目标','核心词','世界观','对手','动机','特点','亮点','定位','基调','金手指','展开','结局','综上','核心看点','设定','走向','看点','卖点','矛盾','成长','悬念','反转']);
+  const re = /^([^\s：:（(]{1,10})\s*[:：]\s*(.*)$/;
+  return ls.map(ln=>{
+    const m = ln.match(re);
+    if(m && labelSet.has(m[1].trim())){
+      return `<div class="so-line"><span class="so-lb">${esc(m[1].trim())}</span><span class="so-txt">${esc(m[2])}</span></div>`;
+    }
+    return `<div class="so-line so-plain">${esc(ln)}</div>`;
+  }).join('');
 }
 // 用②候选的 书名/简介/结构 构建 outline 骨架（纯本地，无 AI）
 function buildOutlineFromPolishCandidate(cand){
@@ -11584,21 +11575,7 @@ function openChapterSummaryPanel(i){
   ov.querySelector('#chSumCopy').onclick = ()=>{ const s=(c.strip||'').trim(); if(s) copyText(s); };
   renderChapterSummaryBody(i);
 }
-// 长篇：写作范式选择器（结构 + 可复用词典，均折叠；节奏/标题/质量 v10.18/10.60 移除）
 // 长篇：写作范式选择器（可复用词典折叠；结构/节奏/标题风格已移除 v11）
-function loglineRangeHtml(){
-  const lr = state.loglineRange || {min:100, max:300};
-  const _m = Number.isFinite(lr.min)?Math.max(1,Math.min(5000,Math.floor(lr.min))):100;
-  const _x = Number.isFinite(lr.max)?Math.max(1,Math.min(5000,Math.floor(lr.max))):300;
-  const _lo = Math.min(_m,_x), _hi = Math.max(_m,_x);
-  return `<div class="logline-range">
-    <span class="llr-label">简介字数范围：</span>
-    <input type="number" id="llMin" class="llr-input" min="1" max="5000" step="1" value="${_lo}" aria-label="简介最少字数">
-    <span class="llr-sep">—</span>
-    <input type="number" id="llMax" class="llr-input" min="1" max="5000" step="1" value="${_hi}" aria-label="简介最多字数">
-    <span class="llr-hint">字（生成大纲时 AI 严格遵守此区间；两数颠倒会自动对调）</span>
-  </div>`;
-}
 
 // 遵从度 → 语义化说明（v8：把百分比翻译成给用户看的自然语言）
 function adherenceHint(a){

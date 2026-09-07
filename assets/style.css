@@ -671,6 +671,12 @@ body.reader-lock{overflow:hidden}
 .so-anchor-in:focus{outline:none;border-color:var(--accent)}
 .so-anchor-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .so-anchor-note{font-size:11px}
+/* v1.0.236 小说简介成型排版：对齐优化构想候选卡——每字段一行（标签横栏 + 内容），整齐易读 */
+.so-logline{margin:6px 0 4px;display:flex;flex-direction:column;gap:4px;padding:8px 10px;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;font-size:13px;line-height:1.55;color:var(--txt);user-select:text}
+.so-logline .so-line{display:flex;align-items:flex-start;gap:8px}
+.so-logline .so-line .so-lb{flex:0 0 auto;min-width:56px;padding:2px 8px;border-radius:6px;background:color-mix(in srgb, var(--accent) 12%, transparent);color:var(--accent);font-weight:700;font-size:12px;white-space:nowrap}
+.so-logline .so-line .so-txt{flex:1;min-width:0;word-break:break-word}
+.so-logline .so-line.so-plain{color:var(--txt)}
 .orig-body{margin-top:8px}
 .orig-text{width:100%;min-height:200px;padding:10px 12px;font-size:13px;line-height:1.7;resize:vertical;
   background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--text);cursor:text}
@@ -981,12 +987,6 @@ body.reader-lock{overflow:hidden}
 /* v8 辅轨词典面板（构想阶段）：可复用词典卡片 */
 .gs-pend{margin-top:12px}
 .gs-pend-count{font-size:12px;color:var(--ok);font-weight:500;background:color-mix(in srgb, var(--ok) 14%, var(--panel2));padding:2px 8px;border-radius:20px}
-/* v11 简介字数范围控件（生成大纲前，仅长篇） */
-.logline-range{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:10px 0 2px;padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
-.logline-range .llr-label{font-size:12px;color:var(--sub);font-weight:600}
-.logline-range .llr-input{width:70px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);font-size:13px}
-.logline-range .llr-sep{color:var(--sub)}
-.logline-range .llr-hint{font-size:11px;color:var(--sub)}
 /* v11 辅轨词典面板精简：挂词典后的紧凑状态行 */
 .gs-pend-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 0;padding:6px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
 .gs-pend-row .sub{margin:0;font-size:11px}
