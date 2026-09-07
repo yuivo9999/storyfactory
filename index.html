@@ -6,18 +6,18 @@
 <meta name="theme-color" content="#0f1115">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6f8">
 <title>影视前期提示词生成器</title>
-<meta name="app-version" content="1.0.136">
+<meta name="app-version" content="1.0.204">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="assets/style.css?v=150">
+<link rel="stylesheet" href="assets/style.css?v=166">
 <link rel="stylesheet" href="assets/vendor/nouislider/nouislider.min.css">
   <link rel="stylesheet" href="assets/vendor/tom-select/tom-select.css">
-<link rel="stylesheet" href="assets/theme-light.css?v=3">
-<link rel="stylesheet" href="assets/theme-mecha.css?v=7">
-  <link rel="stylesheet" href="assets/theme-blackboard.css?v=3">
-<link rel="stylesheet" href="assets/theme-cyber.css?v=6">
-<link rel="stylesheet" href="assets/theme-guofeng.css?v=5">
-<link rel="stylesheet" href="assets/theme-aurora.css?v=1">
-<link rel="stylesheet" href="assets/theme-paper.css?v=3">
+<link rel="stylesheet" href="assets/theme-light.css?v=4">
+<link rel="stylesheet" href="assets/theme-mecha.css?v=8">
+  <link rel="stylesheet" href="assets/theme-blackboard.css?v=4">
+<link rel="stylesheet" href="assets/theme-cyber.css?v=7">
+<link rel="stylesheet" href="assets/theme-guofeng.css?v=7">
+<link rel="stylesheet" href="assets/theme-aurora.css?v=2">
+<link rel="stylesheet" href="assets/theme-paper.css?v=4">
 <link rel="stylesheet" href="assets/style-polish.css?v=2">
 </head>
 <body>
@@ -100,8 +100,16 @@
         <input id="cfgTempQC" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
       <label class="field"><span>AI 配方助手（发散，默认 0.9）</span>
         <input id="cfgAiRecipeTemp" type="number" step="0.1" min="0" max="1" placeholder="0.9"></label>
+      <label class="field"><span>支线进度（契约，建议 0.25）</span>
+        <input id="cfgTempSubplot" type="number" step="0.1" min="0" max="1" placeholder="0.25"></label>
+      <label class="field"><span>审校·锚点提取（契约，建议 0.2）</span>
+        <input id="cfgTempAudit" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
+      <label class="field"><span>滚动摘要（忠实，建议 0.3）</span>
+        <input id="cfgTempRolling" type="number" step="0.1" min="0" max="1" placeholder="0.3"></label>
+      <label class="field"><span>内容建议（建议 0.6）</span>
+        <input id="cfgTempContent" type="number" step="0.1" min="0" max="1" placeholder="0.6"></label>
       <div class="tp-save-row"><button id="btnTempSave" class="btn small primary" type="button">💾 保存温度</button></div>
-      <p class="hint">改后点「保存温度」生效；各 AI 请求按任务类型取对应温度（大纲 0.7 / 优化构想 0.5 / 标题 0.5 / 全书规划师 0.4 / 本章梗概 1.0 / 章节 0.5 / 词库提取 0.2 / AI 配方助手 0.9）。AI 配方助手温度越高候选配方差异越发散、越低越贴近描述。本章梗概为「速读」任务，压缩追求忠实，偏低保真可手动下调其温度至 0.7–0.9。</p>
+      <p class="hint">改后点「保存温度」生效；各 AI 请求按任务类型取对应温度（大纲 0.7 / 优化构想 0.5 / 标题 0.5 / 全书规划师 0.4 / 本章梗概 1.0 / 章节 0.5 / 词库提取 0.2 / AI 配方助手 0.9 / 支线进度 0.25 / 审校 0.2 / 滚动摘要 0.3 / 内容建议 0.6）。本章梗概为「速读」任务，压缩追求忠实，偏低保真可手动下调其温度至 0.7–0.9。支线进度 / 审校 / 滚动摘要 / 词库提取属结构化契约任务，建议低温提升 JSON 合规率。</p>
     </div>
   </div>
 
@@ -274,6 +282,6 @@
   <script src="assets/vendor/tom-select/tom-select.complete.min.js"></script>
 <script src="assets/vendor/jszip.min.js"></script>
 <script src="assets/idb.js?v=4"></script>
-  <script src="assets/app.js?v=228"></script>
+  <script src="assets/app.js?v=290"></script>
   </body>
 </html>
