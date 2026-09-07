@@ -6,9 +6,9 @@
 <meta name="theme-color" content="#0f1115">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6f8">
 <title>影视前期提示词生成器</title>
-<meta name="app-version" content="1.0.204">
+<meta name="app-version" content="1.0.206">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="assets/style.css?v=166">
+<link rel="stylesheet" href="assets/style.css?v=167">
 <link rel="stylesheet" href="assets/vendor/nouislider/nouislider.min.css">
   <link rel="stylesheet" href="assets/vendor/tom-select/tom-select.css">
 <link rel="stylesheet" href="assets/theme-light.css?v=4">
@@ -78,39 +78,8 @@
       <button type="button" class="btn theme" data-theme="aurora">🌌 暗夜极光</button>
       <button type="button" class="btn theme" data-theme="paper">📜 暖阳米纸</button>
     </div>
-    <!-- v10.16 分任务温度（从设置弹窗移入主题面板；id 不变、功能零影响） -->
-    <hr class="tp-sep">
-    <div class="set-block">
-      <div class="set-block-head"><span>🌡️ 分任务温度（留空用建议值）</span></div>
-      <label class="field"><span>全局（未细分任务）</span>
-        <input id="cfgTemp" type="number" step="0.1" min="0" max="1" placeholder="0.7"></label>
-      <label class="field"><span>生成大纲（发散，建议 0.7）</span>
-        <input id="cfgTempOutline" type="number" step="0.1" min="0" max="1" placeholder="0.7"></label>
-      <label class="field"><span>优化构想（折中，建议 0.5）</span>
-        <input id="cfgTempIdea" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
-      <label class="field"><span>标题 AI（折中，建议 0.5）</span>
-        <input id="cfgTempTitle" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
-      <label class="field"><span>全书规划师（忠实偏稳，建议 0.4）</span>
-  <input id="cfgTempPlan" type="number" step="0.1" min="0" max="1" placeholder="0.4"></label>
-      <label class="field"><span>本章梗概（速读，默认 1.0）</span>
-  <input id="cfgTempStrip" type="number" step="0.1" min="0" max="1" placeholder="1"></label>
-      <label class="field"><span>生成章节（折中，建议 0.5）</span>
-        <input id="cfgTempChapter" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
-      <label class="field"><span>词库提取（严谨，建议 0.2）</span>
-        <input id="cfgTempQC" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
-      <label class="field"><span>AI 配方助手（发散，默认 0.9）</span>
-        <input id="cfgAiRecipeTemp" type="number" step="0.1" min="0" max="1" placeholder="0.9"></label>
-      <label class="field"><span>支线进度（契约，建议 0.25）</span>
-        <input id="cfgTempSubplot" type="number" step="0.1" min="0" max="1" placeholder="0.25"></label>
-      <label class="field"><span>审校·锚点提取（契约，建议 0.2）</span>
-        <input id="cfgTempAudit" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
-      <label class="field"><span>滚动摘要（忠实，建议 0.3）</span>
-        <input id="cfgTempRolling" type="number" step="0.1" min="0" max="1" placeholder="0.3"></label>
-      <label class="field"><span>内容建议（建议 0.6）</span>
-        <input id="cfgTempContent" type="number" step="0.1" min="0" max="1" placeholder="0.6"></label>
-      <div class="tp-save-row"><button id="btnTempSave" class="btn small primary" type="button">💾 保存温度</button></div>
-      <p class="hint">改后点「保存温度」生效；各 AI 请求按任务类型取对应温度（大纲 0.7 / 优化构想 0.5 / 标题 0.5 / 全书规划师 0.4 / 本章梗概 1.0 / 章节 0.5 / 词库提取 0.2 / AI 配方助手 0.9 / 支线进度 0.25 / 审校 0.2 / 滚动摘要 0.3 / 内容建议 0.6）。本章梗概为「速读」任务，压缩追求忠实，偏低保真可手动下调其温度至 0.7–0.9。支线进度 / 审校 / 滚动摘要 / 词库提取属结构化契约任务，建议低温提升 JSON 合规率。</p>
-    </div>
+    <!-- v1.0.205 分任务温度已并入设置弹窗「各任务温度」（与分任务模型集中管理） -->
+    <p class="hint" style="margin:10px 2px 0">💡 每类 AI 任务各自的创作/严谨温度（大纲 / 优化构想 / 标题 / 规划师 / 梗概 / 章节 / 词库 / 配方 / 支线 / 审校 / 滚动摘要 / 内容建议）已移到右上角「⚙ 选项」→「各任务温度」，与「各任务模型」同处集中管理。</p>
   </div>
 
   <!-- 写作风格配色弹层（点击 🎨 颜色展开；仿 themePanel 复用 spec-panel 样式） -->
@@ -203,6 +172,39 @@
         <button id="btnTaskModels" class="btn ghost" type="button">🎯 分任务模型设置 · <span id="tmBadge">全部跟随全局</span> →</button>
       </div>
 
+      <!-- v1.0.205 分任务温度（由主题面板并入设置弹窗；id 不变，echoTemps/saveTemps 零改动） -->
+      <div class="set-block">
+        <div class="set-block-head"><span>🌡️ 各任务温度（留空用建议值）</span></div>
+        <label class="field"><span>全局（未细分任务）</span>
+          <input id="cfgTemp" type="number" step="0.1" min="0" max="1" placeholder="0.7"></label>
+        <label class="field"><span>生成大纲（发散，建议 0.7）</span>
+          <input id="cfgTempOutline" type="number" step="0.1" min="0" max="1" placeholder="0.7"></label>
+        <label class="field"><span>优化构想（折中，建议 0.5）</span>
+          <input id="cfgTempIdea" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
+        <label class="field"><span>标题 AI（折中，建议 0.5）</span>
+          <input id="cfgTempTitle" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
+        <label class="field"><span>全书规划师（忠实偏稳，建议 0.4）</span>
+          <input id="cfgTempPlan" type="number" step="0.1" min="0" max="1" placeholder="0.4"></label>
+        <label class="field"><span>本章梗概（速读，默认 1.0）</span>
+          <input id="cfgTempStrip" type="number" step="0.1" min="0" max="1" placeholder="1"></label>
+        <label class="field"><span>生成章节（折中，建议 0.5）</span>
+          <input id="cfgTempChapter" type="number" step="0.1" min="0" max="1" placeholder="0.5"></label>
+        <label class="field"><span>词库提取（严谨，建议 0.2）</span>
+          <input id="cfgTempQC" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
+        <label class="field"><span>AI 配方助手（发散，默认 0.9）</span>
+          <input id="cfgAiRecipeTemp" type="number" step="0.1" min="0" max="1" placeholder="0.9"></label>
+        <label class="field"><span>支线进度（契约，建议 0.25）</span>
+          <input id="cfgTempSubplot" type="number" step="0.1" min="0" max="1" placeholder="0.25"></label>
+        <label class="field"><span>审校·锚点提取（契约，建议 0.2）</span>
+          <input id="cfgTempAudit" type="number" step="0.1" min="0" max="1" placeholder="0.2"></label>
+        <label class="field"><span>滚动摘要（忠实，建议 0.3）</span>
+          <input id="cfgTempRolling" type="number" step="0.1" min="0" max="1" placeholder="0.3"></label>
+        <label class="field"><span>内容建议（建议 0.6）</span>
+          <input id="cfgTempContent" type="number" step="0.1" min="0" max="1" placeholder="0.6"></label>
+        <div class="tp-save-row"><button id="btnTempSave" class="btn small primary" type="button">💾 保存温度</button></div>
+        <p class="hint">改后点「保存温度」生效；各 AI 请求按任务类型取对应温度（大纲 0.7 / 优化构想 0.5 / 标题 0.5 / 全书规划师 0.4 / 本章梗概 1.0 / 章节 0.5 / 词库提取 0.2 / AI 配方助手 0.9 / 支线进度 0.25 / 审校 0.2 / 滚动摘要 0.3 / 内容建议 0.6）。本章梗概为「速读」任务，压缩追求忠实，偏低保真可手动下调其温度至 0.7–0.9。支线进度 / 审校 / 滚动摘要 / 词库提取属结构化契约任务，建议低温提升 JSON 合规率。</p>
+      </div>
+
       <div class="modal-actions">
         <button id="btnCfgTest" class="btn ghost">测试连接</button>
         <button id="btnCfgSave" class="btn primary">保存</button>
@@ -282,6 +284,6 @@
   <script src="assets/vendor/tom-select/tom-select.complete.min.js"></script>
 <script src="assets/vendor/jszip.min.js"></script>
 <script src="assets/idb.js?v=4"></script>
-  <script src="assets/app.js?v=290"></script>
+  <script src="assets/app.js?v=291"></script>
   </body>
 </html>
