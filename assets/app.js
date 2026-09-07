@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.226';   // v1.0.226 节拍表与全局时间线自动重试升至 4 次（含一键四步/单独点击，失败自动重跑、成功进下一步），按钮红点角标实时显示重试次数。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.231';   // v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次），失败自动重跑、成功进入下一步。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -1710,9 +1710,15 @@ function openPolishBox(){
 function polishIdle(){
   return !(Array.isArray(state.polishOptions) && state.polishOptions.length);
 }
-// v1.0.121 优化构想方案卡：竖向多色卡片（序号徽章/方案名/左侧色条三重视觉编码，复刻 ai配方助手候选列表）。
+// v1.0.227 优化构想方案卡：竖向多色卡片（序号徽章/方案名/左侧色条三重视觉编码，复刻 ai配方助手候选列表）。
 // 固定六色序列，按生成顺序取色；正文只读可选中；每卡「采用」即导入构想输入框 +「复制」。
 const POLISH_PALETTE = ['#E8A33D','#D64545','#4C6FD5','#3FA36B','#8E5AC8','#2CA6A4'];
+// v1.0.227：从方案文本提取首行「书名：…」（PRO 提示词已要求每版首项产出书名）；缺省返回 ''
+function extractPolishTitle(text){
+  const ln = String(text||'').split('\n').map(s=>s.trim()).find(s=>/^书名\s*[：:]\s*\S/.test(s));
+  if(!ln) return '';
+  return String(ln.replace(/^书名\s*[：:]\s*/, '')).trim();
+}
 function renderPolishCards(container){
   if(!container) return;
   const opts = Array.isArray(state.polishOptions) ? state.polishOptions : [];
@@ -1729,6 +1735,8 @@ function renderPolishCards(container){
     const isAdopted = !!adopted && adopted === name;
     const defects = (o._v45 && Array.isArray(o._v45.defects)) ? o._v45.defects.filter(d=>String(d||'').trim()) : [];
     const hasV45 = !!(o._v45 && (o._v45.navBeacon || (o._v45.seedCharacters&&o._v45.seedCharacters.length) || (o._v45.seedPlaces&&o._v45.seedPlaces.length)));
+    const pTitle = extractPolishTitle(o.text);   // v1.0.227：方案书名置顶展示
+    const pBody = String(o.text||'').replace(/^\s*书名\s*[：:][^\n]*\n?/, '').trim();   // 书名已置顶，正文去掉首行以免重复
     return `<div class="pol-cand${isAdopted?' on':''}" style="--pc:${c}" data-idx="${i}">
       <div class="pol-cand-head">
         <span class="pol-no" style="background:${c}">${i+1}</span>
@@ -1738,7 +1746,8 @@ function renderPolishCards(container){
           <button type="button" class="btn small ghost" data-pol-copy="${i}" title="复制此方案">📋 复制</button>
         </span>
       </div>
-      <div class="pol-cand-body">${esc(String(o.text||''))}</div>
+      ${pTitle?`<div class="pol-cand-title" style="background:${c}">📖 ${esc(pTitle)}</div>`:''}
+      <div class="pol-cand-body">${esc(pBody ? pBody : String(o.text||''))}</div>
       ${defects.length?`<div class="pol-cand-body" style="opacity:.85"><b>⚠️ 构想缺陷清单：</b><br>${defects.map(d=>'· '+esc(String(d))).join('<br>')}</div>`:''}
       <div class="pol-cand-foot">
         ${hasV45?`<button type="button" class="btn small ghost" data-pol-import="${i}" title="导入结构化设定（导航灯塔/种子人物/种子地点/建议章节数）">📥 导入设定</button>`:''}
@@ -3991,15 +4000,16 @@ const IDEA_POLISH_SYS_LEGACY =  `你是一位深谙网文与影视叙事的构�
 
 // 4.7 Pro（3.1）优化构想 AI 新系统提示词：资深长篇策划编辑 + 故事诊断师，输出结构化故事简报（含缺陷清单）
 const IDEA_POLISH_SYS_PRO =  `你是一位深谙网文与影视叙事的构想编辑。
-【核心任务】把用户输入的粗糙故事构想，优化成一份"字段化简报"——按下面固定的 7 个字段逐项列出，保留用户全部原始意图、补全可推导的具体细节，让后续大纲 AI 能逐字段直接引用、零翻译损耗。
+【核心任务】把用户输入的粗糙故事构想，优化成一份"字段化简报"——每版都必须先给出一个可直接使用的书名，再按下面固定的 7 个字段逐项列出，保留用户全部原始意图、补全可推导的具体细节，让后续大纲 AI 能逐字段直接引用、零翻译损耗。
 【硬性约束】
 0. 输入极短（少于 15 字，仅题材/方向词，如"穿越文""重生复仇""校园"）时：切换到「骨架展开模式」——按该题材经典类型惯例，仍按下述 7 字段框架生成一份通用化报，必须在该报最上方标注"（基于题材惯例的通用展开，非用户原话）"，末尾附一行"💡 建议补充：主角身份？核心设定/金手指？结构阶段？风格基调？——补充后再优化效果更好"；不得把骨架表述成用户提供的、不得声称唯一写法。
 1. 绝不删减、篡改用户明确表达的内容（题材/元素/风格都须保留），只能在原意上细化；
 2. 不替用户新增故事设定（不凭空加角色/势力/冲突/金手指），只补全"可推导的通用细节"；
-3. 严格按下述【输出格式】的 7 个字段分点输出：固定标签、固定顺序，每字段占一行"标签：内容"，不要新增其它大标题；每字段须给出具体、可执行的实质内容，禁止留空、禁止笼统一句话；"核心词"字段必须收列用户在构想里用引号标出的专名与固定短语（无则写"无"）；
+3. 严格按下述【输出格式】的 8 个字段分点输出：固定标签、固定顺序，每字段占一行"标签：内容"，不要新增其它大标题；首项「书名」必须具体可直接用作最终书名（若你更有把握，可在同一行内用 / 另列 2-3 个备选），且须切中本作的题材与核心冲突/主角钩点、避免《重生之xxx》《xxx系统》《xxx的xxx》这类高频套路名；每字段须给出具体、可执行的实质内容，禁止留空、禁止笼统一句话；"核心词"字段必须收列用户在构想里用引号标出的专名与固定短语（无则写"无"）；
 4. 若用户构想含风格基调（轻松/诙谐/深沉/热血等），"风格"字段必须写清基调并给出 2-3 个落地方式；
-5. 全报告 180-320 字：除下述 7 个字段外，不要解释、不要引子、不要 markdown 代码块、不要输出 JSON；末尾可附一行以"💡"开头的编辑建议（可选，不计入字段）。
+5. 全报告 180-360 字：除下述 8 个字段外，不要解释、不要引子、不要 markdown 代码块、不要输出 JSON；末尾可附一行以"💡"开头的编辑建议（可选，不计入字段）。
 【输出格式】
+书名（全书标题：1 个主选即可，可用 / 在同行附 2-3 个备选；≤12 字；须切中题材与核心冲突/主角钩点，避免《重生之xxx》《xxx系统》《xxx的xxx》高频套路名；直接可用作最终书名）：…
 题材（时代/类型基调）：…
 主角（身份/目标/核心缺陷/钩点）：…
 核心冲突（全书的引擎：谁与什么冲突、为何难解）：…
@@ -4025,7 +4035,7 @@ const POLISH_MULTI_MODE = `\n\n【本次输出模式：多方案】在上述要�
 · 悬疑智斗向——靠信息差与严密逻辑链制造"颅内高潮"，读者追更想看主角怎么破局；卖点是烧脑解谜。
 · 轻松日常/沙雕向——解压的情绪按摩，靠反差萌与吐槽感让人嘴角上扬；卖点是轻松解压、适合短视频化传播。
 
-每一版都必须足够具体、可执行，并尽量贴合用户原意。请从这五个方向中，选择与本书题材/构想真正契合的方向各写一版：一般 3~5 版，契合几个就给几版；明显不适配该题材的方向可跳过不给；若确有五个方向都覆盖不了的极契合新方向，允许额外补一版新方向。每个方案用一行分隔符开头：「━━ 方案N：方案名 ━━」，随后是按上述结构的一段条目式构想，并在方案末尾加一行「推荐理由：…（这个方案给谁、适合什么口味；若该方向偏小众或门槛高——如悬疑智斗极费脑、轻松沙雕易同质——请如实点明其取舍）」。方案之间方向要明显拉开，仍不要输出 JSON、不要 markdown 代码块。`;
+每一版都必须足够具体、可执行，并尽量贴合用户原意。请从这五个方向中，选择与本书题材/构想真正契合的方向各写一版：一般 3~5 版，契合几个就给几版；明显不适配该题材的方向可跳过不给；若确有五个方向都覆盖不了的极契合新方向，允许额外补一版新方向。每个方案用一行分隔符开头：「━━ 方案N：方案名 ━━」，随后是按上述结构的一段条目式构想（必须先以「书名：…」开头给出该版书名，再依次列其余字段），并在方案末尾加一行「推荐理由：…（这个方案给谁、适合什么口味；若该方向偏小众或门槛高——如悬疑智斗极费脑、轻松沙雕易同质——请如实点明其取舍）」。方案之间方向要明显拉开，各版书名务必各不相同、切中该方向；仍不要输出 JSON、不要 markdown 代码块。`;
 
 // v8c 词典增量补全：从已生成章节正文中提取「现有词典未收录」的新人物/新地名/新专名，去重后并入词典。
 // 供批量生成章节后的自动补全与词典卡片的「📥 提取新增」共用；人物字段对齐词典契约（age/gender 必填）。
@@ -5749,32 +5759,38 @@ function openStyleLibReader(){
 }
 function closeStyleLibReader(){ const p=$('#wsLibReader'); if(p) p.remove(); }
 
-// ==================== v1.0.201 5格主流程排版辅助 ====================
-function flowSideNavHtml(){
-  const items = isLong()
-    ? [['1','设'],['2','构'],['3','典'],['4','规'],['5','文']]
-    : [['1','设'],['2','构']];
-  return `<div class="flow-sidenav">${items.map(([n,l])=>`<button type="button" class="fsd-btn" data-flow-go="${n}" title="跳到第${n}格">${l}</button>`).join('')}</div>`;
+// ==================== v1.0.228 侧边导航（顺序重排） ====================
+// v1.0.228：把原「设/构/典/规/文」5 步侧边条重排为用户指定的 7 个快捷入口，顺序：构→简→典→规→方→万→正。
+// 每项 = [标签, 目标选择器]；仅当页面真实存在该目标时才渲染该按钮（短片等缺失项自动隐藏），点击平滑滚动到对应功能位置。
+const FLOW_NAV = [
+  ['构','[data-flow="2"]'],     // 优化构想卡片
+  ['简','#soLoglineBox'],       // 小说简介
+  ['典','[data-flow="3"]'],     // 词典达人
+  ['规','[data-flow="4"]'],     // 规划师
+  ['配','.ai-recipe-card'],     // AI 配方助手
+  ['万','.gs-card'],            // 万物词典
+  ['正','#longJump']            // 跳到章节
+];
+function flowNavItems(){
+  return FLOW_NAV.filter(([,sel])=>{ try{ return !!(document && document.querySelector(sel)); }catch(e){ return false; } });
+}
+function flowNavHtml(){
+  const items = flowNavItems();
+  return `<div class="flow-sidenav">${items.map(([l])=>`<button type="button" class="fsd-btn" title="跳到「${l}」">${l}</button>`).join('')}</div>`;
 }
 function bindFlowSideNav(){
   const old = document.querySelector('.flow-sidenav'); if(old && old.parentNode) old.parentNode.removeChild(old);
-  const secs = Array.prototype.slice.call(document.querySelectorAll('.flow-sec'));
-  if(!secs.length) return;
+  const items = flowNavItems(); if(!items.length) return;
   const nav = document.createElement('div');
   nav.className = 'flow-sidenav';
-  const items = isLong() ? [['1','设'],['2','构'],['3','典'],['4','规'],['5','文']] : [['1','设'],['2','构']];
-  nav.innerHTML = items.map(([n,l])=>`<button type="button" class="fsd-btn" data-flow-go="${n}" title="跳到第${n}格">${l}</button>`).join('');
-  (document.getElementById('view')||document.body).appendChild(nav);
-  nav.querySelectorAll('.fsd-btn').forEach(b=>{
-    b.onclick = ()=>{ const sec=document.querySelector('.flow-sec[data-flow="'+b.dataset.flowGo+'"]'); if(sec) sec.scrollIntoView({behavior:'smooth',block:'start'}); };
+  items.forEach(([l, sel])=>{
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'fsd-btn'; b.dataset.navSel = sel;
+    b.title = '跳到「'+l+'」'; b.textContent = l;
+    b.onclick = ()=>{ const el = document.querySelector(sel); if(el) el.scrollIntoView({behavior:'smooth', block:'start'}); };
+    nav.appendChild(b);
   });
-  const listener=()=>{
-    let cur='1';
-    for(const s of secs){ const r=s.getBoundingClientRect(); if(r.top<=120 && r.bottom>120){ cur=s.dataset.flow||cur; } }
-    nav.querySelectorAll('.fsd-btn').forEach(b=> b.classList.toggle('cur', b.dataset.flowGo===cur));
-  };
-  window.addEventListener('scroll', listener, {passive:true});
-  listener();
+  (document.getElementById('view')||document.body).appendChild(nav);
 }
 function flowPlaceholderSec(n, name, note, icon, desc){
   return `<section class="flow-sec" data-flow="${n}">
@@ -5941,7 +5957,7 @@ function viewStory(){
         ${titleManagerHtml()}
       </div>
       <p class="sub" style="font-size:12px;color:var(--muted)">输入：用户构想 + 第 1 格设置的 全书章节数 / 全书拍子。产出：书名、小说简介（题材/主角/冲突/世界观/对手/动机/风格/结构/核心词）、全书节拍结构。选定候选点「生成大纲」后由②原样搬入；书名仅用户可改。</p>
-      <div class="so-fold-head" data-so-toggle role="button" tabindex="0" title="展开/收起小说简介" style="display:flex">
+      <div class="so-fold-head" id="soLoglineBox" data-so-toggle role="button" tabindex="0" title="展开/收起小说简介" style="display:flex">
         <span class="so-fold">${state.soCollapsed?'▸':'▾'}</span><b>📌 小说简介</b>
         <button type="button" class="btn small ghost" id="btnLoglineEdit" title="编辑小说简介" style="margin-left:auto;padding:1px 8px;font-size:12px">✎ 编辑</button>
       </div>
@@ -10459,10 +10475,10 @@ const PLANNER_STAGES = [
   { id:'foreshadow', num:'④', label:'伏笔网'   }
 ];
 function stageLabel(id){ const s=PLANNER_STAGES.find(x=>x.id===id); return s ? s.num+s.label : id; }
-// v1.0.226：节拍表 / 全局时间线 自动重试（含「⚡ 一键四步」与单独点击两条入口）——每批/每段最多尝试
+// v1.0.231：节拍表 / 全局时间线 自动重试（含「⚡ 一键四步」与单独点击两条入口）——每批/整段最多尝试
 // PLANNER_RETRY_MAX 次（含首次，即最多自动重试 PLANNER_RETRY_MAX-1 次），失败即重试、成功即进入下一步。
 // 重试计数存于 outline._plannerRetries（红色角标显示，随项目持久化，刷新后仍可见），每次新开一轮生成归零、重试时递增。
-const PLANNER_RETRY_MAX = 4;
+const PLANNER_RETRY_MAX = 16;   // v1.0.231：节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）
 function plannerRetryOf(stage){
   const o = state.outline; if(!o) return 0;
   return (o._plannerRetries && o._plannerRetries[stage]) || 0;
@@ -10518,14 +10534,10 @@ function refreshPlannerStageBar(running, failed){
   });
   const all = bar.querySelector('[data-cp-all]');
   if(all) all.classList.toggle('running', !!running);
-  // v1.0.190：全局时间线按段续跑——有持久化半程态时在阶段条下重建分段轨道 + 续跑按钮（刷新后仍可续）
+  // v1.0.230：全局时间线改为整段一次生成——移除分段续跑；迁移期清掉旧存档残留的分段半程态并隐藏轨道
   if(running !== 'timeline'){
-    const tlProg = (o._plannerProgress||{}).timeline;
-    const N = (o.chapters||[]).length;
-    if(tlProg && N && Number.isInteger(tlProg.done) && tlProg.done > 0 && tlProg.done < tlProg.total){
-      const segs = timelineSegments(N);
-      if(segs.length === tlProg.total){ renderSegTrack(segs, tlProg.done, -1, -1, `续跑将从第 ${tlProg.done+1}/${tlProg.total} 段开始`); showTimelineResume(segs, tlProg.done); }
-    } else if(plannerStageDone('timeline')){ hideTimelineTrack(); }
+    if(o._plannerProgress && o._plannerProgress.timeline) delete o._plannerProgress.timeline;
+    hideTimelineTrack();
   }
 }
 // v225/P5-A：填完章节数即可进入规划师——无章节数组时按 N 生成占位（空标题），规划师五阶段均可直接跑
@@ -10802,22 +10814,7 @@ function validateTimelineSegOutput(j, expectedCount){
   return '';
 }
 
-// 分区规则：≤8 章对半切 2 段（取中间整章作界，免空段）；>8 章 5 章起步，尾段不足 3 章并入前段
-function timelineSegments(totalN){
-  if(totalN <= 8){
-    const mid = Math.max(1, Math.floor(totalN/2));
-    return [[0,mid],[mid,totalN]].filter(s=>s[1]>s[0]);
-  }
-  const cuts=[]; for(let i=5;i<totalN;i+=5) cuts.push(i);
-  const segs=[]; let st=0;
-  for(const c of cuts){ segs.push([st,c]); st=c; }
-  segs.push([st,totalN]);
-  if(segs.length>1){
-    const last=segs[segs.length-1];
-    if(last[1]-last[0] < 3){ const prev=segs[segs.length-2]; segs[segs.length-2]=[prev[0],last[1]]; segs.pop(); }
-  }
-  return segs;
-}
+// v1.0.230：移除 timelineSegments——全局时间线改为整段一次生成，不再切段。
 
 // 本批用户拼装：处理范围 + 上一批末尾承接上下文 + 本批各章节拍「事件」（v1.0.224：事件驱动，节拍表不再提供 time）
 function buildTimelineSegUser(s, e, prevEnd){
@@ -10846,37 +10843,7 @@ function buildTimelineSegUser(s, e, prevEnd){
   return parts.join('\n\n');
 }
 
-// 分段轨道 DOM 管理：进度条 + 单个续跑按钮（不生成 20+ 个按钮）
-function tlTrackEl(){
-  const bar=$('.cp-stagebar'); if(!bar) return null;
-  const host=bar.parentElement;
-  let el=null;
-  if(host){ for(const c of host.children){ if(c && c.classList && c.classList.contains('cp-tl-track')){ el=c; break; } } }
-  if(!el){ el=document.createElement('div'); el.className='cp-tl-track'; bar.insertAdjacentElement('afterend', el); }
-  return el;
-}
-function renderSegTrack(segs, done, runIdx, failIdx, optTxt){
-  const el=tlTrackEl(); if(!el) return;
-  const n=segs.length;
-  const cells=segs.map((sg,i)=>{
-    let cls='cp-tl-cell';
-    if(i===failIdx) cls+=' cp-tl-fail';
-    else if(i===runIdx) cls+=' cp-tl-run';
-    else if(i<done) cls+=' cp-tl-done';
-    else cls+=' cp-tl-todo';
-    return `<span class="${cls}" title="第 ${i+1} 段：第 ${sg[0]+1}–${sg[1]} 章">${i+1}</span>`;
-  }).join('');
-  el.innerHTML=`<div class="cp-tl-head"><span>全局时间线分段</span><span class="cp-tl-count">${done}<i>/</i>${n}</span></div><div class="cp-tl-cells">${cells}</div>${optTxt?'<div class="cp-tl-hint2">'+optTxt+'</div>':''}`;
-}
-function showTimelineResume(segs, failIdx){
-  const el=tlTrackEl(); if(!el) return;
-  if(el.querySelector('.cp-tl-foot')) el.querySelector('.cp-tl-foot').remove();
-  const foot=document.createElement('div'); foot.className='cp-tl-foot';
-  const sg=segs[failIdx];
-  foot.innerHTML=`<span class="cp-tl-hint2 muted">中断于第 ${failIdx+1}/${segs.length} 段（第 ${sg[0]+1}–${sg[1]} 章），已自动重试 ${PLANNER_RETRY_MAX-1} 次未果，可续跑</span><button type="button" class="btn small ghost cp-tl-resume">▶ 续跑第 ${failIdx+1} 段</button>`;
-  el.appendChild(foot);
-  foot.querySelector('.cp-tl-resume').onclick=()=>{ genPlannerTimeline(null,{silent:false,resumeFrom:failIdx}); };
-}
+// v1.0.230：全局时间线改为整段一次生成，移除分段轨道及相关函数（tlTrackEl/renderSegTrack/showTimelineResume）。
 function hideTimelineTrack(){ const el=$('.cp-tl-track'); if(el) el.remove(); }
 
 // v1.0.184：全局时间线 + 各章节拍事件 上下文块——供 ⑤伏笔网 阶段读取，让伏笔设计贴着全局时间推进、能落地到具体剧情。
@@ -10908,7 +10875,7 @@ function globalTimelineBlock(){
   return parts.join('\n\n');
 }
 
-// ④ 全局时间线（v1.0.190：按段串行重排、跨段承接；中断自动重试 2 次，仍失败可续跑）
+// ④ 全局时间线（v1.0.230：整段一次生成全书时间线——不切段、无切点；失败自动重试最多 PLANNER_RETRY_MAX-1 次）
 async function genPlannerTimeline(btn, opts){
   opts = opts || {};
   if(!plannerGate(opts)) return false;
@@ -10920,89 +10887,68 @@ async function genPlannerTimeline(btn, opts){
     if(!opts.silent) toast('请先完成 ③ 节拍表，再规划全局时间线');
     refreshPlannerStageBar(null, 'timeline'); return false;
   }
-  const segs = timelineSegments(totalN);
-  // 续跑游标：显式 resumeFrom 优先；否则按持久化半程态续跑；都无则从头
-  let resumeFrom = opts.resumeFrom;
-  if(resumeFrom == null){
-    const tlProg = (o._plannerProgress||{}).timeline;
-    if(tlProg && Number.isInteger(tlProg.done) && tlProg.done > 0 && tlProg.done < segs.length && tlProg.total === segs.length) resumeFrom = tlProg.done;
-    else resumeFrom = 0;
-  }
+  // v1.0.230：整段一次发全书（0..totalN），不再分段、不再跨段承接、不再续跑
   markAIRunning('chapterPlan');
   refreshPlannerStageBar('timeline', null);
-  let preview = plannerPreview(btn, '正在全局重排时间线…'), _streamBuf = '';
+  let preview = plannerPreview(btn, '正在生成全书时间线…'), _streamBuf = '';
   plannerRunBtn(btn, true);
   const stopParent = btn && btn.closest('.cp-head-top') ? btn.closest('.cp-head-top') : (btn && btn.parentNode);
   if(stopParent) showStopBtn(stopParent);
-  const setProg = d=>{ o._plannerProgress = o._plannerProgress || {}; o._plannerProgress.timeline = { done:d, total:segs.length, ts:Date.now() }; };
   let tlRetries = 0;          // v1.0.226：本轮累加重试次数（红色角标用），首轮归零
   setPlannerRetry('timeline', 0);
   try{
     const anchors = [];
-    let prevEnd = '', segNotes = '';
+    let notes = '', lastErr = '';
     let changed = 0;
-    renderSegTrack(segs, resumeFrom, resumeFrom===segs.length ? -1 : resumeFrom, -1, '');
-    for(let si=resumeFrom; si<segs.length; si++){
-      const sg = segs[si]; const s = sg[0], e = sg[1];
-      const user = buildTimelineSegUser(s, e, prevEnd || undefined);
-      let ok = false, lastErr = '';
-      // v1.0.226：首次 + 自动重试最多 PLANNER_RETRY_MAX-1 次，共 PLANNER_RETRY_MAX 次（每次修正提示后同段重跑）
-      for(let attempt=0; attempt<PLANNER_RETRY_MAX; attempt++){
-        if(_abortCtl && _abortCtl.signal.aborted) throw {name:'AbortError'};
-        if(attempt > 0){ tlRetries++; setPlannerRetry('timeline', tlRetries); }   // 红色角标实时递增
-        renderSegTrack(segs, si, si, -1, `正在重排第 ${si+1}/${segs.length} 段…`+(attempt>0?`（自动重试 ${attempt}/${PLANNER_RETRY_MAX-1}）`:''));
-        if(_streamBuf){ _streamBuf=''; if(preview) preview.textContent=''; }
-        const usr = user + (attempt>0 ? `\n【重试提示】上一轮第 ${si+1} 段输出无效，请严格按格式重新输出。原因：${lastErr}` : '');
-        const onStream = delta => { _streamBuf += String(delta||''); if(preview){ preview.textContent = _streamBuf; preview.scrollTop = preview.scrollHeight; } };
-        const cands = await Promise.all([
-          callAIWithContract(callDeepSeek(PLANNER_TIMELINE_SYS, usr, {temperature:resolveActiveSpec().planTimelineTemp, topP:0.7, maxTokens:clampMaxTokens('chapterPlan'), onStream, signal:_abortCtl?.signal, taskKey:'planTimeline'}), {needJson:true, expectedCount:e-s, countPath:'chapters', schemaValidator:j=>validateTimelineSegOutput(j, e-s), taskName:`全局时间线-段${si+1}${attempt>0?'-重试'+attempt:''}`}),
-        ]);
-        const best = cands.filter(c=>c && c.ok).sort((a,b)=>(b.score||0)-(a.score||0))[0];
-        if(best){
-          // 应用本批：本批内部 index 映射到全书整章索引；v1.0.224 支持显式 from/to/jump，缺省用首末拍 time 兜底
-          best.data.chapters.forEach(cp=>{
-            const idx = s + (+cp.index - 1);
-            if(idx < 0 || idx >= totalN) return;
-            const plan = o.chapterPlans[idx]; if(!plan || !Array.isArray(plan.beats)) return;
-            cp.beats.forEach((nb,j)=>{ const bb=plan.beats[j]; if(!bb) return; const nt=String(nb&&nb.time||'').trim(); if(nt && String(bb.time||'').trim()!==nt){ bb.time=nt; changed++; } });
-            const _f0 = String(cp.from||'').trim();
-            const _f1 = String(cp.to||'').trim();
-            const t0 = _f0 || (cp.beats.length ? String(cp.beats[0].time||'').trim() : '');
-            const t1 = _f1 || (cp.beats.length ? String(cp.beats[cp.beats.length-1].time||'').trim() : '');
-            anchors.push({ index: idx, title: String((o.chapters[idx] && o.chapters[idx].title) || (''+idx+1)), from: t0, to: t1, jump: String(cp.jump||'').trim() });
-          });
-          prevEnd = String(best.data.end||'').trim() || '';
-          if(!segNotes) segNotes = String(best.data.global_notes||'').trim() || '';
-          ok = true;
-          break;
-        } else {
-          lastErr = (cands[0] && cands[0].error) || '候选无效';
-          if(attempt < PLANNER_RETRY_MAX-1) await new Promise(r=>setTimeout(r, 1500));   // 自动重试间隔
-        }
+    const user = buildTimelineSegUser(0, totalN, undefined);   // 整段直发全书（复用原有的用户拼装，边界承接参数传 undefined）
+    let ok = false;
+    for(let attempt=0; attempt<PLANNER_RETRY_MAX; attempt++){
+      if(_abortCtl && _abortCtl.signal.aborted) throw {name:'AbortError'};
+      if(attempt > 0){ tlRetries++; setPlannerRetry('timeline', tlRetries); }   // 红色角标实时递增
+      if(_streamBuf){ _streamBuf=''; if(preview) preview.textContent=''; }
+      if(attempt>0 && preview){ preview.textContent = `全书时间线输出无效，正在自动重试 ${attempt}/${PLANNER_RETRY_MAX-1}：${lastErr}`; }
+      const usr = user + (attempt>0 ? `\n【重试提示】上一轮全书时间线输出无效，请严格按格式重新输出。原因：${lastErr}` : '');
+      const onStream = delta => { _streamBuf += String(delta||''); if(preview){ preview.textContent = _streamBuf; preview.scrollTop = preview.scrollHeight; } };
+      const cands = await Promise.all([
+        callAIWithContract(callDeepSeek(PLANNER_TIMELINE_SYS, usr, {temperature:resolveActiveSpec().planTimelineTemp, topP:0.7, maxTokens:clampMaxTokens('chapterPlan'), onStream, signal:_abortCtl?.signal, taskKey:'planTimeline'}), {needJson:true, expectedCount:totalN, countPath:'chapters', schemaValidator:j=>validateTimelineSegOutput(j, totalN), taskName:`全局时间线${attempt>0?'-重试'+attempt:''}`}),
+      ]);
+      const best = cands.filter(c=>c && c.ok).sort((a,b)=>(b.score||0)-(a.score||0))[0];
+      if(best){
+        // 整段应用：cp.index 为全书章节序号（1 基），直接写入对应章 拍 time 与起止时间锚
+        best.data.chapters.forEach(cp=>{
+          const idx = +cp.index - 1;
+          if(idx < 0 || idx >= totalN) return;
+          const plan = o.chapterPlans[idx]; if(!plan || !Array.isArray(plan.beats)) return;
+          cp.beats.forEach((nb,j)=>{ const bb=plan.beats[j]; if(!bb) return; const nt=String(nb&&nb.time||'').trim(); if(nt && String(bb.time||'').trim()!==nt){ bb.time=nt; changed++; } });
+          const _f0 = String(cp.from||'').trim();
+          const _f1 = String(cp.to||'').trim();
+          const t0 = _f0 || (cp.beats.length ? String(cp.beats[0].time||'').trim() : '');
+          const t1 = _f1 || (cp.beats.length ? String(cp.beats[cp.beats.length-1].time||'').trim() : '');
+          anchors.push({ index: idx, title: String((o.chapters[idx] && o.chapters[idx].title) || (''+idx+1)), from: t0, to: t1, jump: String(cp.jump||'').trim() });
+        });
+        if(!notes) notes = String(best.data.global_notes||'').trim() || '';
+        ok = true;
+        break;
+      } else {
+        lastErr = (cands[0] && cands[0].error) || '输出无效';
+        if(attempt < PLANNER_RETRY_MAX-1) await new Promise(r=>setTimeout(r, 1500));   // 自动重试间隔
       }
-      if(!ok){
-        setProg(si);          // 已成功 si 段
-        persist();
-        renderSegTrack(segs, si, -1, si, `第 ${si+1} 段生成失败`);
-        showTimelineResume(segs, si);
-        addToFixQueue({kind:'chapterPlan', error:'全局时间线-段'+(si+1)+'：'+lastErr});
-        refreshPlannerStageBar(null, 'timeline');
-        if(!opts.silent) toast(`全局时间线中断于第 ${si+1}/${segs.length} 段（已自动重试 ${PLANNER_RETRY_MAX-1} 次）；可在分段轨道下点「续跑第 ${si+1} 段」继续`);
-        return false;
-      }
-      setProg(si+1);
-      persist();              // 段级进度持久化：刷新后仍可续跑
-      renderSegTrack(segs, si+1, -1, -1, '');
+    }
+    if(!ok){
+      addToFixQueue({kind:'chapterPlan', error:'全局时间线整段生成：'+lastErr});
+      refreshPlannerStageBar(null, 'timeline');
+      if(!opts.silent) toast(`全局时间线整段生成失败（已自动重试 ${PLANNER_RETRY_MAX-1} 次）：${lastErr}`);
+      return false;
     }
     anchors.sort((a,b)=>a.index-b.index);
-    o._globalTimeline = { chapters: anchors, notes: segNotes, ts: Date.now() };
-    if(o._plannerProgress) delete o._plannerProgress.timeline;   // 完成即清半程态
+    o._globalTimeline = { chapters: anchors, notes: notes, ts: Date.now() };
+    if(o._plannerProgress) delete o._plannerProgress.timeline;   // 整段生成无半程态，顺带清旧值
     persist();
     render();
     markAIDone('chapterPlan');
     refreshPlannerStageBar(null, null);
     hideTimelineTrack();
-    if(!opts.silent) toast(`全局时间线完成：重排 ${changed} 处时间锚（共 ${segs.length} 段）${segNotes ? '｜'+segNotes.slice(0,28) : ''}`);
+    if(!opts.silent) toast(`全书时间线完成：一次整段排定 ${anchors.length} 章${notes ? '｜'+notes.slice(0,28) : ''}`);
     return true;
   }catch(e){
     if(e && e.name !== 'AbortError') addToFixQueue({kind:'chapterPlan', error:'全局时间线：'+(e&&e.message)});
