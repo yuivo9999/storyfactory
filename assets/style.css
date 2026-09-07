@@ -981,8 +981,9 @@ body.reader-lock{overflow:hidden}
 .gat-switch input{width:auto;accent-color:var(--accent);flex:0 0 auto}
 
 /* 覆盖层选择卡 */
-.gs-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:12px;animation:gsFade .18s ease}
-.gs-overlay .gs-modal{width:100%;max-width:520px;max-height:86vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.gs-overlay{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:12px;animation:gsFade .18s ease}
+/* v1.0.216 弹窗以页面垂直中线为起点，随内容多寡上下对称自动扩展：内容少→居中居中、内容多→上下同时胀满，直至抵满整页(视口高-留白)后停在原地、由内容区内部滚动浏览，全程不裁剪、不越界 */
+.gs-overlay .gs-modal{width:100%;max-width:520px;max-height:calc(100vh - 24px);overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.5);display:flex;flex-direction:column}
 .gs-modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;font-size:15px;border-bottom:1px solid var(--line)}
 .gs-x{background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:8px}
 .gs-x:hover{background:var(--panel2)}

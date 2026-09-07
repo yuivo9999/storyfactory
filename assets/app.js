@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.211';   // v1.0.211 词典达人四类产出可选择性取用＋词典面板加查看入口：①「设定表·万物词典」卡片新增「📑 词典达人·关系/关联/世界观规则」入口按钮行（人物关系表/地名关联表/专名关联表/世界观规则，各带条数，点开只读完整内容）；②章节正文新增 fogWorldInject「世界情报·迷雾版」——世界观规则对每一章全量必给，人物关系表/地名关联表/专名关联表按迷雾只给本章已出场实体直接相关的部分，未揭示的留后续自然展开、避免提前剧透（规划/标题侧仍全量）。原 v1.0.210 词典达人新增「世界观规则」实际功能：按题材（现代职场/古代写实/江湖/神话仙侠等）提炼本书世界实际如何运转的具体规则（劳动作息/社会制度/力量体系/金钱物价/地理交通/秩序法则），并入万物词典、正文注入端作为硬约束且词典卡片与历史面板新增默认折叠的「世界观规则」折叠区。原 v1.0.209 分任务模型整合温度：移除已失效的「故事大纲」(genOutline 为纯搬运无AI调用)、新增「词典达人」「规划师·时间线」；每个任务行标题最右侧新增温度框(TM_TEMP)，随分任务模型保存一并落盘；资产生成改为用 assetsTemp；设置弹窗集中于全局温度。原 v1.0.208：habit 即【小习惯与习惯性动作】、catchphrase 即【口头禅】，relationshipTable/placeContacts/properContacts 分别即【人物关系表/地名关联表/专名关联表】，提示词与 UI 全链路统一精确名称（含正文注入端「地名关联表/专名关联表」）。原 v1.0.206 阶段5.6（①默认模型换代：新增「智谱 GLM」默认组【glm-4.5-air 现用 + glm-4.5 旗舰】与 DeepSeek 并存，无存档默认选中 GLM、旧 DeepSeek 型号全部保留可选，旧单Key迁移仍落 DeepSeek 组；②分任务温度由主题面板并入设置弹窗「各任务温度」，与「各任务模型」集中管理，主题面板留提示入口；③正文卡「重生成/阅读」按钮饱和度降半）。原 v1.0.205 阶段5.5（①「优化构想」第一步·中国红渐变强调按钮；②后悔药：后大纲视图补优化版本历史/查看全部/重新优化入口，并用绑定点抽出修复按钮无回调；③书名提取放宽【书名/小说名/标题/:、《…》】，修「未命名作品」；④去掉「确认大纲，进入写正文」中间确认关卡，生成大纲自动进正文）：①词典达人重产同名去重(以现有为准：手工>逐章>词典达人)＋手工保护(被改条目升为手工优先级，_srcSnapshot 快照比对)；②词典达人建档案收紧(人物10维填满、地名type+note、专名note，关系/联系表按实情不强求非空)；③正文 L3 由「按章相关词典」改为「万物词典·全量名单+出场全字段」(词典=不可裁红线)，并新增 fullGlossaryChapterBlock；④budgetChapterContext 词典永不裁剪，超限改裁 L4→简介→衔接→节拍详述，仍超则提示提升上限；⑤叙事抽屉新增「一致性自检」一键报告(词典去重+时间线/节拍不悬空)。v1.0.203 阶段3：⑤流程重组——规划师回四步、新增③词典达人(dictmaster role、历史6次、锁定后悔药)、生成大纲纯搬运、正文注入全量词典、原始构想快照。v1.0.198 修复大纲多候选。
+const APP_VERSION = '1.0.217';   // v1.0.217 世界观规则增强并注入词典达人：①字段加 scope（适用对象/范围），rule 尽量含违规代价；②引导语扩充易漏维度——社会劳动作息/经济货币物价/法律治安/阶层身份流动/力量体系与使用代价/地理交通/时间节令天象(含时间流速、梦现实边界)/风俗禁忌因果/明面规则vs潜规则/例外条款/烟火市井物价；③建议条数 3→5；④scope 贯穿存盘(_worldRules)、查看弹窗、词典卡片折叠区、正文注入与「迷雾全量」端、一致性自检(fmtWR 统一格式化)。原 v1.0.216 .gs-overlay 弹窗定位「垂直中线自适应」。原 v1.0.215 万物词典查看入口四类始终显示。原 v1.0.213 三张关联表防假数。
 const KEY_CFG = 'fyp_cfg';
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -1676,7 +1676,7 @@ function renderPolishCards(container){
   const opts = Array.isArray(state.polishOptions) ? state.polishOptions : [];
   if(!opts.length){
     container.style.display = 'block';
-    container.innerHTML = `<p class="muted" style="margin:8px 0 0">👆 点「✨ 优化构想」生成 2–6 个候选方案；点某张卡的「✔ 采用此方案」即选中（不覆盖原始构想），再点「生成大纲」搬入书名 / 简介 / 节拍。</p>`;
+    container.innerHTML = `<p class="muted" style="margin:8px 0 0">👆 点「✨ 优化构想」从五个方向（商业/反差/情感/悬疑智斗/轻松日常）中按契合度生成 3~5 个候选方案；点某张卡的「✔ 采用此方案」即选中（不覆盖原始构想），再点「生成大纲」搬入书名 / 简介 / 节拍。</p>`;
     return;
   }
   container.style.display = 'block';
@@ -4008,9 +4008,14 @@ const POLISH_SINGLE_MODE = `\n\n【本次输出模式：单稿】严格只输出
 
 // v1.0.121 优化构想·输出模式后缀：多方案 —— v230/1-B 重写为与新 PRO 同构的纯文本多方案（旧 JSON options 指令与新 PRO"不要输出 JSON"矛盾，已废弃）；
 // 展示层 showPolishResult 会按「━━ 方案N」分隔符切卡（splitPolishMultiText），切不出 ≥2 张时整体降级单卡。
-const POLISH_MULTI_MODE = `\n\n【本次输出模式：多方案】在上述要求基础上，一次性给出 2~3 个不同方向的优化构想。
-每个方案用一行分隔符开头：「━━ 方案N：方案名 ━━」，随后是按上述结构的一段条目式构想，并在方案末尾加一行「推荐理由：…（这个方案给谁、适合什么口味）」。
-方案之间方向要明显拉开（如稳健商业向 / 高概念反差向 / 情感人物向），仍不要输出 JSON、不要 markdown 代码块。`;
+const POLISH_MULTI_MODE = `\n\n【本次输出模式：多方案】在上述要求基础上，围绕一个固定的「五个方向候选池」来设计优化构想。五个方向定义如下：
+· 稳健商业向——市场验证过的爽点结构，节奏稳、可长期追读；卖点是"稳"且"爽"。
+· 高概念反差向——一个强反差的核心设定/金手指撑起全篇；卖点是概念本身的新奇（身份、世界观与常规预期的错位）。
+· 情感人物向——以人物情感、羁绊、成长为核心驱动；卖点是"人"与"情"的浓度。
+· 悬疑智斗向——靠信息差与严密逻辑链制造"颅内高潮"，读者追更想看主角怎么破局；卖点是烧脑解谜。
+· 轻松日常/沙雕向——解压的情绪按摩，靠反差萌与吐槽感让人嘴角上扬；卖点是轻松解压、适合短视频化传播。
+
+每一版都必须足够具体、可执行，并尽量贴合用户原意。请从这五个方向中，选择与本书题材/构想真正契合的方向各写一版：一般 3~5 版，契合几个就给几版；明显不适配该题材的方向可跳过不给；若确有五个方向都覆盖不了的极契合新方向，允许额外补一版新方向。每个方案用一行分隔符开头：「━━ 方案N：方案名 ━━」，随后是按上述结构的一段条目式构想，并在方案末尾加一行「推荐理由：…（这个方案给谁、适合什么口味；若该方向偏小众或门槛高——如悬疑智斗极费脑、轻松沙雕易同质——请如实点明其取舍）」。方案之间方向要明显拉开，仍不要输出 JSON、不要 markdown 代码块。`;
 
 // v8c 词典增量补全：从已生成章节正文中提取「现有词典未收录」的新人物/新地名/新专名，去重后并入词典。
 // 供批量生成章节后的自动补全与词典卡片的「📥 提取新增」共用；人物字段对齐词典契约（age/gender 必填）。
@@ -4262,14 +4267,14 @@ function chapterGlossaryBlock(curN){
     body += `\n·【设定词典】（给定的人/地/专名，正文一律采用，人名/地名/专名不可自造新名，人物关系/性格、地点类型、专名含义按此保持统一）\n人物：${cs||'（无）'}\n地点：${ps||'（无）'}\n专名：${pn||'（无）'}${repeatNote}${crossNote}`;
     // v1.0.203 阶段3/3.5：正文注入【全量万物词典】——除人/地/专名单外，追加词典达人产出的
     // 人物关系表 / 地名关联表 / 专名关联表 / 世界观规则（有真实关联/规则才列；正文人物关系、地域往来、专名用法、世界逻辑须与此一致）。
-    const relTable = (g._relationshipTable||[]).map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).filter(Boolean).join('；');
-    const pcTable  = (g._placeContacts||[]).map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).filter(Boolean).join('；');
-    const prcTable = (g._properContacts||[]).map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).filter(Boolean).join('；');
+    const relTable = validAssoc(g._relationshipTable,'a','b').map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).filter(Boolean).join('；');
+    const pcTable  = validAssoc(g._placeContacts,'from','to').map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).filter(Boolean).join('；');
+    const prcTable = validAssoc(g._properContacts,'from','to').map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).filter(Boolean).join('；');
     if(relTable) body += `\n·【重要人物关系】（正文人物关系/立场须与此一致）\n${relTable}`;
     if(pcTable)  body += `\n·【地名关联表】（地域往来/通行逻辑须与此一致，只列地名与地名之间的关联）\n${pcTable}`;
     if(prcTable) body += `\n·【专名关联表】（专名与专名、专名用法须与此一致，只列专名与专名之间的关联）\n${prcTable}`;
     // v1.0.210：正文注入【世界观规则】——本书世界实际如何运转的具体规则，正文一律遵守、不得违背该世界逻辑
-    const wrTable = (g._worldRules||[]).map(x=>`${x.cat?`[${x.cat}] `:''}${x.rule}`).filter(Boolean).join('；');
+    const wrTable = (g._worldRules||[]).map(fmtWR).filter(Boolean).join('；');
     if(wrTable) body += `\n·【世界观规则】（本书世界实际如何运转的具体规则，正文据此写作、不得违背该世界逻辑：劳动作息/社会制度/力量体系/金钱物价/地理交通/秩序法则等）\n${wrTable}`;
   }
   body += subplotProgressBlock(curN);   // v1.0.113 副线进度块（无副线则返回空串，不占 token）
@@ -5903,7 +5908,7 @@ function viewStory(){
           </div>
           <div class="btn-row">
             <button id="btnPolishIdea" class="btn ghost ${polishIdle()?'first':''}" title="${polishIdle()?'🚀 第一步：把粗糙构想优化为结构化高质量版本（含书名/简介/结构）':'把构想再优化一版'}">${polishIdle()?'🚀 第一步-优化构想':'✨ 优化构想'}</button>
-            <label class="pol-multi" title="构想不完整时，生成 2-6 份不同方向的构想供选择"><input type="checkbox" id="chkPolishMulti" checked> 多方案</label>
+            <label class="pol-multi" title="构想不完整时，从五个方向（商业/反差/情感/悬疑智斗/轻松日常）中按契合度生成 3~5 份方向的构想供选择"><input type="checkbox" id="chkPolishMulti" checked> 多方案</label>
           </div>
           <div id="polishBox" class="pol-box" style="display:none">
             <div class="pol-head"><b>✨ 优化稿（点「采用此方案」即导入上方构想输入框）</b>
@@ -7925,16 +7930,16 @@ function glossaryCardHtml(){
   const collapsed = !!state.gsCollapsed;
   const total = (g.characters||[]).length + (g.places||[]).length + (g.propernouns||[]).length + (g.subplots||[]).length;
   // v1.0.211：词典达人四类「关系/关联/世界观规则」查看入口（只读弹窗，数据存于 glossary._relationshipTable/_placeContacts/_properContacts/_worldRules）
-  const vRel=(g._relationshipTable||[]).filter(x=>x&&(String(x.a||'').trim()||String(x.b||'').trim())).length;
-  const vPC=(g._placeContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())).length;
-  const vPRC=(g._properContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())).length;
+  const vRel=validAssoc(g._relationshipTable,'a','b').length;
+  const vPC=validAssoc(g._placeContacts,'from','to').length;
+  const vPRC=validAssoc(g._properContacts,'from','to').length;
   const vWR=(g._worldRules||[]).filter(x=>x&&String(x.rule||'').trim()).length;
-  const viewGrid = (vRel||vPC||vPRC||vWR) ? `<div class="gs-viewgrid">
-    <button type="button" class="btn ghost gs-tool" data-gs-view="rel" ${vRel?'':'style="display:none"'} title="查看词典达人生成的完整人物关系表">👥 人物关系表${vRel?`（${vRel}）`:''}</button>
-    <button type="button" class="btn ghost gs-tool" data-gs-view="pc" ${vPC?'':'style="display:none"'} title="查看词典达人生成的完整地名关联表">🗺️ 地名关联表${vPC?`（${vPC}）`:''}</button>
-    <button type="button" class="btn ghost gs-tool" data-gs-view="prc" ${vPRC?'':'style="display:none"'} title="查看词典达人生成的完整专名关联表">📌 专名关联表${vPRC?`（${vPRC}）`:''}</button>
-    <button type="button" class="btn ghost gs-tool" data-gs-view="wr" ${vWR?'':'style="display:none"'} title="查看词典达人生成的完整世界观规则">⚙️ 世界观规则${vWR?`（${vWR}）`:''}</button>
-  </div>` : '';
+  const viewGrid = `<div class="gs-viewgrid">
+    <button type="button" class="btn ghost gs-tool" data-gs-view="rel" title="查看词典达人生成的完整人物关系表">👥 人物关系表（${vRel}）</button>
+    <button type="button" class="btn ghost gs-tool" data-gs-view="pc" title="查看词典达人生成的完整地名关联表">🗺️ 地名关联表（${vPC}）</button>
+    <button type="button" class="btn ghost gs-tool" data-gs-view="prc" title="查看词典达人生成的完整专名关联表">📌 专名关联表（${vPRC}）</button>
+    <button type="button" class="btn ghost gs-tool" data-gs-view="wr" title="查看词典达人生成的完整世界观规则">⚙️ 世界观规则（${vWR}）</button>
+  </div>`;
   return `<div class="card gs-card${collapsed?' gs-collapsed':''}">
     <div class="gs-card-head">
       <h3 class="gs-card-title" role="button" tabindex="0" data-gs-card-toggle>
@@ -8105,14 +8110,31 @@ function bindGlossary(){
   // v1.0.211：词典达人四类「人物关系表/地名关联表/专名关联表/世界观规则」查看入口
   $$('[data-gs-view]').forEach(b=> b.onclick = ()=> openGlossaryTableView(b.dataset.gsView));
   }
+// v1.0.217：世界观规则格式化——把（可选）适用对象 scope 一并呈现，形如 [类别·适用对象] 规则
+function fmtWR(x){
+  if(!x || typeof x !== 'object') return '';
+  const c=String(x.cat||'').trim(), s=String(x.scope||'').trim(), r=String(x.rule||'').trim();
+  const head = `${c?`[${c}]`:''}${s?`·${s}`:''}`.trim();
+  return `${head}${head&&r?' ':''}${r}`.trim();
+}
+// v1.0.213 关联表有效条目：真正的 关系/关联 必须连接两个不同的实体端点（from/a 与 to/b 都非空且不互等），
+// 统一过滤 AI 塞入的「端名空/自身到自身」垃圾条目，保证卡片/弹窗/注入/自检各处计数一致且不再虚高（如 333 条实为填充垃圾）。
+function validAssoc(list, ka, kb){
+  if(!Array.isArray(list)) return [];
+  return list.filter(x=>{
+    if(!x || typeof x !== 'object') return false;
+    const a=String(x[ka]||'').trim(), b=String(x[kb]||'').trim();
+    return !!a && !!b && a!==b;
+  });
+}
 // v1.0.211：词典「关系/关联/世界观规则」只读查看弹窗（数据存于 glossary._relationshipTable/_placeContacts/_properContacts/_worldRules）
 function openGlossaryTableView(type){
   const g = (state.outline && state.outline.glossary) || {};
   const meta = {
-    rel: { name:'👥 人物关系表', rows:(g._relationshipTable||[]).filter(x=>x&&(String(x.a||'').trim()||String(x.b||'').trim())), empty:'暂无人物关系记录', row: x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'？')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>` },
-    pc:   { name:'🗺️ 地名关联表', rows:(g._placeContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())), empty:'暂无地名关联记录', row: x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>` },
-    prc:  { name:'📌 专名关联表', rows:(g._properContacts||[]).filter(x=>x&&(String(x.from||'').trim()||String(x.to||'').trim())), empty:'暂无专名关联记录', row: x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>` },
-    wr:   { name:'⚙️ 世界观规则', rows:(g._worldRules||[]).filter(x=>x&&String(x.rule||'').trim()), empty:'暂无世界观规则（需词典达人生成）', row: x=>`<div class="dm-wr"><b>${esc(x.cat||'')}</b><div>${esc(x.rule||'')}</div></div>` }
+    rel: { name:'👥 人物关系表', rows:validAssoc(g._relationshipTable,'a','b'), empty:'暂无人物关系记录', row: x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'？')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>` },
+    pc:   { name:'🗺️ 地名关联表', rows:validAssoc(g._placeContacts,'from','to'), empty:'暂无地名关联记录', row: x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>` },
+    prc:  { name:'📌 专名关联表', rows:validAssoc(g._properContacts,'from','to'), empty:'暂无专名关联记录', row: x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>` },
+    wr:   { name:'⚙️ 世界观规则', rows:(g._worldRules||[]).filter(x=>x&&String(x.rule||'').trim()), empty:'暂无世界观规则（需词典达人生成）', row: x=>{ const sc=String(x.scope||'').trim(); return `<div class="dm-wr"><b>${esc(x.cat||'')}${sc?` · ${esc(sc)}`:''}</b><div>${esc(x.rule||'')}</div></div>`; } }
   };
   const m = meta[type]; if(!m) return;
   const rowsHtml = m.rows.map(m.row).join('');
@@ -10016,8 +10038,8 @@ const DICTMASTER_SYS = `你是一位资深长篇「词典达人」（全局设�
 2. 蓝本未提及、但为支撑该世界观/主线合理运转所必需的配角/地名/专名，可自行补全（如主角亲友、反派爪牙、关键地点/势力/宝器/功法），但**禁止无依据乱加**：每个新增都必须能从蓝本九要素或主线逻辑推出，且数量克制（建议 ≤ 蓝本已有量的 1.5 倍）。
 3. 不注入全书节拍/章节微拍（词典是全局设定，与元节拍无关）。
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{"characters":[{"name":"","identity":"","age":"","gender":"","appearance":"","hobby":"","relation":"","trait":"","habit":"小习惯与习惯性动作","catchphrase":"口头禅"}],"relationshipTable":[{"a":"名字","b":"名字","relation":"关系","note":"一句话"}],"places":[{"name":"","type":"","note":""}],"placeContacts":[{"from":"地名","to":"地名","relation":"联系","note":""}],"propernouns":[{"name":"","note":""}],"properContacts":[{"from":"专名","to":"专名","relation":"联系","note":""}],"worldRules":[{"cat":"规则类别","rule":"具体规则"}],"summary":"1-2 句说明构成品亮点"}
-【要点】characters 每位必须给满 10 维且每维非空（name身份、identity身份定位、age年龄、gender性别、appearance外貌、hobby爱好、relation关系、trait性格要点、habit【小习惯与习惯性动作】、catchphrase【口头禅】（habit 只写该人物独特的下意识/日常规律小动作，catchphrase 只写其反复挂在嘴边的口头语，两者严格分开禁止互混乱写；age/gender 无明确值也必须写"未知"）；places 每位必须给满 type（类型）+note（说明）；propernouns 每位必须给满 note（说明）；characters 建议 ≥6 位且含主角+反派+主要配角。三张关联表必须按各自名称的语义精确生成：relationshipTable 即【人物关系表】——只写人物↔人物之间的关联（血缘/身份/立场/恩怨等），不要写入地名或专名；placeContacts 即【地名关联表】——只写地名↔地名之间的关联（相邻/隶属/路程远近/往来通道/势力归属等）；properContacts 即【专名关联表】——只写专名↔专名之间的关联（来源/克制/配套/并列等）；三表内容多少按具体小说情况决定（有真实关联就列，没有就不硬凑，且禁止把"关系/关联类型"填成与语义无关的内容）。worldRules 即【世界观规则】：按本次故事的题材/时代背景/社会性质，把这本书里『世界实际怎么运转』的、贯穿全文必须遵守的具体规则提炼出来（要落成可执行的具体条目，不是空泛口号，正文据其写作不得违背）。要贴合该题材的真实世界逻辑，例如——现代都市/职场类：写明社会劳动作息（白领一周双休/单休/大小周、某些行业一月只休两三天、上下班时间、法定节假日、通勤等）、经济与货币、法律与治安、阶层、日用科技等实际运转规则；古代写实/历史类（如三国）：没有『上班双休』这类现代概念，应写明古代特有作息（农耕节令、集市与墟日、宵禁、驿站驿道、官衙卯时点卯）、军制军粮、赋税徭役、货币（铜钱/银两/粮布）、通信与出行速度等；古代江湖类：写明江湖规矩（门派帮派/武林盟约/快意恩仇的边界/镖局客栈驿道）、官府与江湖的关系、武艺内功体系等；神话仙侠类（如西游/封神）：写明天庭地府妖界方外世界体系、修炼境界与境界压制、法宝神通法则、天条因果、仙人鬼神不得干预凡俗等约束。worldRules 每位必须给满 cat（类别）+rule（规则）；凡该世界存在的工作作息、社会结构、力量体系、金钱物价、地理交通、风俗禁忌、秩序法则等都要按题材提炼成具体规则；某题材无某类规则就不列该类，禁止把现代职场概念生搬硬套到古代/仙侠世界；建议 ≥3 条并按类别分条列出。`;
+{"characters":[{"name":"","identity":"","age":"","gender":"","appearance":"","hobby":"","relation":"","trait":"","habit":"小习惯与习惯性动作","catchphrase":"口头禅"}],"relationshipTable":[{"a":"名字","b":"名字","relation":"关系","note":"一句话"}],"places":[{"name":"","type":"","note":""}],"placeContacts":[{"from":"地名","to":"地名","relation":"联系","note":""}],"propernouns":[{"name":"","note":""}],"properContacts":[{"from":"专名","to":"专名","relation":"联系","note":""}],"worldRules":[{"cat":"规则类别","scope":"适用对象/范围","rule":"具体规则（尽量写清违反的后果/代价）"}],"summary":"1-2 句说明构成品亮点"}
+【要点】characters 每位必须给满 10 维且每维非空（name身份、identity身份定位、age年龄、gender性别、appearance外貌、hobby爱好、relation关系、trait性格要点、habit【小习惯与习惯性动作】、catchphrase【口头禅】（habit 只写该人物独特的下意识/日常规律小动作，catchphrase 只写其反复挂在嘴边的口头语，两者严格分开禁止互混乱写；age/gender 无明确值也必须写"未知"）；places 每位必须给满 type（类型）+note（说明）；propernouns 每位必须给满 note（说明）；characters 建议 ≥6 位且含主角+反派+主要配角。三张关联表必须按各自名称的语义精确生成：relationshipTable 即【人物关系表】——只写人物↔人物之间的关联（血缘/身份/立场/恩怨等），不要写入地名或专名；placeContacts 即【地名关联表】——只写地名↔地名之间的关联（相邻/隶属/路程远近/往来通道/势力归属等）；properContacts 即【专名关联表】——只写专名↔专名之间的关联（来源/克制/配套/并列等）；三张关联表每一条都必须是"两个不同实体之间的真实关联"：两端名（关系表 a 与 b，关联表 from 与 to）都必须填真实名称、且两端名称不同，并且要分别取自本表对应的清单——人物关系表两端取 characters 里的人名、地名关联表两端取 places 里的地名、专名关联表两端取 propernouns 里的专名；严禁把某个实体的"功能/属性/组成部分/内部要点/技能/子项/类别"当成另一个实体去建关联，严禁留空端名或用自身对自身凑数；三表内容多少按具体小说情况决定，有真实关联就列、没有就不硬凑，每条都必须是两端齐全的真实关联，宁缺毋滥、禁止为看起来数量多而虚增条数。worldRules 即【世界观规则】：按本次故事的题材/时代背景/社会性质，把这本书里『世界实际怎么运转』的、贯穿全文必须遵守的具体规则提炼出来（要落成可执行的具体条目，不是空泛口号，正文据其写作不得违背）。要贴合该题材的真实世界逻辑，例如——现代都市/职场类：写明社会劳动作息（白领一周双休/单休/大小周、某些行业一月只休两三天、上下班时间、法定节假日、通勤等）、经济与货币、法律与治安、阶层、日用科技等实际运转规则；古代写实/历史类（如三国）：没有『上班双休』这类现代概念，应写明古代特有作息（农耕节令、集市与墟日、宵禁、驿站驿道、官衙卯时点卯）、军制军粮、赋税徭役、货币（铜钱/银两/粮布）、通信与出行速度等；古代江湖类：写明江湖规矩（门派帮派/武林盟约/快意恩仇的边界/镖局客栈驿道）、官府与江湖的关系、武艺内功体系等；神话仙侠类（如西游/封神）：写明天庭地府妖界方外世界体系、修炼境界与境界压制、法宝神通法则、天条因果、仙人鬼神不得干预凡俗等约束。worldRules 每位必须给满 cat（类别）+rule（规则）；scope（适用对象/范围）建议一并给出——写明这条规则约束谁、作用于谁（如 全境/全体人物/普通百姓/当朝官府/修士/某势力/某地区/仅主角一人的独有约束等），让正文写作时知道该由谁遵守、作用于谁；rule 尽量把『违反的后果/代价』也写进去（如破坏者受天条反噬/官府追捕/被逐出师门等），使规则可校验、能落地。凡该世界存在的维度都要覆盖并按类别分条列出：社会劳动作息、经济货币/物价、法律与治安/秩序法则、阶层与身份流动、力量/能力体系与使用上限代价、地理与交通/出行速度、时间节令与天象（含时间流速/梦与现实的边界）、风俗与禁忌/因果报应、明面规则与潜规则（表面秩序 vs 实际灰色地带）、例外条款（规则有无例外、何人可破例）、烟火市井（衣食住行价格/民生物价）。某题材无某类规则就不列该类，禁止把现代职场概念生搬硬套到古代/仙侠世界；建议 ≥5 条并按类别分条列出，越具体越好。`;
 function buildDictMasterUser(ctx){
   const cand = ctx && ctx.candidate;
   const txt = String((cand && cand.text) || '').trim();
@@ -10053,6 +10075,17 @@ function validateDictMasterOutput(j){
   const wr = Array.isArray(j.worldRules)?j.worldRules:[];
   if(!wr.length) return '缺少 worldRules（世界观规则，应 ≥1 条）';
   for(const r of wr){ if(r && (!String(r.cat||'').trim()||!String(r.rule||'').trim())) return `世界观规则「${String(r&&r.cat||'').trim()||'?'}」缺失 cat 或 rule`; }
+  // v1.0.213：三张关联/关系表每条必须两端齐全且不同；禁止 AI 把"功能/属性/子项"当成关联凑数（否则会虚增条数如 333 条）
+  for(const [key,aa,bb,lab] of [['relationshipTable','a','b','人物关系表'],['placeContacts','from','to','地名关联表'],['properContacts','from','to','专名关联表']]){
+    const arr = Array.isArray(j[key]) ? j[key] : [];
+    for(const e of arr){
+      if(!e || typeof e !== 'object') continue;
+      const A=String(e[aa]||'').trim(), B=String(e[bb]||'').trim();
+      const hasRest = String(e.relation||'').trim() || String(e.note||'').trim();
+      if(hasRest && (!A || !B)) return `${lab}存在端名不全的条目（${lab}每条必须两端都填真实名称，禁止把功能/属性/子项当作另一端凑数）`;
+      if(A && B && A===B) return `${lab}「${A}」两端相同（自身对自身无意义）`;
+    }
+  }
   return '';
 }
 // 一键生成万物词典（蓝色渐变→生成后绿渐变；重新生成=替换本 AI 上次贡献；历史 6 次）
@@ -10114,7 +10147,7 @@ async function genDictMaster(btn){
     o.glossary._placeContacts = (j.placeContacts||[]).map(x=>({ from:String(x.from||'').trim(), to:String(x.to||'').trim(), relation:String(x.relation||'').trim(), note:String(x.note||'').trim() }));
     o.glossary._properContacts = (j.properContacts||[]).map(x=>({ from:String(x.from||'').trim(), to:String(x.to||'').trim(), relation:String(x.relation||'').trim(), note:String(x.note||'').trim() }));
     // v1.0.210：世界观规则（本书世界实际如何运转的硬约束，正文注入端读取，供全文一致遵守）
-    o.glossary._worldRules = (j.worldRules||[]).map(x=>({ cat:String(x.cat||'').trim(), rule:String(x.rule||'').trim() }));
+    o.glossary._worldRules = (j.worldRules||[]).map(x=>({ cat:String(x.cat||'').trim(), scope:String(x.scope||'').trim(), rule:String(x.rule||'').trim() }));
     // 存档最近产物 + 历史 6 次（FIFO）
     const result = { ts: Date.now(), book: (o.title)||'', summary:String(j.summary||'').trim(), nChar:(j.characters||[]).length, nPlace:(j.places||[]).length, nProp:(j.propernouns||[]).length, nRel:(j.relationshipTable||[]).length, nPC:(j.placeContacts||[]).length, nPRC:(j.properContacts||[]).length, nWR:(j.worldRules||[]).length, characters:j.characters||[], rel:j.relationshipTable||[], places:j.places||[], pc:j.placeContacts||[], props:j.propernouns||[], prc:j.properContacts||[], wr:j.worldRules||[] };
     state.dictmasterLatest = result;
@@ -10145,13 +10178,13 @@ function dictMasterBlockHtml(){
   const status = `<p id="dictmasterStatus" class="status" style="margin:8px 0 0"></p>`;
   if(hasOut){
     const r = state.dictmasterLatest || {};
-    const relRows = (r.rel||[]).slice(0,8).map(x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>`).join('');
+    const relRows = validAssoc(g._relationshipTable,'a','b').slice(0,8).map(x=>`<div class="dm-rel"><b>${esc(x.a||'')}</b> ←${esc(x.relation||'')}→ <b>${esc(x.b||'')}</b>${x.note?` <span class="muted">· ${esc(x.note)}</span>`:''}</div>`).join('');
     const contactRow = x=>`<div class="dm-rel">${esc(x.from||'')} ↔ ${esc(x.to||'')} <span class="muted">· ${esc(x.relation||'')}${x.note?('：'+esc(x.note)):''}</span></div>`;
-    const pcRows = ((g&&g._placeContacts)||[]).map(contactRow).join('');
-    const prcRows = ((g&&g._properContacts)||[]).map(contactRow).join('');
-    const wrRows = ((g&&g._worldRules)||[]).map(x=>`<div class="dm-wr"><b>${esc(x.cat||'')}</b><div>${esc(x.rule||'')}</div></div>`).join('');
+    const pcRows = validAssoc(g._placeContacts,'from','to').map(contactRow).join('');
+    const prcRows = validAssoc(g._properContacts,'from','to').map(contactRow).join('');
+    const wrRows = ((g&&g._worldRules)||[]).map(x=>`<div class="dm-wr"><b>${esc(x.cat||'')}${String(x.scope||'').trim()?` · ${esc(String(x.scope).trim())}`:''}</b><div>${esc(x.rule||'')}</div></div>`).join('');
     return `<div class="card dm-card">
-      <div class="dm-head">📖 词典达人 · 万物词典生成器<span class="muted" style="font-weight:400">（已生成 人物 ${r.nChar||0} · 地名 ${r.nPlace||0} · 专名 ${r.nProp||0} · 关系表 ${r.nRel||0} 条 · 世界观规则 ${r.nWR||0} 条）</span></div>
+      <div class="dm-head">📖 词典达人 · 万物词典生成器<span class="muted" style="font-weight:400">（已生成 人物 ${r.nChar||0} · 地名 ${r.nPlace||0} · 专名 ${r.nProp||0} · 人物关系表 ${validAssoc(g._relationshipTable,'a','b').length} 条 · 专名关联表 ${validAssoc(g._properContacts,'from','to').length} 条 · 世界观规则 ${r.nWR||0} 条）</span></div>
       ${r.summary?`<p class="sub" style="margin:8px 0 4px">${esc(r.summary)}</p>`:''}
       <div class="btn-row" style="margin:8px 0 0">
         <button id="btnGenDictMaster" class="btn block dm-btn-on">🔄 重新生成万物词典</button>
@@ -11856,14 +11889,14 @@ function fullGlossaryChapterBlock(i){
   if(Array.isArray(g._relationshipTable) && g._relationshipTable.length){
     lines.push(`重要人物关系（全量）：${g._relationshipTable.map(x=>`${x.a} ←${x.relation||'？'}→ ${x.b}${x.note?`（${x.note}）`:''}`).join('；')}`);
   }
-  if(Array.isArray(g._placeContacts) && g._placeContacts.length){
-    lines.push(`地名关联（全量）：${g._placeContacts.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
+  if(validAssoc(g._placeContacts,'from','to').length){
+    lines.push(`地名关联（全量）：${validAssoc(g._placeContacts,'from','to').map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
   }
-  if(Array.isArray(g._properContacts) && g._properContacts.length){
-    lines.push(`专名关联（全量）：${g._properContacts.map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
+  if(validAssoc(g._properContacts,'from','to').length){
+    lines.push(`专名关联（全量）：${validAssoc(g._properContacts,'from','to').map(x=>`${x.from} ↔ ${x.to}${x.relation?`（${x.relation}）`:''}${x.note?`：${x.note}`:''}`).join('；')}`);
   }
   if(Array.isArray(g._worldRules) && g._worldRules.length){
-    lines.push(`世界观规则（全量·正文须遵守不违背）：${g._worldRules.map(x=>`${x.cat?`[${x.cat}] `:''}${x.rule}`).join('；')}`);
+    lines.push(`世界观规则（全量·正文须遵守不违背）：${g._worldRules.map(fmtWR).join('；')}`);
   }
   return '请全程遵循本设定词典（人名/地名/专名不可自造、人物关系/性格/地域往来/专名用法与世界规则与此保持统一）：\n' + lines.join('\n');
 }
@@ -11944,7 +11977,7 @@ function fogWorldInject(i){
   const seg = [];
   // 世界观规则：全量必给（世界实际运转规则，无剧透风险、务必一致遵守，不裁剪）
   const wr = (g._worldRules||[]).filter(x=> x && String(x.rule||'').trim());
-  if(wr.length) seg.push(`【世界观规则·全量】（本书世界实际如何运转的具体规则，对每一章都全文给出，本章写作必须遵守、不得违背该世界逻辑）\n${wr.map(x=>`${x.cat?`[${x.cat}] `:''}${x.rule}`).join('\n')}`);
+  if(wr.length) seg.push(`【世界观规则·全量】（本书世界实际如何运转的具体规则，对每一章都全文给出，本章写作必须遵守、不得违背该世界逻辑）\n${wr.map(fmtWR).join('\n')}`);
   // 迷雾依据：本章已出场实体（relevantGlossaryForChapter 反哺）
   const rg = relevantGlossaryForChapter(i);
   const mk = k => new Set((rg[k]||[]).map(x=>String(x&&x.name||'').trim()).filter(Boolean));
