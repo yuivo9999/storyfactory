@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.204';   // v1.0.204 阶段4（连接·注入与输出串通）：①词典达人重产同名去重(以现有为准：手工>逐章>词典达人)＋手工保护(被改条目升为手工优先级，_srcSnapshot 快照比对)；②词典达人建档案收紧(人物10维填满、地名type+note、专名note，关系/联系表按实情不强求非空)；③正文 L3 由「按章相关词典」改为「万物词典·全量名单+出场全字段」(词典=不可裁红线)，并新增 fullGlossaryChapterBlock；④budgetChapterContext 词典永不裁剪，超限改裁 L4→简介→衔接→节拍详述，仍超则提示提升上限；⑤叙事抽屉新增「一致性自检」一键报告(词典去重+时间线/节拍不悬空)。v1.0.203 阶段3：⑤流程重组——规划师回四步、新增③词典达人(dictmaster role、历史6次、锁定后悔药)、生成大纲纯搬运、正文注入全量词典、原始构想快照。v1.0.198 修复大纲多候选。
+const APP_VERSION = '1.0.206';   // v1.0.206 阶段5.6（①默认模型换代：新增「智谱 GLM」默认组【glm-4.5-air 现用 + glm-4.5 旗舰】与 DeepSeek 并存，无存档默认选中 GLM、旧 DeepSeek 型号全部保留可选，旧单Key迁移仍落 DeepSeek 组；②分任务温度由主题面板并入设置弹窗「各任务温度」，与「各任务模型」集中管理，主题面板留提示入口；③正文卡「重生成/阅读」按钮饱和度降半）。原 v1.0.205 阶段5.5（①「优化构想」第一步·中国红渐变强调按钮；②后悔药：后大纲视图补优化版本历史/查看全部/重新优化入口，并用绑定点抽出修复按钮无回调；③书名提取放宽【书名/小说名/标题/:、《…》】，修「未命名作品」；④去掉「确认大纲，进入写正文」中间确认关卡，生成大纲自动进正文）：①词典达人重产同名去重(以现有为准：手工>逐章>词典达人)＋手工保护(被改条目升为手工优先级，_srcSnapshot 快照比对)；②词典达人建档案收紧(人物10维填满、地名type+note、专名note，关系/联系表按实情不强求非空)；③正文 L3 由「按章相关词典」改为「万物词典·全量名单+出场全字段」(词典=不可裁红线)，并新增 fullGlossaryChapterBlock；④budgetChapterContext 词典永不裁剪，超限改裁 L4→简介→衔接→节拍详述，仍超则提示提升上限；⑤叙事抽屉新增「一致性自检」一键报告(词典去重+时间线/节拍不悬空)。v1.0.203 阶段3：⑤流程重组——规划师回四步、新增③词典达人(dictmaster role、历史6次、锁定后悔药)、生成大纲纯搬运、正文注入全量词典、原始构想快照。v1.0.198 修复大纲多候选。
 const KEY_CFG = 'fyp_cfg';
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -73,7 +73,6 @@ const state = {
   subRecallRatio: 0.4,  // v1.0.113 副线消失超全书比例阈值（超过则回归须 ≤20 字轻提前情）
   timeAnchor: true,       // v1.0.175 时间锚开关（默认开）：规划师为每拍给定「支线·时点」，正文据此承接章节/支线时间
   timeAnchorsAuto: true,  // v1.0.175 承接真相源（默认开）：正文落库后轻量模型回写本章末尾支线/时点，作下一章承接硬真相
-  quickOutline: false,      // v1.0.178「默认大纲」开关（默认关）：打开后点「生成大纲」跳过 3 个候选角度选择，直接生成 1 个默认大纲
   teamShape: 'solo',       // v1.0.186 叙事主体·团队：solo=主角线 / trio=铁三角(+2) / quad=四方(+3) / quint=五人团(+4)
   dictmasterHistory: [],   // 阶段3/3.3：词典达人历史（6 次，FIFO，独立体系）
   dictmasterLatest: null,  // 阶段3/3.3：词典达人最近一次产物（含人物/关系表/地名专名联系表）
@@ -87,7 +86,6 @@ const state = {
   plannerFinalized: false,  // v11：全书规划师是否已定稿全书章节标题（未定稿时正文任务行轻提示「沿用参考稿」）
   chapters: [],         // [{title, content, confirmed, editHistory:[]}]
   characters: [],       // [{name, role, profile:{...}, prompts:{...}}]
-  outlineHistory: [],   // 大纲版本历史（上限10）：[{outline, ts}] 覆盖前快照，支持预览/恢复
   expSel: [],           // 长篇导出勾选的章节索引（随项目快照持久化，P3-4）
   expOpenGroups: [],    // 长篇导出章节选择：手动展开的分组序号（配合限高内滚+分组折叠，缓解超长章节列表，P5）
   hist: { characters:[], scenes:[], cover:[], storyboard:[] },  // P1-3 角色/场景/封面/分镜覆盖前快照（各上限10）
@@ -309,24 +307,36 @@ const TM_KEYS = ['chapter','outline','planBeats','plannerTitles','plannerAux',
   'glossary','subplot','strip','rolling','audit',
   'assets','recipe'];
 
-function defaultModels(){ return [
+function glmModels(){ return [
+  {name:'glm-4.5-air', label:'GLM-4.5-Air（智谱 · 高性价比，现用）', kind:'pro'},
+  {name:'glm-4.5',      label:'GLM-4.5（智谱 · 旗舰满血版）',      kind:'pro'}
+]; }
+function deepseekModels(){ return [
   {name:'deepseek-v4-pro', label:'deepseek-v4-pro（质量最高，推荐）', kind:'pro'},
   {name:'deepseek-v4-flash', label:'deepseek-v4-flash（最快/最便宜）', kind:'flash'},
   {name:'deepseek-v4-flash-vision-exp', label:'deepseek-v4-flash-vision-exp（带视觉）', kind:'flash'}
 ]; }
-function cfgDeepSeekGroup(){ return {id:'deepseek', kind:'openai', label:'DeepSeek 官方', baseUrl:'https://api.deepseek.com', keys:[], models:defaultModels()}; }
+// v1.0.205 默认候选模型全集（GLM + DeepSeek 并存）：仅作「无存档/旧档缺 models」的兜底，GLM 优先
+function defaultModels(){ return glmModels().concat(deepseekModels()); }
+function cfgZhipuGroup(){ return {id:'zhipu', kind:'openai', label:'智谱 GLM', baseUrl:'https://open.bigmodel.cn/api/paas/v4', keys:[], models:glmModels(), keyInBody:false}; }
+function cfgDeepSeekGroup(){ return {id:'deepseek', kind:'openai', label:'DeepSeek 官方', baseUrl:'https://api.deepseek.com', keys:[], models:deepseekModels()}; }
 
 // 归一化 cfg：保证 groups/active 存在，迁移旧平铺配置。
 function normalizeCfg(cfg){
   cfg = cfg || {};
   if(!Array.isArray(cfg.groups)){
-    const g = cfgDeepSeekGroup();
-    if(cfg.apiKey){            // 旧版单 Key 迁移
+    const gz = cfgZhipuGroup();
+    const gd = cfgDeepSeekGroup();
+    if(cfg.apiKey){            // 旧版单 Key 迁移：旧 key 归属 DeepSeek 组
       const id = uid('k');
-      g.keys.push({id, label:'默认账号', key:cfg.apiKey});
+      gd.keys.push({id, label:'默认账号', key:cfg.apiKey});
+      cfg.groups = [gz, gd];
       cfg.active = { groupId:'deepseek', keyId:id, model: cfg.model || 'deepseek-v4-pro' };
+    } else {
+      // v1.0.205 默认组并存：无存档时默认智谱 GLM（glm-4.5-air），DeepSeek 组备选
+      cfg.groups = [gz, gd];
+      cfg.active = { groupId:'zhipu', keyId: (gz.keys[0]||{}).id||null, model: (gz.models[0]||{}).name || 'glm-4.5-air' };
     }
-    cfg.groups = [g];
   }
   // v1.0.137 fix：存量数据自愈——旧版本已产生的重复组 ID（如两个 g1001）会让两组永远串在一起。
   // 保留每组第一个出现的 ID，其余重复组改发新 ID（active.groupId 在 find 语义下本就指向第一个匹配组，无需修正）。
@@ -348,8 +358,8 @@ function normalizeCfg(cfg){
   if(group){
     const key = group.keys.find(k=>k.id===act.keyId) || group.keys[0];
     const model = group.models.find(m=>m.name===act.model)
-      || group.models.find(m=>m.name==='deepseek-v4-pro') || group.models[0];
-    cfg.active = { groupId: group.id, keyId: key ? key.id : null, model: model ? model.name : 'deepseek-v4-pro' };
+      || group.models.find(m=>m.name==='glm-4.5-air') || group.models[0];
+    cfg.active = { groupId: group.id, keyId: key ? key.id : null, model: model ? model.name : (group.models[0] ? group.models[0].name : '') };
   } else {
     cfg.active = { groupId:null, keyId:null, model:'' };
   }
@@ -492,7 +502,6 @@ function projectSnapshot(){
     characters: state.characters,
     ctAdviceHist: Array.isArray(state.ctAdviceHist) ? state.ctAdviceHist : [],   // v10.59 章节标题 AI 建议快照
     contentAdviceHist: Array.isArray(state.contentAdviceHist) ? state.contentAdviceHist : [],   // v10.59 章节内容 AI 建议快照
-    outlineHistory: state.outlineHistory,
     expSel: Array.isArray(state.expSel) ? state.expSel : [],
     hist: state.hist || { characters:[], scenes:[], cover:[], storyboard:[] },
     chapterStyle: state.chapterStyle || { tags: [], intensity: 2, collapsed: false },
@@ -502,9 +511,6 @@ function projectSnapshot(){
     aiNetwork: state.aiNetwork || { stage:'idle', running:[], completed:[], blockedBy:{} },   // 4.8 旗舰版 AI 协作网络（刷新不丢）
     _lastPolishBrief: state._lastPolishBrief || null,   // 4.7 Pro 优化构想结构化简报（供大纲 AI 经 formatNavBeaconForOutline 注入）
     _lastPolishIdeaText: state._lastPolishIdeaText || '',   // v230/1-C：纯文本优化稿存档（新 PRO 无 JSON brief 时构想→大纲的上下文通道）
-    _outlineCandidates: state._outlineCandidates || null,   // v230/3.1：多大纲候选 {batchTs, items:[{id,label,outline}], chosenId}
-    _outlineCandsFolded: !!state._outlineCandsFolded,   // v239/905-2：候选大纲区折叠状态（选择完成后可手动折叠，随项目持久化）
-    quickOutline: !!state.quickOutline,   // v1.0.178「默认大纲」开关状态随项目持久化
     teamShape: (state.teamShape==='dual'||state.teamShape==='trio'||state.teamShape==='quad'||state.teamShape==='quint') ? state.teamShape : 'solo',   // v1.0.188 叙事主体（主角线/双主角/团队）随项目持久化
     _chapterPartial: state._chapterPartial || {},   // 4.8 旗舰版（板块一-3）：流式中断续写缓存（刷新不丢）
     scenes: state.scenes,
@@ -565,7 +571,6 @@ function applyProject(p){
   state.characters = p.characters || [];
   state.ctAdviceHist = Array.isArray(p.ctAdviceHist) ? p.ctAdviceHist : [];   // v10.59 老项目缺省空
   state.contentAdviceHist = Array.isArray(p.contentAdviceHist) ? p.contentAdviceHist : [];   // v10.59 老项目缺省空
-  state.outlineHistory = Array.isArray(p.outlineHistory) ? p.outlineHistory : [];
   state.expSel = Array.isArray(p.expSel) ? p.expSel.filter(i=> Number.isInteger(i)) : [];
   state.hist = (p.hist && typeof p.hist === 'object') ? {
     characters: Array.isArray(p.hist.characters)?p.hist.characters:[],
@@ -592,13 +597,10 @@ function applyProject(p){
   state.aiNetwork = (p.aiNetwork && typeof p.aiNetwork === 'object') ? p.aiNetwork : { stage:'idle', running:[], completed:[], blockedBy:{} };   // 4.8 旗舰版 AI 协作网络恢复
   state._lastPolishBrief = (p._lastPolishBrief && typeof p._lastPolishBrief === 'object') ? p._lastPolishBrief : null;   // 4.7 Pro 优化构想简报恢复
   state._lastPolishIdeaText = (typeof p._lastPolishIdeaText === 'string') ? p._lastPolishIdeaText : '';   // v230/1-C 纯文本优化稿恢复
-  state._outlineCandidates = (p._outlineCandidates && typeof p._outlineCandidates === 'object' && Array.isArray(p._outlineCandidates.items)) ? p._outlineCandidates : null;   // v230/3.1 多大纲候选恢复
-  state._outlineCandsFolded = !!p._outlineCandsFolded;   // v239/905-2 候选大纲区折叠状态恢复
   state.dictmasterHistory = Array.isArray(p.dictmasterHistory) ? p.dictmasterHistory : [];   // 阶段3/3.3：词典达人历史恢复
   state.dictmasterLatest = (p.dictmasterLatest && typeof p.dictmasterLatest === 'object') ? p.dictmasterLatest : null;   // 阶段3/3.3
   state.dictmasterRan = !!p.dictmasterRan;   // 阶段3/3.0
   state.originalIdeaSnapshot = (typeof p.originalIdeaSnapshot === 'string') ? p.originalIdeaSnapshot : '';   // 阶段3/3.7
-  state.quickOutline = !!p.quickOutline;   // v1.0.178「默认大纲」开关状态恢复
   state.teamShape = (p.teamShape==='dual'||p.teamShape==='trio'||p.teamShape==='quad'||p.teamShape==='quint') ? p.teamShape : 'solo';   // v1.0.188 叙事主体恢复
   state._chapterPartial = (p._chapterPartial && typeof p._chapterPartial === 'object') ? p._chapterPartial : {};   // 4.8 旗舰版（板块一-3）：流式中断续写缓存恢复
   // v1.0.140：_tensionCurve / _personaCards / _branchSandboxes 状态已随「叙事》人设/张力/沙盘」清理整体移除（不再持久化）
@@ -617,20 +619,17 @@ function clearState(){
   state.useChapterPlans = true;  // v10.29 新建作品默认参与生成
   state.chapters = []; state.characters = []; state.scenes = []; state.storyboard = []; state.boardConcepts = []; state.titleHistory = []; state.raw = {};
   state.ctAdviceHist = []; state.contentAdviceHist = [];   // v10.59 随项目的 AI 建议快照（章节标题 / 章节内容）
-  state.outlineHistory = []; state.expSel = [];
+  state.expSel = [];
   state.hist = { characters:[], scenes:[], cover:[], storyboard:[] };
   state.chapterStyle = { tags: [], intensity: 2, collapsed: false, elemOpen: false };
   state.fcCollapsed = true; state.rsCollapsed = true;   // v1.0.163 折叠态重置（默认收合）
   state._fixQueue = [];   // 4.6 Plus 修复队列重置
   state._lastPolishBrief = null;   // 4.7 Pro 优化构想简报重置
   state._lastPolishIdeaText = '';   // v230/1-C 纯文本优化稿重置
-  state._outlineCandidates = null;   // v230/3.1 多大纲候选重置
-  state._outlineCandsFolded = false;   // v239/905-2 候选大纲区折叠状态重置
   state.dictmasterHistory = [];   // 阶段3/3.3：词典达人历史重置
   state.dictmasterLatest = null;   // 阶段3/3.3
   state.dictmasterRan = false;   // 阶段3/3.0
   state.originalIdeaSnapshot = '';   // 阶段3/3.7
-  state.quickOutline = false;   // v1.0.178「默认大纲」开关重置为默认关闭
   state.teamShape = 'solo';   // v1.0.186 叙事主体·团队重置为默认「主角线」
   state._chapterPartial = {};   // 4.8 旗舰版（板块一-3）：流式中断续写缓存重置
   state.aiNetwork = { stage:'idle', running:[], completed:[], blockedBy:{} };   // 4.8 旗舰版 AI 协作网络重置
@@ -1664,6 +1663,10 @@ function openPolishBox(){
   renderPolishCards(cards);
 }
 
+// v1.0.205 阶段5.5：未生成/无候选方案 → 「第一步」强调态（红色渐变按钮）；已有方案后恢复普通按钮
+function polishIdle(){
+  return !(Array.isArray(state.polishOptions) && state.polishOptions.length);
+}
 // v1.0.121 优化构想方案卡：竖向多色卡片（序号徽章/方案名/左侧色条三重视觉编码，复刻 ai配方助手候选列表）。
 // 固定六色序列，按生成顺序取色；正文只读可选中；每卡「采用」即导入构想输入框 +「复制」。
 const POLISH_PALETTE = ['#E8A33D','#D64545','#4C6FD5','#3FA36B','#8E5AC8','#2CA6A4'];
@@ -3541,7 +3544,7 @@ function ideaKeyTerms(idea){
 }
 // 返回 ''=通过，否则返回不忠实提示。
 // v1.0.164 放宽：只对「硬芯专名被整体丢弃」或「总体命中率过低」的情形发提示，且该提示不再作废候选——
-// 多候选路径（genOutlineMulti）会容错降级为「可选用 + 黄标警示」，不再整条跳过。
+// 忠实度校验：未通过时容错降级为「可选用 + 黄标警示」，不再整条跳过。
 function validateIdeaFaithful(j, idea){
   const { coined, soft, short } = ideaKeyTerms(idea);
   if(short || (!coined.length && !soft.length)) return '';       // 极短/无关键词：豁免
@@ -3692,8 +3695,7 @@ function getSystemPrompt(kind, extra){
   switch(kind){
     case 'idea': return IDEA_POLISH_SYS + (extra && extra.multi ? POLISH_MULTI_MODE : '');   // 4.9 加固：多方案开关接线（此前 POLISH_MULTI_MODE 只定义从未拼入，勾选「多方案」实际不生效）
     case 'recipe': return AI_RECIPE_SYS_PRO;
-    // v230/3.2：outline 支持多候选角度尾注（genOutlineMulti 经 extra.angleNote 注入【本候选创意角度】）
-    case 'outline': return buildOutlineSys() + ((extra && extra.angleNote) ? '\n\n' + extra.angleNote : '');
+    case 'outline': return buildOutlineSys();
     case 'titles': return REGEN_TITLES_SYS;
     case 'chapterPlan': return CHAPTER_PLAN_SYS;
     case 'chapter': return longChapterSys();
@@ -5896,7 +5898,7 @@ function viewStory(){
             <textarea id="ideaInput" placeholder="">${esc(state.idea)}</textarea>
           </div>
           <div class="btn-row">
-            <button id="btnPolishIdea" class="btn ghost" title="把构想优化成结构化高质量版本">✨ 优化构想</button>
+            <button id="btnPolishIdea" class="btn ghost ${polishIdle()?'first':''}" title="${polishIdle()?'🚀 第一步：把粗糙构想优化为结构化高质量版本（含书名/简介/结构）':'把构想再优化一版'}">${polishIdle()?'🚀 第一步-优化构想':'✨ 优化构想'}</button>
             <label class="pol-multi" title="构想不完整时，生成 2-6 份不同方向的构想供选择"><input type="checkbox" id="chkPolishMulti" checked> 多方案</label>
           </div>
           <div id="polishBox" class="pol-box" style="display:none">
@@ -5934,6 +5936,7 @@ function viewStory(){
         <div class="card-head-row"><h3 style="margin:0">✨ 候选方案比选</h3></div>
         <p class="sub" style="font-size:12px;color:var(--muted)">点某张候选卡「✔ 采用此方案」即选中（不覆盖原始构想）；选中后点下方「生成大纲」把该方案的 书名 / 小说简介 / 全书节拍 三处搬入。词典达人生成万物词典前可换方案重搬（后悔药）；③ 一旦产出即锁定不可再换。</p>
         <div id="polishCards2" class="pol-box" style="display:block"></div>
+        ${ polishKeepBar() }   <!-- v1.0.205 阶段5.5 后悔药：生成大纲后仍可 查看历史优化版本 / 重新优化 / 重新选候选后点下方「生成大纲」重搬（词典达人产出前可反悔） -->
         <div class="btn-row" style="margin-top:8px">
           <button data-gen-outline class="btn primary block" ${dictmasterLocked()?'disabled title="词典达人已产出，②方案已锁定"':''}>📚 生成大纲（搬入书名 / 简介 / 节拍）${dictmasterLocked()?'（②已锁定）':''}</button>
         </div>
@@ -6011,10 +6014,7 @@ function viewStory(){
         <div id="wcTotal" class="wc-total hidden"></div>
         <div class="cyber-pad hidden"></div>
       ` : `
-        <div class="btn-row">
-          <button id="btnConfirmOutline" class="btn primary">✓ 确认大纲，进入写正文</button>
-          <button id="btnReOutline" class="btn ghost">重生成</button>
-        </div>
+        <p class="sub" style="margin:0">尚未生成故事大纲。请先在上方「✨ 优化构想」选定方案后点「📚 生成大纲」——大纲落定即自动进入正文写作；如需重生成大纲，可再次点击「生成大纲」覆盖。</p>
       ` }
     </section>
   </div>`;
@@ -8637,7 +8637,7 @@ function renderChapters(){
       // v241/908-3：撤除第一章空框占位（v240 曾保留）——空态只给一行提示
       const wantN = chapterCountVal();
       wrap.innerHTML = wantN > 0
-        ? `<div class="ch-pager"><span class="muted">已填章节数 ${wantN} 章，尚未生成章节：确认大纲后这里会出现章节卡。</span></div>`
+        ? `<div class="ch-pager"><span class="muted">已填章节数 ${wantN} 章，尚未生成章节：大纲生成后这里会出现章节卡。</span></div>`
         : `<div class="ch-pager"><span class="muted">共 0 章：先在第②步生成大纲。</span></div>`;
       return;
     }
@@ -8891,7 +8891,7 @@ function renderLongProgress(){
 /* ---------- P2 角色 ---------- */
 function viewCharacters(){
   if(!readyForAssets()){
-    return `<div class="center-empty">请先在「故事」里确认大纲并生成章节。<br>角色提示词需要基于完整故事生成。</div>`;
+    return `<div class="center-empty">请先在「故事」里生成大纲并生成章节。<br>角色提示词需要基于完整故事生成。</div>`;
   }
   if(!state.characters.length){
     return `<div class="card">
@@ -9092,7 +9092,7 @@ function coverCardHtml(){
     </div>`;
 }
 function viewScenes(){
-  if(!readyForAssets()) return `<div class="center-empty">请先在「故事」里确认大纲并生成章节。</div>`;
+  if(!readyForAssets()) return `<div class="center-empty">请先在「故事」里生成大纲并生成章节。</div>`;
   // 长篇模式：只需封面提示词，无需"场景/角色/分镜"等视频资产
   if(isLong()) return coverCardHtml();
   const coverCard = coverCardHtml();
@@ -9124,7 +9124,7 @@ function viewScenes(){
 
 /* ---------- P4 分镜 ---------- */
 function viewStoryboard(){
-  if(!readyForAssets()) return `<div class="center-empty">请先在「故事」里确认大纲并生成章节。</div>`;
+  if(!readyForAssets()) return `<div class="center-empty">请先在「故事」里生成大纲并生成章节。</div>`;
   if(!state.storyboard.length){
     return `<div class="card">
       <h3>🎞️ 分镜文字</h3>
@@ -9500,20 +9500,22 @@ function bindView(){
   // P1
   const idea = $('#ideaInput'); if(idea){
     idea.oninput = ()=> state.idea = idea.value;
-    bindPolishIdea();   // v10.13 优化构想按钮 + 优化区绑定
-    // 阶段3/3.2：生成大纲 = 纯搬运函数（不再走大纲 AI / 多候选）；before-outline 态按钮同样调用
-    $('#btnGenOutline').onclick = ()=> genOutline();
-    // 阶段3：②「后大纲」格候选比选 + 纯搬运按钮 + ③词典达人绑定
-    const _p2 = $('#polishCards2'); if(_p2) renderPolishCards(_p2);
-    $$('[data-gen-outline]').forEach(b=> b.onclick = ()=> genOutline());
-    bindDictMaster();
-    // v1.0.186 叙事主体·团队：选中即持久化并整页重渲染（后续构想/大纲/规划/正文全链路按所选团队注入）
+    // 阶段3/3.2：生成大纲 = 纯搬运函数（before-outline 态也仅在 ideaInput 在场时才有 btnGenOutline）
+    const _go0 = $('#btnGenOutline'); if(_go0) _go0.onclick = ()=> genOutline();
+    // v1.0.186 叙事主体·团队：选中即持久化并整页重渲染
     const tsTg = $('#teamPick'); if(tsTg){
       tsTg.querySelectorAll('[data-team]').forEach(lb=>{
         lb.onclick = (e)=>{ e.preventDefault(); if(state.teamShape === lb.dataset.team) return; state.teamShape = lb.dataset.team; persist(); render(); toast(`叙事主体已切换为「${currentTeamShape().label}」`); };
       });
     }
   }
+  // v1.0.205 阶段5.5 修复：大纲已生成视图（后大纲格）不含 ideaInput，原将以下绑定锁在 if(ideaInput) 块内
+  // 导致「后大纲格生成大纲 / 词典达人 / 候选卡采用方案」按钮全部无回调、点击无反应。改为独立判空绑定。
+  bindPolishIdea();   // v10.13 优化构想/提示条/历史等绑定：须与视图无关地无条件执行（原锁 if(ideaInput) 内，后大纲视图会失效）
+  const _goB = $('#btnGenOutline'); if(_goB) _goB.onclick = ()=> genOutline();
+  const _p2 = $('#polishCards2'); if(_p2) renderPolishCards(_p2);
+  $$('[data-gen-outline]').forEach(b=> b.onclick = ()=> genOutline());
+  bindDictMaster();
   // v11 简介字数范围（生成大纲前、仅长篇）：双数字输入，min>max 自动对调、max 上限 5000
   const llMin = $('#llMin'), llMax = $('#llMax');
   if(isLong() && llMin && llMax){
@@ -9559,8 +9561,8 @@ function bindView(){
         // v225/P5-B：占位态章节数变更——规划师已写过节拍表时显式确认并归档，再按新数量重建占位
         if(_o && Array.isArray(_o.chapters) && _o.chapters.length>0 && _o.chapters.length !== v){
           const _hasPlans = Array.isArray(_o.chapterPlans) && _o.chapterPlans.some(Boolean);
-          if(_hasPlans && !confirm(`规划师已生成过本章锚点/节拍表。章节数改为 ${v} 将按新数量重建章节占位（旧内容先归档入历史版本）。继续？`)){ render(); return; }
-          if(_hasPlans){ snapshotOutline(); _o.chapterPlans = new Array(v).fill(null); }
+          if(_hasPlans && !confirm(`规划师已生成过本章锚点/节拍表。章节数改为 ${v} 将按新数量重建章节占位（旧正文将清空重建）。继续？`)){ render(); return; }
+          if(_hasPlans){ _o.chapterPlans = new Array(v).fill(null); }
           _o.chapters = Array.from({length:v}, ()=>({title:'', summary:''}));
         }
         state.chapterCount = v;
@@ -9776,103 +9778,9 @@ const lnER = $('#lnExportReader'); if(lnER) lnER.onclick = openExportReader;
 /* =========================================================
  * 生成动作
  * ========================================================= */
-/* ---------- P0-1 大纲版本历史：覆盖前快照 + 📚 弹窗预览/恢复（上限10） ---------- */
-// v230/3.4：快照支持可选 label（如"候选B·未选用""重生成前·原大纲"）；旧数据无 label 照常显示时间，向后兼容
-function snapshotOutlineLabel(o, label){
-  if(!o || typeof o !== 'object') return;
-  const copy = JSON.parse(JSON.stringify(o));
-  const sig = JSON.stringify(copy);
-  // v233 修复：内容去重——历史里已存在完全相同内容的大纲就不再叠加（修复"恢复一个历史就多出一条重复历史、可无限叠加"）；
-  // 旧条目无 _sig 时现场 stringify 对比，新条目缓存 _sig
-  state.outlineHistory = Array.isArray(state.outlineHistory) ? state.outlineHistory : [];
-  if(state.outlineHistory.some(h => h && (h._sig ? h._sig === sig : JSON.stringify(h.outline) === sig))) return;
-  const item = { outline: copy, ts: Date.now() };
-  if(label) item.label = String(label);
-  item._sig = sig;
-  state.outlineHistory.unshift(item);
-  if(state.outlineHistory.length > 50) state.outlineHistory.splice(50);
-}
-function snapshotOutline(label){
-  snapshotOutlineLabel(state.outline, label);
-}
-function hasOutlineHistory(){ return Array.isArray(state.outlineHistory) && state.outlineHistory.length > 0; }
-function outlineHistoryCount(){ return hasOutlineHistory() ? state.outlineHistory.length : 0; }
-function openOutlineHistoryPanel(){
-  closeOutlineHistoryPanel();
-  if(!hasOutlineHistory()){ toast('暂无历史版本'); return; }
-  const fmtTs = ts=>{ const d=new Date(ts); return (d.getFullYear())+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
-  const wc = o => { const s = JSON.stringify(o||{}); return (s.length||0); };
-  const rows = state.outlineHistory.map((h,idx)=>{
-    const o = h.outline || {};
-    const n = (o.chapters||[]).length;
-    return `<div class="cv-row">
-      <div class="cv-meta" style="flex:1;min-width:0"><div class="cv-time">${h.label?`<b style="color:var(--primary,#4a7dff)">${esc(h.label)}</b> · `:''}${fmtTs(h.ts)}</div><div class="cv-t" style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.title||'未命名')} · ${n} 章 · ${wc(o)} 字符</div></div>
-      <div class="cv-actions" style="display:flex;gap:6px;flex-shrink:0">
-        <button type="button" class="btn ghost cv-b" data-ov-prev="${idx}">预览</button>
-        <button type="button" class="btn ghost cv-b" data-ov-restore="${idx}">↩ 恢复</button>
-      </div>
-    </div>`;
-  }).join('');
-  const ov = document.createElement('div'); ov.id='ovPanel'; ov.className='gs-overlay';
-  ov.innerHTML = `
-    <div class="gs-modal">
-      <div class="gs-modal-head"><b>📚 大纲版本历史（${state.outlineHistory.length}/50）</b>
-        <button class="gs-x" data-ov-close>✕</button></div>
-      <div class="cv-body">
-        <div class="cv-row cur"><div class="cv-meta"><span class="cv-time">当前版本</span><span class="cv-wc">${esc((state.outline&&state.outline.title)||'未命名')} · ${(state.outline&&state.outline.chapters||[]).length} 章</span></div></div>
-        <div class="cv-div">历史版本：恢复前会把当前大纲自动存入历史；恢复后章节列表按该版大纲重建（正文清空，已写章节保留在版本内可回退）。</div>
-        ${rows}
-        <div class="cv-preview hidden" id="ovPreview">
-          <div class="cv-prev-head"><b id="ovPrevTitle">版本预览</b><button class="gs-x" data-ov-prev-close>✕</button></div>
-          <div class="cv-pre" id="ovReader"></div>
-        </div>
-      </div>
-    </div>`;
-  document.body.appendChild(ov);
-  ov.querySelector('[data-ov-close]').onclick = closeOutlineHistoryPanel;
-  ov.addEventListener('click', e=>{ if(e.target===ov) closeOutlineHistoryPanel(); });
-  ov.addEventListener('click', e=>{
-    const p = e.target.closest('[data-ov-prev]'); if(!p) return;
-    const h = state.outlineHistory[+p.dataset.ovPrev]; if(!h) return;
-    const o = h.outline||{};
-    const pr=$('#ovPreview'), rd=$('#ovReader'), pt=$('#ovPrevTitle');
-    if(pr && rd){
-      pt.textContent = '预览 · '+fmtTs(h.ts);
-      rd.innerHTML = `<b>${esc(o.title||'')}</b><br><span class="muted">${esc(o.logline||'')}</span><br><br>` +
-        (o.chapters||[]).map((c,i)=>`${i+1}. ${esc((c&&c.title)||'')}`).join('<br>');
-      pr.classList.remove('hidden');
-    }
-  });
-  ov.querySelector('[data-ov-prev-close]').onclick = ()=>{ const pr=$('#ovPreview'); if(pr) pr.classList.add('hidden'); };
-  ov.addEventListener('click', e=>{
-    const rb = e.target.closest('[data-ov-restore]'); if(!rb) return;
-    const h = state.outlineHistory[+rb.dataset.ovRestore]; if(!h) return;
-    if(!window.confirm('恢复该版大纲将覆盖当前大纲（当前大纲自动存入历史，不会丢失）。若新旧章节数一致，已写正文会保留；否则章节列表按该版重建。确定恢复吗？')) return;
-    snapshotOutline();                       // 当前大纲入历史
-    const newOutline = JSON.parse(JSON.stringify(h.outline));
-    const oldOutline = state.outline;
-    state.outline = newOutline;
-    state.outlineConfirmed = false;
-    if(state.chapters.length === (newOutline.chapters||[]).length && oldOutline && (oldOutline.chapters||[]).length === state.chapters.length){
-      // 章节数一致：保留已写正文，仅同步标题（避免恢复大纲把正文冲掉）
-      state.chapters.forEach((c,i)=>{ const oc=newOutline.chapters[i]; if(oc) c.title = oc.title; });
-    } else {
-      state.chapters = (newOutline.chapters||[]).map(c=>({title:(c&&c.title)||'', content:'', strip:'', confirmed:false}));
-    }
-    persist(); closeOutlineHistoryPanel(); render();
-    toast('已恢复历史大纲');
-  });
-}
-function closeOutlineHistoryPanel(){ const p=$('#ovPanel'); if(p) p.remove(); }
-
-// v230/T3+3.3：大纲落盘共用段——genOutline 与多候选「选用此版」两条路共用，避免复制粘贴漂移。
-// 含：章数软检查（T3：仅提示不拦截）、旧标题保留/重建、当前大纲入历史（label 可配）、
-//     旧词典沿用、简介字数 toast（非阻断）、pendingV45 应用、navBeacon 回填、userIdea/chapterPlans 初始化、state.chapters 同步。
-// opts.replacedLabel：当前大纲入历史时的标注（默认'被替换的上一版'）；opts.silent：候选生成阶段静默（不弹章数提示）。
+// v5.0 阶段5.3 清理：删除大纲历史/多候选后，applyOutlineObject（大纲落盘共用段）仅剩纯搬运调用方。
 function applyOutlineObject(o, opts){
   opts = opts || {};
-  // v1.0.144：章数软检查已移除——structure.chapterPlan（维度→章节分组）已彻底清除，章节数以「章节标题」步骤为准。
-  // 保留旧章节标题（如果数量一致）
   const oldChapters = (state.outline && state.outline.chapters) || [];
   const newN = state.chapterCount || oldChapters.length;
   if(newN && oldChapters.length === newN){
@@ -9882,7 +9790,6 @@ function applyOutlineObject(o, opts){
   }
   // 沿用旧词典（4.5 注：在覆盖 state.outline 前读取，否则"沿用旧词典"永远失效）
   const prevGloss = (state.outline && state.outline.glossary && sourceHasGlossary(state.outline.glossary)) ? state.outline.glossary : null;
-  snapshotOutline(opts.replacedLabel || '被替换的上一版');
   state.outline = o;
   normalizeOutline(state.outline);   // 4.6 Plus：outline 防御归一化
   state.outlineConfirmed = false;
@@ -9921,11 +9828,11 @@ function applyOutlineObject(o, opts){
       o.navBeacon = { genre:_genre, protagonist:_prot, coreConflict:_conf, tone:'' };
     }
   }
-  o.userIdea = state.idea;
+  if(!o.userIdea) o.userIdea = state.idea;   // v5.0 阶段5.3 收紧：不覆盖已存在的 userIdea（原始构想走 3.7 快照）
   if(!Array.isArray(o.chapterPlans)) o.chapterPlans = [];
   // 如果 chapters 已重建，同步 state.chapters
   // v238/B：章节数一致时逐章迁移已写内容（content/strip/confirmed/_titleByAI）——
-  // 换大纲/换候选不再清空正文；数量不一致才重建为空（原大纲与正文已随 snapshotOutline 入历史版本可找回）
+  // 换大纲/换候选不再清空正文；数量不一致才重建为空。
   if(o.chapters.length){
     const _prev = (Array.isArray(state.chapters) && state.chapters.length === o.chapters.length) ? state.chapters : null;
     state.chapters = o.chapters.map((c,ci)=>{
@@ -9972,224 +9879,11 @@ function confirmOutlineContentGuard(){
   if(!s.hasContent) return true;
   const newN = chapterCountVal();
   if(s.curN && newN && s.curN !== newN){
-    return window.confirm(`当前已写正文 ${s.contentN} 章（共 ${s.curN} 章），本次预设章数为 ${newN} 章。章数不同，新大纲生效后正文将无法按章节对应保留（原大纲与正文会存入历史版本，可找回）。继续生成？`);
+    return window.confirm(`当前已写正文 ${s.contentN} 章（共 ${s.curN} 章），本次预设章数为 ${newN} 章。章数不同，新大纲生效后正文将无法按章节对应保留。继续生成？`);
   }
   return true;
 }
 
-// —— v230/3.1：多大纲候选（3 个角度差异化候选，供比选；未选候选入历史可切回） ——
-const OUTLINE_CANDIDATE_N = 3;   // v1.0.194 候选数收敛 6→3（商业/反差/情感；角度池同步缩为 3 个，1:1 无撞角度；1 = 退化为单发行为）
-// state._outlineCandidates = { batchTs, items:[{id,label,outline}], chosenId }（随项目持久化，见 projectSnapshot/applyProject/clearState）
-const OUTLINE_CANDIDATE_ANGLES = [
-  { tag:'商业',   rise:'本候选＝稳扎稳打的大众爽感线：主线清晰、升级可预期、回报即时。必须把「被贬马夫以天象推人事」做成一步一升级、目标明确的逆袭线；禁止使用多线叙诡、禁止开放式留白结尾。', temp:0.75 },
-  { tag:'反差',   rise:'本候选＝反差设定为最高卖点：必须重新赋予一个高概念级别的反差钩子（身份×权力的极端错位、动机的荒诞反转、前提的反直觉设计，择一主用），让读者一句话就想追；禁止平铺直叙复述原设定，必须打破原设定的惯性组合。', temp:0.85 },
-  { tag:'情感',   rise:'本候选＝人物弧光与情感关系为骨：把「哑马夫」的内心、亲子/主仆/守将间的张力作为主线引擎，权谋只作背景；情节必须围绕主角的代价、选择与救赎推进，使结局落在情感落点上；禁止把人物写成推动剧情的工具人。', temp:0.95 }
-];
-// v1.0.169：作者拍板回退「同段一次列 N 个」→ 恢复 N 次独立差异化生成（v1.0.194 起 N=3，见 OUTLINE_CANDIDATE_N）。
-// 回退原因：GLM 单段输出多个候选对象数组经常整批 JSON 解析失败——单点耦合毁掉全部，重试仍败，用户一个候选都拿不到。
-// 独立多调用让单个候选失败只影响自己（自身重试一次后跳过），稳定优先；"角度互相可比"的诉求用温度+差异化需求部分补偿。
-// 差异化改由每个候选独立的强指令（下述 outlineAngleDirective 内的 per-angle 演绎要求）保证，避免退回"多个雷同"老问题。
-function outlineAngleDirective(ang, idx, total){
-  return `【本候选创意角度：${idx+1}/${total} ·「${ang.tag}」】
-你是用「${ang.tag}」这个角度，把用户的构想重新设想成一本书。本批共 ${total} 个候选，各代表完全不同的创作角度：你必须让本候选在 书名、主角设定方式、剧作重心、类型口味 四个维度的组合上，与其他候选形成肉眼可辨的差异，禁止写成只是换了个题目的同一篇。
-· 硬核保真：用户在【用户构想】中加引号/书名号的核心词（如「被贬马夫」「社稷倾覆」）必须逐字原样出现、一字不改。
-· 除硬核外放开重塑：允许按本角度改动主角的身份细节/动机/处境、重写主线的冲突组织与叙事焦点，把故事真正"用这个角度重讲一遍"。
-· 每个候选都必须同时给出 anchor（核心一句话定位：题材+主角+核心冲突，≤50字）与 thesis（深层主题命题，≤80字，点出该角度挖掘的内核）；禁止省略留空——若确实难措辞，anchor 引用 logline 前半、thesis 提炼一句主题，也务必真实给出。
-${ang.rise}`;
-}
- 
- // v230/3.2：多候选生成——串行逐个（沿用 _abortCtl 可中断），角度差异化 + 温度阶梯；
-// 每个候选完整走 callAIGuarded('outline')（内置结构+忠实度双闸校验，v228/P3 闸原样保留）；
-// 单个失败 toast 跳过，≥1 个成功即进入候选选择态，全部失败才报错走修复队列。
-async function genOutlineMulti(btn){
-  const st = $('#outlineStatus');
-  if(st){ st.className='status'; st.textContent=''; }
-  const ideaIn = $('#ideaInput');
-  if(ideaIn) state.idea = ideaIn.value.trim();   // 仅第②步页面有输入框；「重生成大纲」入口直接用已存 state.idea
-  if(!state.idea){ toast('先写几句构想'); return; }
-  if(!canRunAI('outline')){ toast('请先完成上游步骤：优化构想'); return; }
-  // v238/B：已有正文且章节数预设被改动时，生成前明确警示正文无法按章节对应保留
-  if(!confirmOutlineContentGuard()) return;
-  // v230/1-B 修复：移除"建议先优化构想"toast——构想改纯文本后 navBeacon 不再回填，此提示变成每点必弹，
-  // 且被误解为阻断（生成实际继续）；大纲 AI 的构想上下文已由 buildOutlineUser→formatNavBeaconForOutline 的
-  // 纯文本 fallback 注入，无信息损失。允许用户跳过优化构想直接生成大纲。
-  markAIRunning('outline');
-  if(btn) busy(btn,true,'生成候选大纲中…');
-  if(btn && btn.parentNode) showStopBtn(btn.parentNode);
-  const items = [];
-  try{
-    const N = Math.max(1, OUTLINE_CANDIDATE_N|0);
-    for(let i=0;i<N;i++){
-      const ang = OUTLINE_CANDIDATE_ANGLES[i % OUTLINE_CANDIDATE_ANGLES.length];
-      const tag = '候选' + String.fromCharCode(65 + (i % OUTLINE_CANDIDATE_ANGLES.length));
-      if(st){ st.className='status'; st.textContent = `${tag}（${ang.tag}）生成中…（${i+1}/${N}）`; }
-      // v1.0.169：恢复 N 次独立差异化调用（N=OUTLINE_CANDIDATE_N，见上方注释）。每个候选独立走结构+忠实度双闸；
-      // 单候选失败仅自身重试一次（覆盖偶发截断/解析），仍失败才 toast 跳过、不拖累其余；≥1 成功即进入候选选择态，全失败才走修复队列。
-      const attempt = async ()=>{
-        const txt = await callAIGuarded('outline', { angleNote: outlineAngleDirective(ang, i, N) },
-          {temperature: ang.temp, maxTokens: 8192, signal: _abortCtl?.signal, tolerateFaithOutline: true});
-        // v1.0.170：改用括号深度平衡扫描（extractFirstObject），容忍前后杂文；失败时把 AI 原始开头带进报错，
-        // 一眼区分「模型返回不标准」vs「我方解析误判」。
-        const salv = salvageOutlineFromText(txt);
-        if(!salv){
-          const _head = String(txt||'').replace(/\s+/g,' ').slice(0,90);
-          throw new Error(`AI 未返回可用的书名/简介` + (_head ? `；原始输出开头「${_head}…」` : ''));
-        }
-        const o = salv.o;
-        if(salv.salvaged){ try{ o._softWarn = o._salvaged || '未能完整解析为标准结构，已自动抢救为可编辑骨架'; }catch(e){} }
-        const warn = (txt && txt._validateWarn) || '';
-        if(warn){ try{ o._faithWarn = warn; }catch(e){} }
-        // v1.0.197：候选生成即补齐 soft 字段（anchor/thesis 缺失时由简介推导/占位），
-        // 消除候选卡上每次生成都恒现的「待确认校验：缺：叙事锚点、深层主题」；数据完整、不再作软缺警示，且不阻塞比选。
-        fillOutlineSoftFields(o);
-        return o;
-      };
-      let cand = null, lastErr = null;
-      for(let k=0; k<2 && !cand; k++){
-        try{
-          cand = await attempt();
-        }catch(e){
-          if(e.name === 'AbortError') throw e;
-          lastErr = e;
-          if(k===0 && st){ st.textContent = `${tag}（${ang.tag}）首次未通过（${e.message}），自动重试一次…`; }
-        }
-      }
-      if(!cand){ toast(`${tag}（${ang.tag}）重试后仍未通过校验，已跳过：${(lastErr && lastErr.message) || '未知错误'}`); }
-      if(cand){
-        const _g = gradeOutlineCandidate(cand);
-        const _warn = cand._faithWarn || '';
-        // 忠实度/结构警示候选不当硬伤丢弃——标记"仍可选用"、黄标提示，端上自行把关
-        items.push({ id: 'c'+(i+1), label: `${tag}·${ang.tag}`, outline: cand, ok: _g.ok && !_warn, reason: _g.reason || _warn || '' });
-      }
-    }
-    if(!items.length) throw new Error('全部候选均未通过校验');
-    state._outlineCandidates = { batchTs: Date.now(), items, chosenId: null };
-    state._outlineCandsFolded = false;   // v1.0.166：新一批候选生成后默认展开，不沿用上次选用后的折叠态
-    markAIDone('outline');   // v234 修复：v230 多候选路径漏标 completed——规划师/标题/正文等下游全部被"请先完成上游步骤：生成大纲"误拦（旧单发版 9422 有标，重写时丢失）
-    persist(); render();
-    const _badN = items.filter(it=>!it.ok).length;
-    if(st){ st.className='status'; st.textContent = _badN ? `已生成 ${items.length} 个候选（其中 ${_badN} 个未通过结构校验，仍可选用并会自动补齐），请在候选卡中比选采用` : `已生成 ${items.length} 个候选大纲，请在候选卡中比选采用`; }
-    toast(_badN ? `已生成 ${items.length} 个候选（${_badN} 个未过校验可选）` : `已生成 ${items.length} 个候选大纲，请比选采用`);
-  }catch(e){
-    if(e.name==='AbortError'){ if(st){ st.className='status'; st.textContent='已停止生成'; } else { toast('已停止生成'); } }
-    else {
-      if(st){ st.className='status err'; st.textContent = e.message; }
-      addToFixQueue({kind:'outline', error:e.message});   // 4.8（6.4）：失败进修复队列
-      toast('大纲生成失败，已加入修复队列');
-    }
-  }finally{
-    state.aiNetwork.running = (state.aiNetwork.running||[]).filter(k=>k!=='outline');   // 兜底清理运行态
-    hideStopBtn(); if(btn) busy(btn,false);
-  }
-}
-
-// v230/3.3：候选大纲卡片区（未生成大纲页与已生成大纲页共用；chosenId 标注当前采用者）
-// v239/905-2：选择完成后用户可把候选区折叠起来——标题行「收起候选 ▴ / 展开候选 ▾」手动切换；
-// 折叠状态 state._outlineCandsFolded 随项目持久化（projectSnapshot/applyProject 透传），刷新不丢。
-function outlineCandidatesHtml(){
-  const cands = state._outlineCandidates;
-  if(!cands || !Array.isArray(cands.items) || !cands.items.length) return '';
-  const folded = !!state._outlineCandsFolded;
-  const head = `<div style="display:flex;align-items:center;gap:8px;margin:10px 0 0">
-    <p class="muted" style="margin:0;flex:1">🧭 本批候选大纲（${cands.items.length} 个，${new Date(cands.batchTs).toLocaleString()}）：选用后未选候选自动存入「📚 大纲版本」历史，可随时切回。</p>
-    <button type="button" class="btn small ghost" data-cand-fold style="white-space:nowrap" title="${folded?'展开本批候选大纲卡片':'把本批候选大纲卡片折叠成一行（已选用的版本不受影响）'}">${folded?'展开候选 ▾':'收起候选 ▴'}</button>
-  </div>`;
-  if(folded) return `<div id="outlineCands">${head}</div>`;
-  const cards = cands.items.map(it=>{
-    const od = (it && it.outline) || {};
-    const adopted = cands.chosenId === it.id;
-    let adoptHtml;
-    if(adopted){ adoptHtml = '<b style="color:var(--ok, #2e9e5b);white-space:nowrap">✅ 当前采用</b>'; }
-    else {
-      adoptHtml = '<button type="button" class="btn small '+(it.ok?'primary':'ghost')+'" data-cand-adopt="'+esc(it.id)+'" style="white-space:nowrap">'+(it.ok?'▶ 选用此版':'⚠️ 仍要选用')+'</button>';
-    }
-    // v1.0.164：警示不再塞进头部行（nowrap 长文本会把卡片头部挤爆/溢出错排），独立成整行并自然换行；
-    // 头部行只保留「标题 + 选用按钮」，按钮用 flex:none 固定不压缩
-    let warnLine = '';
-    if(!it.ok){
-      warnLine = `<div style="margin:8px 0 0;font-size:11px;line-height:1.55;color:#b8860b">⚠️ <b>待确认校验</b>${it.reason?('：'+esc(it.reason)):''}</div>`;
-    }
-    return `<div class="card" style="margin-top:10px">
-      <div class="card-head-row">
-        <b style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(od.title||'未命名')} <span class="muted">［${esc(it.label||'候选')}］</span></b>
-        <span style="display:inline-flex;align-items:center;flex:none;margin-left:8px;white-space:nowrap">${adoptHtml}</span>
-      </div>
-      ${warnLine}
-      <p class="sub" style="margin:6px 0 0;white-space:pre-wrap;word-break:break-word">${esc(String(od.logline||''))}</p>
-      <div class="btn-row" style="margin-top:8px">
-        <button type="button" class="btn small ghost" data-cand-prev="${esc(it.id)}">👁 预览</button>
-      </div>
-    </div>`;
-  }).join('');
-  return `<div id="outlineCands">${head}${cards}</div>`;
-}
-
-// v230/3.3：采用候选大纲（点击 → confirm 确认 → 生效；被替换的当前大纲与未选候选均入历史）
-function adoptOutlineCandidate(id){
-  const cands = state._outlineCandidates;
-  if(!cands || !Array.isArray(cands.items)) return;
-  const it = cands.items.find(x=>x && x.id===id);
-  if(!it) return;
-  if(cands.chosenId === id){ toast('该候选已是当前采用版本'); return; }
-  // v238/B：确认文案按实际情形动态生成——章数一致时明确"正文保留"，章数不同时警示"正文清空"
-  {
-    const s = chapterContentStat();
-    const newN = (it.outline && Array.isArray(it.outline.chapters)) ? it.outline.chapters.length : 0;
-    let msg;
-    if(s.hasContent && newN && s.curN && newN !== s.curN){
-      msg = `选用后：未选候选将存入历史版本，当前大纲自动入历史。⚠️ 新候选章节数（${newN}）与当前（${s.curN}）不同，已写正文将被清空（可从历史版本找回）。确定？`;
-    } else if(s.hasContent){
-      msg = '选用后：未选候选将存入历史版本，当前大纲自动入历史，已写正文将按章节对应保留。确定？';
-    } else {
-      msg = '选用后：未选候选将存入历史版本，当前大纲自动入历史。确定？';
-    }
-    if(!window.confirm(msg)) return;
-  }
-  // v1.0.161：采用"未通过校验"候选时，先按软字段自动补齐，避免缺字段进下游（书名/简介缺失的硬伤候选已被生成层跳过，不会出现在这里）
-  const _cl = it.ok ? JSON.parse(JSON.stringify(it.outline)) : fillOutlineSoftFields(JSON.parse(JSON.stringify(it.outline)));
-  applyOutlineObject(_cl, { replacedLabel: '被替换的上一版' });
-  // 未选用的其他候选逐个入历史（label 标注；上一批的当前采用者即当前大纲，已在上面入历史，不重复）
-  cands.items.forEach(x=>{
-    if(!x || x.id===id || x.id===cands.chosenId) return;
-    if(x.outline) snapshotOutlineLabel(x.outline, `${x.label||'候选'}·未选用`);
-  });
-  cands.chosenId = id;
-  markAIDone('outline');   // v234 修复：多候选采用路径补标 completed（幂等；未采用前 genOutlineMulti 已标过）
-  state._outlineCandsFolded = true;   // v1.0.166：选完即自动折叠候选区（右侧「展开候选 ▾」可手动再展开）
-  persist(); render();
-  toast(it.ok ? `已采用「${it.label||'候选'}」` : `已采用「${it.label||'候选'}」（原未过校验，缺失字段已自动补齐）`);
-}
-
-// v230/3.3：候选大纲预览（gs-overlay 弹窗；无章节列表时仅展示书名/简介）
-function previewOutlineCandidate(id){
-  const cands = state._outlineCandidates; if(!cands || !Array.isArray(cands.items)) return;
-  const it = cands.items.find(x=>x && x.id===id); if(!it) return;
-  const od = it.outline||{};
-  const chapRows = (Array.isArray(od.chapters) && od.chapters.length)
-    ? od.chapters.map((c,i)=>`${i+1}. ${esc((c&&c.title)||'')}`).join('<br>')
-    : '';
-  const ov = document.createElement('div'); ov.id='candPrevPanel'; ov.className='gs-overlay';
-  ov.innerHTML = `<div class="gs-modal">
-    <div class="gs-modal-head"><b>预览 · ${esc(it.label||'候选')}</b><button class="gs-x" data-cp2-close>✕</button></div>
-    <div class="cv-pre" style="padding:12px;max-height:60vh;overflow:auto"><b>${esc(od.title||'')}</b><br><span class="muted">${esc(od.logline||'')}</span><br><br>${chapRows}</div>
-  </div>`;
-  document.body.appendChild(ov);
-  ov.querySelector('[data-cp2-close]').onclick = ()=> ov.remove();
-  ov.addEventListener('click', e=>{ if(e.target===ov) ov.remove(); });
-}
-
-// v230/3.5：「🔄 重生成大纲」——再生产一批新候选；当前大纲与上一批候选自动入历史，不丢失
-async function regenOutlineBatch(btn){
-  const cands = state._outlineCandidates;
-  const cur = cands && cands.chosenId ? '（当前采用：' + ((cands.items.find(x=>x&&x.id===cands.chosenId)||{}).outline||{}).title + '）' : '';
-  if(!window.confirm(`将再生成一批 ${OUTLINE_CANDIDATE_N} 个新候选${cur}；当前大纲与上一批候选自动存入历史版本，不会丢失。继续？`)) return;
-  if(cands && Array.isArray(cands.items)){
-    snapshotOutline('重生成前·原大纲');
-    cands.items.forEach(x=>{ if(x && x.outline && x.id!==cands.chosenId) snapshotOutlineLabel(x.outline, `${x.label||'候选'}·未选用`); });
-  }
-  state._outlineCandidates = null;
-  await genOutlineMulti(btn);
-}
 
 // 4.5：genOutline 改造——走 callAIWithContract 校验；保留 title/logline/anchor/thesis（v1.0.144 起不再含 structure）；
 // chapters 数量一致时保留旧标题；锚点前移（直接使用 AI 返回的 anchor/thesis，不再事后提取）。
@@ -10208,12 +9902,13 @@ const genOutline = async function(){
   if(btn) busy(btn,true,'搬运大纲中…');
   try{
     const o = buildOutlineFromPolishCandidate(cand);
-    applyOutlineObject(o, { replacedLabel: '被替换的上一版', silent: true });
-    state._outlineCandidates = null;   // 大纲 AI 候选已停；清掉残留
-    state._outlineCandsFolded = false;
+    applyOutlineObject(o, { silent: true });
+    // v1.0.205 阶段5.5：去掉「确认大纲，进入写正文」中间确认关卡——大纲一旦落定即视为已确认，
+    // 正文区直接可用（旧版需再点一次确认条，属历史遗留；重生成大纲仍可随时回 flow2 再点「生成大纲」覆盖）
+    state.outlineConfirmed = true;
     markAIDone('outline');   // 成功后标记完成
     persist(); render();
-    toast('已生成大纲：书名 / 小说简介 / 全书节拍已搬入（书名仅用户可改）');
+    toast('已生成大纲：书名 / 小说简介 / 全书节拍已搬入，直接进入正文写作（书名仅用户可改）');
   }catch(e){
     if(e.name==='AbortError'){ if(st){ st.className='status'; st.textContent='已停止生成'; } }
     else {
@@ -10243,10 +9938,14 @@ function dictmasterLocked(){
   if(!g) return false;
   return (g.characters && g.characters.length) || (g.places && g.places.length) || (g.propernouns && g.propernouns.length) ? true : false;
 }
-// 从候选文本提出书名（首行「书名：…」；无则回退原大纲书名或空）
+// 从候选文本提出书名（v1.0.205 放宽：兼容 书名/小说名/标题 键值行 与《…》书名号两种写法；无则回退原大纲书名或空）
 function extractCandidateBookName(txt){
-  const m = String(txt||'').match(/(?:^|\n)\s*书名\s*[:：]\s*([^\n]{1,30})/);
-  return (m && m[1]) ? m[1].trim().replace(/[】】\]）)]/g,'') : '';
+  const s = String(txt||'');
+  const kv = s.match(/(?:^|\n)\s*(?:书名|小说名|标题|名称)\s*[:：]\s*([^\n]{1,30})/);
+  if(kv && kv[1]) return kv[1].trim().replace(/[】\]\)]/g,'');
+  const bk = s.match(/[《<]([^《》<>]{1,30})[》>]/);
+  if(bk && bk[1]) return bk[1].trim().replace(/[】\]\)]/g,'');
+  return '';
 }
 // 用②候选的 书名/简介/结构 构建 outline 骨架（纯本地，无 AI）
 function buildOutlineFromPolishCandidate(cand){
@@ -13743,9 +13442,7 @@ function openThemePanel(){
   // 同步高亮当前主题
   const cur = (document.documentElement.getAttribute('data-theme')) || 'dark';
   $$('.theme-btns .theme').forEach(b=> b.classList.toggle('active', b.dataset.theme===cur));
-  // v10.16 温度已移入主题面板：打开时回显当前配置
-  editCfg = JSON.parse(JSON.stringify(getCfg()));
-  echoTemps();
+  // v1.0.205 温度已并入「设置 → 各任务温度」，主题面板不再回显温度
   p.classList.remove('hidden');
 }
 function closeThemePanel(){ const p=$('#themePanel'); if(p) p.classList.add('hidden'); }

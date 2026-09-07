@@ -81,13 +81,18 @@ label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px
 .btn.ghost.is-busy .spinner{border-color:rgba(255,255,255,.4);border-top-color:#fff}
 /* v10.48 生成章节内容 · 跨主题统一（固定色，不随主题变量漂移；#app 抬特异度抗主题覆写）
    重生成=蓝渐变常态/金黄渐变生成中 · 阅读=金黄渐变 */
-#app .btn.ghost[data-regen]{background:linear-gradient(135deg,#4db8ff 0%,#2a7fe3 100%);border:1px solid transparent;color:#fff;font-weight:600;box-shadow:0 1px 6px rgba(45,130,230,.35)}
-#app .btn.ghost[data-regen]:hover:not(:disabled):not(.is-busy){background:linear-gradient(135deg,#69c6ff 0%,#3a93e8 100%);color:#fff}
-#app .btn.ghost[data-regen].is-busy{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border-color:transparent;color:#fff;font-weight:600;opacity:1;box-shadow:0 1px 6px rgba(245,158,11,.4)}
+#app .btn.ghost[data-regen]{background:linear-gradient(135deg,#4db8ff 0%,#2a7fe3 100%);border:1px solid transparent;color:#fff;font-weight:600;box-shadow:0 1px 6px rgba(45,130,230,.35);filter:saturate(.5)}
+#app .btn.ghost[data-regen]:hover:not(:disabled):not(.is-busy){background:linear-gradient(135deg,#69c6ff 0%,#3a93e8 100%);color:#fff;filter:saturate(.5)}
+#app .btn.ghost[data-regen].is-busy{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border-color:transparent;color:#fff;font-weight:600;opacity:1;box-shadow:0 1px 6px rgba(245,158,11,.4);filter:saturate(.5)}
 #app .btn.ghost[data-regen].is-busy .spinner{border-color:rgba(255,255,255,.45);border-top-color:#fff}
-#app .btn.ghost[data-read]{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border:1px solid transparent;color:#fff;font-weight:600;box-shadow:0 1px 6px rgba(245,158,11,.4)}
-#app .btn.ghost[data-read]:hover{background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%);color:#fff}
+#app .btn.ghost[data-read]{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border:1px solid transparent;color:#fff;font-weight:600;box-shadow:0 1px 6px rgba(245,158,11,.4);filter:saturate(.5)}
+#app .btn.ghost[data-read]:hover{background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%);color:#fff;filter:saturate(.5)}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+/* v1.0.205 阶段5.5 ① 优化构想「第一步」强调按钮：未生成方案时红色渐变、拉长醒目 */
+#app .btn.first{flex:1;padding:12px 16px;font-size:15px;line-height:1.3;font-weight:700;letter-spacing:.5px;background:linear-gradient(135deg,#E3371E 0%,#C8102E 52%,#A90612 100%);border:1px solid transparent;color:#fff;box-shadow:0 2px 12px rgba(200,16,46,.38)}
+#app .btn.first:hover:not(:disabled):not(.is-busy){background:linear-gradient(135deg,#F45B3A 0%,#D81B31 52%,#C0121F 100%);color:#fff}
+#app .btn.first.is-busy{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border-color:transparent;color:#fff;font-weight:700;opacity:1;box-shadow:0 1px 6px rgba(245,158,11,.4)}
+#app .btn.first.is-busy .spinner{border-color:rgba(255,255,255,.45);border-top-color:#fff}
 /* v10.48 导出界面「阅读」：与章内阅读统一为 135° 金黄渐变（白字、无描边、右推保留） */
 #lnExportReader{margin-left:auto;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border:1px solid transparent;color:#fff;font-weight:600;box-shadow:0 1px 6px rgba(245,158,11,.4)}
 #lnExportReader:hover{background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%);color:#fff;transform:translateY(-1px)}
