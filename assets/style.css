@@ -642,6 +642,10 @@ body.reader-lock{overflow:hidden}
 .gs-entry .gs-f>span{font-size:11px;color:var(--sub)}
 .gs-entry .gs-f input{min-height:36px;padding:6px 8px;font-size:13px;width:100%}
 .gs-entry .gs-f select{min-height:36px;padding:6px 8px;font-size:13px;width:100%;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px}
+/* 方案丙：人物卡 relation 只读展示（摘要）+ 引导按钮 */
+.gs-entry .gs-f .gs-rel-ro{display:flex;align-items:center;gap:8px;min-height:36px;padding:6px 8px;font-size:13px;width:100%;box-sizing:border-box;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px}
+.gs-entry .gs-f .gs-rel-val{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.gs-entry .gs-f .gs-rel-btn{flex:0 0 auto;white-space:nowrap}
 .gs-sub-progress{font-size:12px;color:var(--sub);line-height:1.7;white-space:pre-wrap;word-break:break-word;background:color-mix(in srgb, var(--accent) 6%, transparent);border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
 /* v1.0.113 副线收束看板 */
 .sb-row{padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
