@@ -1259,8 +1259,8 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 .ai-recipe-gapitem .ar-gapwhy{font-size:11.5px;color:var(--sub);margin:3px 0}
 .ai-recipe-gapitem .ar-gapwhy::before{content:'为何补：';color:var(--accent2);font-weight:700}
 .ai-recipe-gapitem .ar-gapnote{font-size:11.5px;white-space:pre-wrap;color:var(--txt);margin:3px 0}
-/* v10.53 缺口词条示例文字蓝色 */
-.ai-recipe-gapitem .ar-gap-demo{font-size:11.5px;color:#4db8ff;margin:3px 0;font-style:italic}
+/* v1.0.264 缺口词条示例块样式：由斜体浅蓝改为暖色渐变圆角卡片（衬图2），文字深棕加粗，加阴影提升可读性 */
+ .ai-recipe-gapitem .ar-gap-demo{font-size:13px;line-height:1.75;color:#4a2c14;background:linear-gradient(135deg,#FFD9B8 0%,#F6A15E 100%);border-radius:14px;padding:12px 14px;margin:8px 0 4px;box-shadow:0 2px 8px rgba(244,150,80,.18);font-style:normal;font-weight:500}
 .ai-recipe-gapitem .ar-gapwarn{font-size:11px;color:#f0a24a;margin:3px 0}
 .ai-recipe-gapitem .btn{margin-top:6px}
 /* E·v1.0.120 默认深色 & 白天主题：AI配方助手卡片套「古风国潮」宣纸背景（正文/占位符/textarea 沿用可读深墨色，内联变量局部化避免污染其它卡片） */
