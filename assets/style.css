@@ -827,7 +827,6 @@ body.reader-lock{overflow:hidden}
 .cp-stage-all{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:8px;border:none;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);color:#fff;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(245,158,11,.35);transition:all .2s;font-family:inherit}
 .cp-stage-all:hover{background:linear-gradient(135deg,#fbbf24 0%,#f59e0b 100%)}
 .cp-stage-all.running{opacity:.7;cursor:wait}
-.cp-stage-hint{font-size:10.5px;color:var(--muted);margin:-2px 0 8px}
 /* v1.0.226 节拍表/全局时间线 重试次数红色角标 */
 .cp-stage .cp-retry-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;margin-left:2px;border-radius:20px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;line-height:1;font-style:normal;animation:gvtPop .2s ease}
 @keyframes gvtPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}

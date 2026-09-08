@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.251';   // v1.0.251 AI 配方助手修复（方案C）：在 callDeepSeek 层识别推理模型（o1/o3/R1/deepseek-reasoner/思考型/1210 等）并以 max_completion_tokens（思考+正文总预算，默认32K）替代 max_tokens 传限长，同时省略此类模型通常不支持的 temperature/top_p；普通对话模型完全不受影响。根治推理模型下 reasoning_content 耗尽 max_tokens、content 为空的"生成失败"。v1.0.250 AI 配方助手修复（方案A）：此前配方任务误用 clampMaxTokens('json')=4096 输出预算，在推理型模型下 reasoning_content 思考易耗尽预算致 content 为空、finish_reason=length 而"生成失败"；现为 recipe 单独增设 clampMaxTokens('recipe')=8192 档并接线 aiRecipeProduce，同时在 AI_RECIPE_SYS_PRO 增加硬性约束7「控制思考深度、预算留给正文」以约束推理、保证输出完整可 JSON.parse 的数组。v1.0.249 「优化构想」冗余递归清除（abc）：删除无任何引用点的遗留常量 IDEA_POLISH_SYS_LEGACY（旧「结构化 JSON 简报」提示词）与 POLISH_SINGLE_MODE（单稿 JSON 输出后缀），现行统一走 IDEA_POLISH_SYS_PRO（字段化简报/纯文本多方案）；删除 _lastPolishBrief 孤儿消费分支（字段写点已随 v1.0.246 迭代移除，此分支恒为假），navBeacon 兜底收敛为 v1.0.155 纯文本构想粗提，不损失下游（AIBus/规划师/沙盘）消费。保留活的 _v45/导入设定（📥 导入设定按钮及其 applyV45ToOutline/importPolishToState/pendingV45 链路）。v1.0.248 写作风格「标题(tone)/梗概(texture)」残留清除：写风配色收敛为单色（内置方案与自定义新建均只保留章节风格 element 色，取色器/新建表单改单色，旧三色数据读取取末槽=章节色，向后兼容）；删除从未被任何规则消费的 --c-tone/--c-texture CSS 变量及注入；剔除已收敛的 tone/texture 分组继承兜底与阅读器过滤、wsGroupStyleTags 不再需要 group 参数，并清理相关旧注释。v1.0.247 写作风格「节奏/浓度」范式残留清除：删除孤儿字段 out.recipe 与 chapterStyle.intensity（含预设/draft/快照/preset/覆盖全链路）、空占位函数 writeStyleIntHtml、死字段 elemOpen 与 WS_CONC_TXT 浓度注入，修剪 wsStyleNoteBlock 未用参数 st/demoLabel 并同步修正相关旧注释；注入链只保留 tags 驱动的章节风格(element)。v1.0.246 大纲 AI 链路彻底退役清理：大纲早已无 AI 化（genOutline=纯搬运），其整套 AI 管道已成死代码——删除 OUTLINE_GEN_SYS/PRO/LEGACY、JSON_HEADER、buildOutlineSys、buildOutlineUser、formatNavBeaconForOutline、outlineCoreTerms、validateOutlineOutput/gradeOutlineCandidate/fillOutlineSoftFields/validateOutlineFaithful、AIValidators.outline、callAIGuarded 的 tolerateFaithOutline 兼容块，以及 getSystemPrompt/buildAIPrompt/AIBus.get 的 outline 分支；死状态字段 _lastPolishIdeaText 全量移除；保留仍被纯搬运 genOutline 消费的活字段 _lastPolishBrief（回填 navBeacon）。canRunAI/markAIRunning 中的 'outline' 仅为依赖进度状态标记，非 AI 调用，不受影响。v1.0.245 死代码清理：随「大纲无 AI 化」与「规划师四段拆分（v1.0.138）不再产出词典」，删除已无调用点的 GLOSSARY_SYS / outlineGlossaryInject / adherenceSys / NM_NAME_RULE_TEXT，并移除规划师 CHAPTER_PLAN_SYS_PRO 中遗留的 glossary 输出段（JSON schema / 硬性约束5 / 输出示例，该输出无人校验入库），核心任务与注释同步修正为「产出两样产物」。v1.0.244 人物卡 relation 去重（方案乙+丙）：(1)人物卡 relation 契约收紧为「一句话关系摘要（≤20字）」，多组关系的逐条明细一律由「人物关系表」承载——词典达人 prompt 收紧 + 生成校验护栏（>40字阻断并提示改走关系表），词典提取(LEGACY+PRO)的 relation 约束同步统一；(2)人物卡 UI 的 relation 改为只读展示（摘要·只读）+「✏️ 去人物关系表编辑」一键打开人物关系表弹窗，彻底消除人物卡与关系表的内容重复；(3)词典达人 summary 改为可空（空则省略展示），设计亮点说明改为整篇描述由词典达人卡片呈现。v1.0.243 万物词典正文注入去冗余：(1)人物关系/地名关联/专名关联三表不再在 L3 全量注入（与 fog 迷雾版双写纯冗余，且全量关系表会提前剧透），改由 fog 独家承担「按本章出场过滤的迷雾版」（同受预算红线保护，零丢失）；(2)人物行改用 fmtCharFullFields 7 字段上桌（与「人设防火墙」审计字段对齐），age/gender 等「未知」占位不再注入正文；(3)提取 fmtCharFullFields 供 L3 与 formatRelevantGlossary 共用，消除重复实现并接线 v243 预留函数。v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.253';   // v1.0.253 人物维度瘦身：彻底移除「小习惯与习惯性动作(habit)」维——正文 AI 拿到该动作锚点后会在对应情境机械贴「这是他/她…的习惯」标签（tell-don't-show，正文极不自然）；现从人物九/八维契约全面摘除 habit（词典提炼/提取契约、词典达人 JSON与校验、数据模型/快照/推送白名单、正文注入三处、人物卡片标签与字段、UI文案），口头禅(catchphrase)保留；人物契约由十维降为九维(释义处 8 字段)、词典达人由十维降为九维。软约束 NARRATIVE_IRON_SOFT 同步弱化「必须给核心人物绑定专属小动作/习惯」为「可给核心人物绑定 1-2 个专属口头禅」，杜绝 AI 为凑习惯而自造并标注。历史已存 habit 值不注入、不渲染，无需迁移。v1.0.252 UI 文字精简：删除规划师卡片的「先在上方挑选章节微拍节奏…」提示行（cp-stage-hint，容器已无内容，连带清理其孤儿 CSS 类）与无规划时的「可选步骤：分四步规划全书…」说明段；AI 配方助手输入框 placeholder 文字说明「可选：用一段话补充…」置空。均为纯展示文案移除，无逻辑变更。v1.0.251 AI 配方助手修复（方案C）：在 callDeepSeek 层识别推理模型（o1/o3/R1/deepseek-reasoner/思考型/1210 等）并以 max_completion_tokens（思考+正文总预算，默认32K）替代 max_tokens 传限长，同时省略此类模型通常不支持的 temperature/top_p；普通对话模型完全不受影响。根治推理模型下 reasoning_content 耗尽 max_tokens、content 为空的"生成失败"。v1.0.250 AI 配方助手修复（方案A）：此前配方任务误用 clampMaxTokens('json')=4096 输出预算，在推理型模型下 reasoning_content 思考易耗尽预算致 content 为空、finish_reason=length 而"生成失败"；现为 recipe 单独增设 clampMaxTokens('recipe')=8192 档并接线 aiRecipeProduce，同时在 AI_RECIPE_SYS_PRO 增加硬性约束7「控制思考深度、预算留给正文」以约束推理、保证输出完整可 JSON.parse 的数组。v1.0.249 「优化构想」冗余递归清除（abc）：删除无任何引用点的遗留常量 IDEA_POLISH_SYS_LEGACY（旧「结构化 JSON 简报」提示词）与 POLISH_SINGLE_MODE（单稿 JSON 输出后缀），现行统一走 IDEA_POLISH_SYS_PRO（字段化简报/纯文本多方案）；删除 _lastPolishBrief 孤儿消费分支（字段写点已随 v1.0.246 迭代移除，此分支恒为假），navBeacon 兜底收敛为 v1.0.155 纯文本构想粗提，不损失下游（AIBus/规划师/沙盘）消费。保留活的 _v45/导入设定（📥 导入设定按钮及其 applyV45ToOutline/importPolishToState/pendingV45 链路）。v1.0.248 写作风格「标题(tone)/梗概(texture)」残留清除：写风配色收敛为单色（内置方案与自定义新建均只保留章节风格 element 色，取色器/新建表单改单色，旧三色数据读取取末槽=章节色，向后兼容）；删除从未被任何规则消费的 --c-tone/--c-texture CSS 变量及注入；剔除已收敛的 tone/texture 分组继承兜底与阅读器过滤、wsGroupStyleTags 不再需要 group 参数，并清理相关旧注释。v1.0.247 写作风格「节奏/浓度」范式残留清除：删除孤儿字段 out.recipe 与 chapterStyle.intensity（含预设/draft/快照/preset/覆盖全链路）、空占位函数 writeStyleIntHtml、死字段 elemOpen 与 WS_CONC_TXT 浓度注入，修剪 wsStyleNoteBlock 未用参数 st/demoLabel 并同步修正相关旧注释；注入链只保留 tags 驱动的章节风格(element)。v1.0.246 大纲 AI 链路彻底退役清理：大纲早已无 AI 化（genOutline=纯搬运），其整套 AI 管道已成死代码——删除 OUTLINE_GEN_SYS/PRO/LEGACY、JSON_HEADER、buildOutlineSys、buildOutlineUser、formatNavBeaconForOutline、outlineCoreTerms、validateOutlineOutput/gradeOutlineCandidate/fillOutlineSoftFields/validateOutlineFaithful、AIValidators.outline、callAIGuarded 的 tolerateFaithOutline 兼容块，以及 getSystemPrompt/buildAIPrompt/AIBus.get 的 outline 分支；死状态字段 _lastPolishIdeaText 全量移除；保留仍被纯搬运 genOutline 消费的活字段 _lastPolishBrief（回填 navBeacon）。canRunAI/markAIRunning 中的 'outline' 仅为依赖进度状态标记，非 AI 调用，不受影响。v1.0.245 死代码清理：随「大纲无 AI 化」与「规划师四段拆分（v1.0.138）不再产出词典」，删除已无调用点的 GLOSSARY_SYS / outlineGlossaryInject / adherenceSys / NM_NAME_RULE_TEXT，并移除规划师 CHAPTER_PLAN_SYS_PRO 中遗留的 glossary 输出段（JSON schema / 硬性约束5 / 输出示例，该输出无人校验入库），核心任务与注释同步修正为「产出两样产物」。v1.0.244 人物卡 relation 去重（方案乙+丙）：(1)人物卡 relation 契约收紧为「一句话关系摘要（≤20字）」，多组关系的逐条明细一律由「人物关系表」承载——词典达人 prompt 收紧 + 生成校验护栏（>40字阻断并提示改走关系表），词典提取(LEGACY+PRO)的 relation 约束同步统一；(2)人物卡 UI 的 relation 改为只读展示（摘要·只读）+「✏️ 去人物关系表编辑」一键打开人物关系表弹窗，彻底消除人物卡与关系表的内容重复；(3)词典达人 summary 改为可空（空则省略展示），设计亮点说明改为整篇描述由词典达人卡片呈现。v1.0.243 万物词典正文注入去冗余：(1)人物关系/地名关联/专名关联三表不再在 L3 全量注入（与 fog 迷雾版双写纯冗余，且全量关系表会提前剧透），改由 fog 独家承担「按本章出场过滤的迷雾版」（同受预算红线保护，零丢失）；(2)人物行改用 fmtCharFullFields 7 字段上桌（与「人设防火墙」审计字段对齐），age/gender 等「未知」占位不再注入正文；(3)提取 fmtCharFullFields 供 L3 与 formatRelevantGlossary 共用，消除重复实现并接线 v243 预留函数。v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -1613,7 +1613,7 @@ function applyV45ToOutline(o, d){
   (d.seedCharacters||[]).forEach(c=>{
     const nm = String(c&&c.name||'').trim(); if(!nm) return;
     if(g.characters.some(x=>String(x&&x.name||'').trim()===nm)) return;
-    g.characters.push({ name:nm, identity:c.identity||'', age:String(c.age==null?'':c.age), gender:c.gender||'', appearance:c.appearance||'', hobby:c.hobby||'', habit:c.habit||'', catchphrase:c.catchphrase||'', relation:c.relation||'', trait:c.trait||'' });
+    g.characters.push({ name:nm, identity:c.identity||'', age:String(c.age==null?'':c.age), gender:c.gender||'', appearance:c.appearance||'', hobby:c.hobby||'', catchphrase:c.catchphrase||'', relation:c.relation||'', trait:c.trait||'' });
     nC++;
   });
   (d.seedPlaces||[]).forEach(p=>{
@@ -2396,7 +2396,7 @@ function aiRecipeCard(){
     </div>
     <div class="ai-recipe-body">
       <div class="ai-desc-wrap">
-        <textarea id="aiReDesc" rows="3" placeholder="可选：用一段话补充你想要的风格/题材/氛围。例如：轻松治愈的都市言情，带点温馨笑料，配角俏皮，节奏明快。（留空则仅依据所选方案设计配方）" style="width:100%;box-sizing:border-box"></textarea>
+        <textarea id="aiReDesc" rows="3" placeholder="" style="width:100%;box-sizing:border-box"></textarea>
       </div>
       <div class="ai-recipe-tool">
         <button type="button" class="btn primary" data-ai-recipe-gen>✨ 生成配方</button>
@@ -3734,7 +3734,7 @@ const NARRATIVE_IRON_HARD = `〔硬约束 · 铁律，不可逾越，冲突时�
 · 书面语是藏起来的底牌：旁白可按题材适度书面，但对白必须口语；书面语必须只在超大高潮、深情告白、终极顿悟时用来「提咖」，禁止在赶路、打斗、系统提示等快节奏场景滥用。`;
 
 const NARRATIVE_IRON_SOFT = `〔软约束 · 尽力而为、随题材微调〕
-· 必须给核心人物绑定 1-2 个专属小动作/口头禅/下意识小习惯，写到自然出现、不刻意。
+· 可给核心人物绑定 1-2 个专属口头禅，写到自然出现、不刻意。
 · 每章必须至少落地 1-2 处生活化细碎细节作真实毛边。
 · 语言底色必须随题材稳定贯穿全书，禁止中途漂移：都市/网游/沙雕→贴近生活口语；仙侠/红楼风→适度书面高级感。
 · 快节奏场景必须优先大白话短句，禁止绕弯长句，保证读者一目十行不卡壳。`;
@@ -3873,15 +3873,15 @@ const POLISH_MULTI_MODE = `\n\n【本次输出模式：多方案】在上述要�
 // 4.7 Pro（3.8/第7章指令2）：旧常量改名 GLOSSARY_EXTRACT_SYS_LEGACY 保留回退，新常量用旧名指向 GLOSSARY_EXTRACT_SYS_PRO。
 const GLOSSARY_EXTRACT_SYS_LEGACY = `你是长篇小说设定整理助手。给定【本章正文】与【现有词典】，提取正文中出现但现有词典【未收录】的新人物、新地名、新专名。
 请严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
+{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好","catchphrase":"口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
 规则：
 1. 只提取正文中真实出现、且有明确所指（被命名）的实体；纯叙述性泛指不提取。
 2. 必须与现有词典逐名去重：同名条目一律不再输出。
-3. ★【人物必须输出全部 9 个字段：identity / age / gender / appearance / hobby / habit / catchphrase / relation / trait】
+3. ★【人物必须输出全部 8 个字段：identity / age / gender / appearance / hobby / catchphrase / relation / trait】
    · 禁止只输出人名、禁止缺字段、禁止省略任何字段；
-   · 从正文中提取该人物的身份、年龄、性别、外貌、爱好、习惯小动作/口头禅、关系、性格等信息，正文未明说的字段按上下文合理推断后填写；
+   · 从正文中提取该人物的身份、年龄、性别、外貌、爱好、口头禅、关系、性格等信息，正文未明说的字段按上下文合理推断后填写；
    · 实在无法推断的字段填「未知」，不得留空、不得删除该字段；
-   · habit（小习惯与习惯性动作）与 catchphrase（口头禅）：正文出现该人物的专属小动作/口头禅就写具体内容（如「手指敲桌｜口头禅'稳了'」），判定其没有就填「无」；
+   · catchphrase（口头禅）：正文出现该人物的专属口头禅就写具体内容（如「口头禅'稳了'」），判定其没有就填「无」；
    · relation 与 identity 务必区分：身份词（捕快/市长/船女）归 identity；带"谁的"的人际关联（XX的妹妹/她的仆人）归 relation；relation 只写一句话关系摘要（≤20字），与他人多组关系的逐条明细由「人物关系表」承载，禁止堆砌多组关系。
    · ★推断须自洽：填写的 age 与履历/居住年限类设定不得矛盾（如"在此已住30年"却23岁、"18岁却已当官5年"）；子代须小于亲代；转世/穿越/长生/修仙等特殊预设可豁免，但需有对应标注。
 4. 无明显新实体时输出 {"characters":[],"places":[],"propernouns":[]}。`;
@@ -3891,12 +3891,12 @@ const GLOSSARY_EXTRACT_SYS_PRO = `你是一位资深长篇小说「设定审计�
 【核心任务】给定本章正文与现有词典，提取正文中出现但现有词典未收录的新人物、新地名、新专名，并做字段自洽审查。
 
 【必须输出的 JSON 结构】
-{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好/习惯","habit":"小习惯与习惯性动作","catchphrase":"口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
+{"characters":[{"name":"人名","identity":"身份/职业/社会身份","age":"岁数/年龄","gender":"性别","appearance":"外貌特征","hobby":"爱好","catchphrase":"口头禅","relation":"与该人的血缘/人际关联","trait":"性格要点"}],"places":[{"name":"地名","type":"类型","note":"设定要点"}],"propernouns":[{"name":"专名","note":"含义"}]}
 
 【硬性约束】
 1. 只提取正文中真实出现、且有明确所指（被命名）的实体；纯叙述性泛指不提取。
 2. 与现有词典逐名去重：同名条目一律不再输出。
-3. 人物必须输出全部 9 个字段：identity / age / gender / appearance / hobby / habit / catchphrase / relation / trait；禁止缺字段、留空；无法推断的字段填「未知」。habit（小习惯与习惯性动作）与 catchphrase（口头禅）并非人人都有：正文出现其专属小动作/口头禅就写具体内容，判定没有则填「无」。
+3. 人物必须输出全部 8 个字段：identity / age / gender / appearance / hobby / catchphrase / relation / trait；禁止缺字段、留空；无法推断的字段填「未知」。catchphrase（口头禅）并非人人都有：正文出现其专属口头禅就写具体内容，判定没有则填「无」。
 4. relation 与 identity 区分：身份词（捕快/市长/船女）归 identity；带"谁的"的人际关联归 relation；relation 只写一句话关系摘要（≤20字），与他人多组关系的逐条明细由「人物关系表」承载，禁止在 relation 里堆砌多组关系。
 5. 字段自洽：age 与履历/居住年限不得矛盾；子代须小于亲代；特殊预设（转世/穿越/长生/修仙）可豁免但需标注。
 6. 无明显新实体时输出 {"characters":[], "places":[], "propernouns":[]}。
@@ -3909,7 +3909,7 @@ const GLOSSARY_EXTRACT_SYS = GLOSSARY_EXTRACT_SYS_PRO;
 function validateGlossaryExtract(j){
   if(!j) return {ok:false, code:'EMPTY'};
   for(const c of (j.characters || [])){
-    const missing = ['name','identity','age','gender','appearance','hobby','habit','catchphrase','relation','trait'].filter(k => !String(c[k]||'').trim());
+    const missing = ['name','identity','age','gender','appearance','hobby','catchphrase','relation','trait'].filter(k => !String(c[k]||'').trim());
     if(missing.length) return {ok:false, code:'CHAR_FIELD_MISSING', details: c.name};
     const nameViol = nmNameRuleViolation(String(c.name||'').trim());
     if(nameViol) return {ok:false, code:'CHAR_NAME_RULE', details: nameViol};
@@ -4029,7 +4029,7 @@ function chapterGlossaryBlock(curN, opts){
   const o = state.outline;
   if(!o) return '';
   opts = opts || {};
-  const lean = !!opts.lean;   // v1.0.240：规划向瘦身（节拍表用）——人物只保留 名称（身份·关系），正文细节字段（外貌/爱好/口头禅/习惯/岁数/性别）不注入
+  const lean = !!opts.lean;   // v1.0.240：规划向瘦身（节拍表用）——人物只保留 名称（身份·关系），正文细节字段（外貌/爱好/口头禅/岁数/性别）不注入
   // v1.0.241：标题向极简（names）——只输出 人物/地名/专名 名称清单，无任何细节字段/关系表/世界观/副线；标题仅需防"引入词典外新名"。
   if(opts.names){
     const g = (o && o.glossary) || {};
@@ -4047,7 +4047,7 @@ function chapterGlossaryBlock(curN, opts){
     const rf = glossaryForAI();
     const cDetail = lean
       ? c => [c.identity?`身份:${c.identity}`:'', c.relation?`关系:${c.relation}`:''].filter(Boolean).join('；')
-      : c => [c.identity?`身份:${c.identity}`:'', c.age?`岁数:${c.age}`:'', c.gender?`性别:${c.gender}`:'', c.appearance?`外貌:${c.appearance}`:'', c.hobby?`爱好:${c.hobby}`:'', (c.habit&&c.habit!=='无')?`小习惯与习惯性动作:${c.habit}`:'', (c.catchphrase&&c.catchphrase!=='无')?`口头禅:${c.catchphrase}`:'', c.relation?`关系:${c.relation}`:'', c.trait?`性格:${c.trait}`:''].filter(Boolean).join('；');
+      : c => [c.identity?`身份:${c.identity}`:'', c.age?`岁数:${c.age}`:'', c.gender?`性别:${c.gender}`:'', c.appearance?`外貌:${c.appearance}`:'', c.hobby?`爱好:${c.hobby}`:'', (c.catchphrase&&c.catchphrase!=='无')?`口头禅:${c.catchphrase}`:'', c.relation?`关系:${c.relation}`:'', c.trait?`性格:${c.trait}`:''].filter(Boolean).join('；');
     const pDetail = p => [p.type?`类型:${p.type}`:'', p.note?`说明:${p.note}`:''].filter(Boolean).join('；');
     const cs = rf.characters.map(c=> `${c.name}${cDetail(c)?`（${cDetail(c)}）`:''}`).join('、');
     const ps = rf.places.map(p=> `${p.name}${pDetail(p)?`（${pDetail(p)}）`:''}`).join('、');
@@ -4134,13 +4134,13 @@ function checkGlossaryCoverage(){
   scan(g.propernouns, summary.props);
   return summary;
 }
-// v1.0.206 人物十维契约（与大纲词典一致：name + 9 字段 identity/age/gender/appearance/hobby/relation/trait/habit/catchphrase）；词典卡字段检查共用
-const CHAR_FIELDS = ['identity','age','gender','appearance','hobby','relation','trait','habit','catchphrase'];
-const CHAR_FIELD_LABEL = { identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', relation:'关系', trait:'性格', habit:'小习惯与习惯性动作', catchphrase:'口头禅' };
-// 提取结果补全：空字段一律填「未知」（habit/catchphrase 判无则填「无」——并非人人都有小习惯/口头禅），保证新人物字段齐全再入库（禁止"只有名字的新人物"）
+// v1.0.253 人物九维契约（name + 8 字段 identity/age/gender/appearance/hobby/relation/trait/catchphrase）；v1.0.253 移除「小习惯与习惯性动作(habit)」维——避免正文 AI 机械贴「这是他…的习惯」标签；口头禅( catchphrase)保留。词典卡字段检查共用
+const CHAR_FIELDS = ['identity','age','gender','appearance','hobby','relation','trait','catchphrase'];
+const CHAR_FIELD_LABEL = { identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', relation:'关系', trait:'性格', catchphrase:'口头禅' };
+// 提取结果补全：空字段一律填「未知」（catchphrase 判无则填「无」——并非人人都有口头禅），保证新人物字段齐全再入库（禁止"只有名字的新人物"）
 function completeCharFields(c){
   CHAR_FIELDS.forEach(k=>{
-    if(c[k]==null || String(c[k]).trim()==='') c[k] = (k==='habit'||k==='catchphrase') ? '无' : '未知';
+    if(c[k]==null || String(c[k]).trim()==='') c[k] = (k==='catchphrase') ? '无' : '未知';
   });
   return c;
 }
@@ -5718,7 +5718,7 @@ function viewStory(){
           <p id="outlineStatus" class="status"></p>
         </div>
       </section>
-      ${ isLong() ? flowPlaceholderSec(3,'词典达人','生成完整人物 / 地名 / 专名词典与人物关系表 / 世界观规则','📘','词典达人：生成完整人物角色卡（十维：名称/身份/岁数/性别/外貌/爱好/关系/性格/小习惯与习惯性动作/口头禅）、地名专名细化、重要人物关系表与世界观规则。')
+      ${ isLong() ? flowPlaceholderSec(3,'词典达人','生成完整人物 / 地名 / 专名词典与人物关系表 / 世界观规则','📘','词典达人：生成完整人物角色卡（九维：名称/身份/岁数/性别/外貌/爱好/关系/性格/口头禅）、地名专名细化、重要人物关系表与世界观规则。')
         + flowPlaceholderSec(4,'规划师','全书标题 / 节拍表 / 时间表 / 伏笔','🗺️','规划师：一键生成全书标题、章内节拍表、全书时间表与伏笔网。')
         + flowPlaceholderSec(5,'正文','写作风格 / 配方助手 / 逐章正文','✍️','正文：按写作风格配方逐章生成正文，并回填万物词典。') : '' }
     </div>`;
@@ -7363,7 +7363,6 @@ function chapterPlanBlock(){
           </button>`;
         }).join('')}
       </div>
-      <div class="cp-stage-hint muted">先在上方挑选「章节微拍节奏」，再点「⚡ 一键四步」或四步中的任一步；四步可任意顺序单独点击。切换微拍后，规划师节拍表、AI 生成内容与章节正文均随之变化。</div>
       ${hasPlans ? `<div class="cp-plans-tool">
           <button type="button" class="btn small ghost" data-cp-beat-expand title="展开全部章节的节拍表">▾ 全部展开</button>
           <button type="button" class="btn small ghost" data-cp-beat-collapse title="收起全部章节的节拍表（长书默认）">▸ 全部收起</button>
@@ -7373,7 +7372,7 @@ function chapterPlanBlock(){
         </div>
         <div class="cp-list">${items}</div>
         <p class="muted" style="margin:6px 0 0">节拍表由 AI 分批生成，写正文时注入为【L1 本章节拍表】（硬性执行清单）。</p>`
-        : `<p class="sub">可选步骤：分四步规划全书——①定稿章节标题、②每章节拍表（${currentBeatCfg().label}）、③全局时间线、④跨章伏笔网。按顺序生成效果最佳，任一步可单独重跑；不做也不影响默认流程。（万物词典由 ③词典达人 生成，此处不再产出。）</p>`}
+        : ``}
     </div>
   </div>`;
 }
@@ -7673,8 +7672,8 @@ function glossaryCardHtml(){
       </div>
     </div>`;
   };
-  const kLabel = k => ({name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', habit:'小习惯与习惯性动作', catchphrase:'口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明', question:'核心问题', pivot:'蝴蝶效应'}[k]||k);
-  const chars = (g.characters||[]).map((c,i)=>entry(c,'char',i,['identity','gender','age'],['name','identity','age','gender','appearance','hobby','habit','catchphrase','relation','trait'])).join('');
+  const kLabel = k => ({name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', catchphrase:'口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明', question:'核心问题', pivot:'蝴蝶效应'}[k]||k);
+  const chars = (g.characters||[]).map((c,i)=>entry(c,'char',i,['identity','gender','age'],['name','identity','age','gender','appearance','hobby','catchphrase','relation','trait'])).join('');
   const places = (g.places||[]).map((p,i)=>entry(p,'place',i,['type','note'],['name','type','note'])).join('');
   const props = (g.propernouns||[]).map((p,i)=>entry(p,'proper',i,['note'],['name','note'])).join('');
   // v1.0.113 副线条目：名称可编辑 + status 三态 select + question/arc/pivot 可编辑 + 进度只读 + 「回退一步」
@@ -8393,7 +8392,7 @@ function openGlossaryPanel(info){
   const scan = scanGlossaryImpact(info);
   const hits = scan.hits || [];
 
-  const labels = {name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', habit:'小习惯与习惯性动作', catchphrase:'口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明'};
+  const labels = {name:'名称', identity:'身份', age:'岁数', gender:'性别', appearance:'外貌', hobby:'爱好', mannerism:'小动作/口头禅', catchphrase:'口头禅', relation:'关系', trait:'性格', type:'类型', note:'说明'};
   const kind = info.isName ? `「${info.oldVal||''}」→「${info.newVal||''}」`
     : `「${itemName}」的「${labels[info.key]||info.key||'详情'}」已修改（正文引用该条目 ${scan.word?('出现自 「'+scan.word+'」'):''}）`;
   const hitHtml = hits.length ? hits.map(h=>`
@@ -9969,8 +9968,8 @@ const DICTMASTER_SYS = `你是一位资深长篇「词典达人」（全局设�
 2. 蓝本未提及、但为支撑该世界观/主线合理运转所必需的配角/地名/专名，可自行补全（如主角亲友、反派爪牙、关键地点/势力/宝器/功法），但**禁止无依据乱加**：每个新增都必须能从蓝本九要素或主线逻辑推出，且数量克制（建议 ≤ 蓝本已有量的 1.5 倍）。
 3. 不注入全书节拍/章节微拍（词典是全局设定，与元节拍无关）。
 【输出格式】严格只输出如下 JSON（不要解释、不要 markdown 代码块）：
-{"characters":[{"name":"","identity":"","age":"","gender":"","appearance":"","hobby":"","relation":"","trait":"","habit":"小习惯与习惯性动作","catchphrase":"口头禅"}],"relationshipTable":[{"a":"名字","b":"名字","relation":"关系","note":"一句话"}],"places":[{"name":"","type":"","note":""}],"placeContacts":[{"from":"地名","to":"地名","relation":"联系","note":""}],"propernouns":[{"name":"","note":""}],"properContacts":[{"from":"专名","to":"专名","relation":"联系","note":""}],"worldRules":[{"cat":"规则类别","scope":"适用对象/范围","rule":"具体规则（尽量写清违反的后果/代价）"}],"summary":"1-2 句说明构成品亮点（可空，空则省略）"}
-【要点】characters 每位必须给满 10 维且每维非空（name身份、identity身份定位、age年龄、gender性别、appearance外貌、hobby爱好、relation关系、trait性格要点、habit【小习惯与习惯性动作】、catchphrase【口头禅】（habit 只写该人物独特的下意识/日常规律小动作，catchphrase 只写其反复挂在嘴边的口头语，两者严格分开禁止互混乱写；age/gender 无明确值也必须写"未知"）；relation 只写一句话关系摘要（≤20字，如"主角的青梅"；可含关系表之外的隐藏线索如"隐瞒身世"），多组关系的逐条明细一律放 relationshipTable，禁止在 relation 里堆砌多组关系（与关系表重复）；places 每位必须给满 type（类型）+note（说明）；propernouns 每位必须给满 note（说明）；characters 建议 ≥6 位且含主角+反派+主要配角。三张关联表必须按各自名称的语义精确生成：relationshipTable 即【人物关系表】——只写人物↔人物之间的关联（血缘/身份/立场/恩怨等），不要写入地名或专名；placeContacts 即【地名关联表】——只写地名↔地名之间的关联（相邻/隶属/路程远近/往来通道/势力归属等）；properContacts 即【专名关联表】——只写专名↔专名之间的关联（来源/克制/配套/并列等）；三张关联表每一条都必须是"两个不同实体之间的真实关联"：两端名（关系表 a 与 b，关联表 from 与 to）都必须填真实名称、且两端名称不同，并且要分别取自本表对应的清单——人物关系表两端取 characters 里的人名、地名关联表两端取 places 里的地名、专名关联表两端取 propernouns 里的专名；严禁把某个实体的"功能/属性/组成部分/内部要点/技能/子项/类别"当成另一个实体去建关联，严禁留空端名或用自身对自身凑数；三表内容多少按具体小说情况决定，有真实关联就列、没有就不硬凑，每条都必须是两端齐全的真实关联，宁缺毋滥、禁止为看起来数量多而虚增条数。worldRules 即【世界观规则】：按本次故事的题材/时代背景/社会性质，把这本书里『世界实际怎么运转』的、贯穿全文必须遵守的具体规则提炼出来（要落成可执行的具体条目，不是空泛口号，正文据其写作不得违背）。要贴合该题材的真实世界逻辑，例如——现代都市/职场类：写明社会劳动作息（白领一周双休/单休/大小周、某些行业一月只休两三天、上下班时间、法定节假日、通勤等）、经济与货币、法律与治安、阶层、日用科技等实际运转规则；古代写实/历史类（如三国）：没有『上班双休』这类现代概念，应写明古代特有作息（农耕节令、集市与墟日、宵禁、驿站驿道、官衙卯时点卯）、军制军粮、赋税徭役、货币（铜钱/银两/粮布）、通信与出行速度等；古代江湖类：写明江湖规矩（门派帮派/武林盟约/快意恩仇的边界/镖局客栈驿道）、官府与江湖的关系、武艺内功体系等；神话仙侠类（如西游/封神）：写明天庭地府妖界方外世界体系、修炼境界与境界压制、法宝神通法则、天条因果、仙人鬼神不得干预凡俗等约束。worldRules 每位必须给满 cat（类别）+rule（规则）；scope（适用对象/范围）建议一并给出——写明这条规则约束谁、作用于谁（如 全境/全体人物/普通百姓/当朝官府/修士/某势力/某地区/仅主角一人的独有约束等），让正文写作时知道该由谁遵守、作用于谁；rule 尽量把『违反的后果/代价』也写进去（如破坏者受天条反噬/官府追捕/被逐出师门等），使规则可校验、能落地。凡该世界存在的维度都要覆盖并按类别分条列出：社会劳动作息、经济货币/物价、法律与治安/秩序法则、阶层与身份流动、力量/能力体系与使用上限代价、地理与交通/出行速度、时间节令与天象（含时间流速/梦与现实的边界）、风俗与禁忌/因果报应、明面规则与潜规则（表面秩序 vs 实际灰色地带）、例外条款（规则有无例外、何人可破例）、烟火市井（衣食住行价格/民生物价）。某题材无某类规则就不列该类，禁止把现代职场概念生搬硬套到古代/仙侠世界；建议 ≥5 条并按类别分条列出，越具体越好。`;
+{"characters":[{"name":"","identity":"","age":"","gender":"","appearance":"","hobby":"","relation":"","trait":"","catchphrase":"口头禅"}],"relationshipTable":[{"a":"名字","b":"名字","relation":"关系","note":"一句话"}],"places":[{"name":"","type":"","note":""}],"placeContacts":[{"from":"地名","to":"地名","relation":"联系","note":""}],"propernouns":[{"name":"","note":""}],"properContacts":[{"from":"专名","to":"专名","relation":"联系","note":""}],"worldRules":[{"cat":"规则类别","scope":"适用对象/范围","rule":"具体规则（尽量写清违反的后果/代价）"}],"summary":"1-2 句说明构成品亮点（可空，空则省略）"}
+【要点】characters 每位必须给满 9 维且每维非空（name身份、identity身份定位、age年龄、gender性别、appearance外貌、hobby爱好、relation关系、trait性格要点、catchphrase【口头禅】（catchphrase 只写其反复挂在嘴边的口头语；age/gender 无明确值也必须写"未知"）；relation 只写一句话关系摘要（≤20字，如"主角的青梅"；可含关系表之外的隐藏线索如"隐瞒身世"），多组关系的逐条明细一律放 relationshipTable，禁止在 relation 里堆砌多组关系（与关系表重复）；places 每位必须给满 type（类型）+note（说明）；propernouns 每位必须给满 note（说明）；characters 建议 ≥6 位且含主角+反派+主要配角。三张关联表必须按各自名称的语义精确生成：relationshipTable 即【人物关系表】——只写人物↔人物之间的关联（血缘/身份/立场/恩怨等），不要写入地名或专名；placeContacts 即【地名关联表】——只写地名↔地名之间的关联（相邻/隶属/路程远近/往来通道/势力归属等）；properContacts 即【专名关联表】——只写专名↔专名之间的关联（来源/克制/配套/并列等）；三张关联表每一条都必须是"两个不同实体之间的真实关联"：两端名（关系表 a 与 b，关联表 from 与 to）都必须填真实名称、且两端名称不同，并且要分别取自本表对应的清单——人物关系表两端取 characters 里的人名、地名关联表两端取 places 里的地名、专名关联表两端取 propernouns 里的专名；严禁把某个实体的"功能/属性/组成部分/内部要点/技能/子项/类别"当成另一个实体去建关联，严禁留空端名或用自身对自身凑数；三表内容多少按具体小说情况决定，有真实关联就列、没有就不硬凑，每条都必须是两端齐全的真实关联，宁缺毋滥、禁止为看起来数量多而虚增条数。worldRules 即【世界观规则】：按本次故事的题材/时代背景/社会性质，把这本书里『世界实际怎么运转』的、贯穿全文必须遵守的具体规则提炼出来（要落成可执行的具体条目，不是空泛口号，正文据其写作不得违背）。要贴合该题材的真实世界逻辑，例如——现代都市/职场类：写明社会劳动作息（白领一周双休/单休/大小周、某些行业一月只休两三天、上下班时间、法定节假日、通勤等）、经济与货币、法律与治安、阶层、日用科技等实际运转规则；古代写实/历史类（如三国）：没有『上班双休』这类现代概念，应写明古代特有作息（农耕节令、集市与墟日、宵禁、驿站驿道、官衙卯时点卯）、军制军粮、赋税徭役、货币（铜钱/银两/粮布）、通信与出行速度等；古代江湖类：写明江湖规矩（门派帮派/武林盟约/快意恩仇的边界/镖局客栈驿道）、官府与江湖的关系、武艺内功体系等；神话仙侠类（如西游/封神）：写明天庭地府妖界方外世界体系、修炼境界与境界压制、法宝神通法则、天条因果、仙人鬼神不得干预凡俗等约束。worldRules 每位必须给满 cat（类别）+rule（规则）；scope（适用对象/范围）建议一并给出——写明这条规则约束谁、作用于谁（如 全境/全体人物/普通百姓/当朝官府/修士/某势力/某地区/仅主角一人的独有约束等），让正文写作时知道该由谁遵守、作用于谁；rule 尽量把『违反的后果/代价』也写进去（如破坏者受天条反噬/官府追捕/被逐出师门等），使规则可校验、能落地。凡该世界存在的维度都要覆盖并按类别分条列出：社会劳动作息、经济货币/物价、法律与治安/秩序法则、阶层与身份流动、力量/能力体系与使用上限代价、地理与交通/出行速度、时间节令与天象（含时间流速/梦与现实的边界）、风俗与禁忌/因果报应、明面规则与潜规则（表面秩序 vs 实际灰色地带）、例外条款（规则有无例外、何人可破例）、烟火市井（衣食住行价格/民生物价）。某题材无某类规则就不列该类，禁止把现代职场概念生搬硬套到古代/仙侠世界；建议 ≥5 条并按类别分条列出，越具体越好。`;
 function buildDictMasterUser(ctx){
   const cand = ctx && ctx.candidate;
   const txt = String((cand && cand.text) || '').trim();
@@ -9986,8 +9985,8 @@ function validateDictMasterOutput(j){
   if(!Array.isArray(j.characters) || !j.characters.length) return '人物卡 characters 为空（应至少 1 位）';
   for(const c of j.characters){
     if(!c || !String(c.name||'').trim()) return '存在人物缺少 name';
-    const dims = {identity:c.identity, appearance:c.appearance, hobby:c.hobby, relation:c.relation, trait:c.trait, habit:c.habit, catchphrase:c.catchphrase};
-    for(const [kk,vv] of Object.entries(dims)){ if(!String(vv||'').trim()) return `人物「${String(c.name).trim()||'?'}」缺字段 ${kk}（10 维须填满）`; }
+    const dims = {identity:c.identity, appearance:c.appearance, hobby:c.hobby, relation:c.relation, trait:c.trait, catchphrase:c.catchphrase};
+    for(const [kk,vv] of Object.entries(dims)){ if(!String(vv||'').trim()) return `人物「${String(c.name).trim()||'?'}」缺字段 ${kk}（9 维须填满）`; }
     if(!String(c.age||'').trim()) return `人物「${String(c.name).trim()||'?'}」缺字段 age（可写未知）`;
     if(!String(c.gender||'').trim()) return `人物「${String(c.name).trim()||'?'}」缺字段 gender（可写未知）`;
     // 方案乙（relation 去重）护栏：relation 只写一句话摘要，超长视为把多组关系堆进摘要，阻断并提示走关系表
@@ -10037,7 +10036,7 @@ async function genDictMaster(btn){
     // v1.0.204 阶段4/4.2 合并进 glossary：
     // 决策1a 同名去重（以现有为准：手工>逐章提取>词典达人）；决策8 手工保护（只清本 AI 从未被改动的旧条目）
     o.glossary = o.glossary || { characters:[], places:[], propernouns:[], subplots:[] };
-    const snapKeys = { characters:['name','identity','age','gender','appearance','hobby','relation','trait','habit','catchphrase'], places:['name','type','note'], propernouns:['name','note'] };
+    const snapKeys = { characters:['name','identity','age','gender','appearance','hobby','relation','trait','catchphrase'], places:['name','type','note'], propernouns:['name','note'] };
     const entryJson = (x,k)=>{ const o2={}; (snapKeys[k]||[]).forEach(f=> o2[f]=String((x && x[f])!=null ? x[f] : '').trim()); try{ return JSON.stringify(o2); }catch(e){ return ''; } };
     ['characters','places','propernouns'].forEach(k=>{
       const kept=[];
@@ -10067,7 +10066,7 @@ async function genDictMaster(btn){
         o.glossary[k].push(e); existing.add(nm);
       });
     };
-    push(j.characters, 'characters', c=>({ name:String(c.name||'').trim(), identity:String(c.identity||'').trim(), age:String(c.age||'').trim(), gender:String(c.gender||'').trim(), appearance:String(c.appearance||'').trim(), hobby:String(c.hobby||'').trim(), relation:String(c.relation||'').trim(), trait:String(c.trait||'').trim(), habit:String(c.habit||'').trim(), catchphrase:String(c.catchphrase||'').trim() }));
+    push(j.characters, 'characters', c=>({ name:String(c.name||'').trim(), identity:String(c.identity||'').trim(), age:String(c.age||'').trim(), gender:String(c.gender||'').trim(), appearance:String(c.appearance||'').trim(), hobby:String(c.hobby||'').trim(), relation:String(c.relation||'').trim(), trait:String(c.trait||'').trim(), catchphrase:String(c.catchphrase||'').trim() }));
     push(j.places, 'places', p=>({ name:String(p.name||'').trim(), type:String(p.type||'').trim(), note:String(p.note||'').trim() }));
     push(j.propernouns, 'propernouns', p=>({ name:String(p.name||'').trim(), note:String(p.note||'').trim() }));
     // 关系表 / 关联表存入 glossary 专用字段（★万物词典卡与 ⑤正文 可读取）
@@ -10134,7 +10133,7 @@ function dictMasterBlockHtml(){
   }
   return `<div class="card dm-card">
     <div class="dm-head">📖 词典达人 · 万物词典生成器</div>
-    <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0">输入源：②所选方案的 书名 + 九要素（题材/主角/冲突/世界观/对手/动机/风格/结构/核心词），作为蓝本 → 深化 + 补新。一键产出：完整人物卡（十维：名称/身份/岁数/性别/外貌/爱好/关系/性格/小习惯与习惯性动作/口头禅）· 重要人物关系表 · 地名关联表 · 专名关联表 · 世界观规则（按题材提炼本书世界实际如何运转的具体规则：劳动作息/社会结构/力量体系/金钱物价/秩序法则等），直接并入「万物词典」供 ④规划师 / ⑤正文 消费。②已有的角色/地名/专名不可改动；未提及的会按慎重原则自动补充（避免乱加设定）。</p>
+    <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0">输入源：②所选方案的 书名 + 九要素（题材/主角/冲突/世界观/对手/动机/风格/结构/核心词），作为蓝本 → 深化 + 补新。一键产出：完整人物卡（九维：名称/身份/岁数/性别/外貌/爱好/关系/性格/口头禅）· 重要人物关系表 · 地名关联表 · 专名关联表 · 世界观规则（按题材提炼本书世界实际如何运转的具体规则：劳动作息/社会结构/力量体系/金钱物价/秩序法则等），直接并入「万物词典」供 ④规划师 / ⑤正文 消费。②已有的角色/地名/专名不可改动；未提及的会按慎重原则自动补充（避免乱加设定）。</p>
     ${locked?`<div class="dm-locked" style="margin:6px 0;color:#2e9e5b;font-size:12px">②方案已锁定：本词典已生成，可「重新生成」独自迭代（历史 6 次对比）。</div>`:''}
     <div class="btn-row"><button id="btnGenDictMaster" class="btn block ${locked?'dm-btn-on':'dm-btn'}">📖 生成万物词典</button></div>
     ${status}
@@ -11806,7 +11805,6 @@ function fmtCharFullFields(c){
   if(c.appearance && c.appearance !== '未知') segs.push('外貌:'+c.appearance);
   if(c.trait && c.trait !== '未知') segs.push('性格:'+c.trait);
   if(c.hobby && c.hobby !== '未知') segs.push('爱好:'+c.hobby);
-  if(c.habit && c.habit !== '未知' && c.habit !== '无') segs.push('小习惯与习惯性动作:'+c.habit);
   if(c.catchphrase && c.catchphrase !== '未知' && c.catchphrase !== '无') segs.push('口头禅:'+c.catchphrase);
   if(c.relation && c.relation !== '未知') segs.push('关系:'+c.relation);
   return segs;
@@ -12252,7 +12250,6 @@ function buildAiRefineCtx(i){
     if(c.gender) parts.push('性别:'+c.gender);
     if(c.appearance) parts.push('外貌:'+c.appearance);
     if(c.hobby) parts.push('爱好:'+c.hobby);
-    if(c.habit && c.habit !== '无') parts.push('小习惯与习惯性动作:'+c.habit);
     if(c.catchphrase && c.catchphrase !== '无') parts.push('口头禅:'+c.catchphrase);
     if(c.relation) parts.push('关系:'+c.relation);
     if(c.trait) parts.push('性格:'+c.trait);
