@@ -7,7 +7,7 @@
 'use strict';
 
 /* ---------- 全局状态 ---------- */
-const APP_VERSION = '1.0.253';   // v1.0.253 人物维度瘦身：彻底移除「小习惯与习惯性动作(habit)」维——正文 AI 拿到该动作锚点后会在对应情境机械贴「这是他/她…的习惯」标签（tell-don't-show，正文极不自然）；现从人物九/八维契约全面摘除 habit（词典提炼/提取契约、词典达人 JSON与校验、数据模型/快照/推送白名单、正文注入三处、人物卡片标签与字段、UI文案），口头禅(catchphrase)保留；人物契约由十维降为九维(释义处 8 字段)、词典达人由十维降为九维。软约束 NARRATIVE_IRON_SOFT 同步弱化「必须给核心人物绑定专属小动作/习惯」为「可给核心人物绑定 1-2 个专属口头禅」，杜绝 AI 为凑习惯而自造并标注。历史已存 habit 值不注入、不渲染，无需迁移。v1.0.252 UI 文字精简：删除规划师卡片的「先在上方挑选章节微拍节奏…」提示行（cp-stage-hint，容器已无内容，连带清理其孤儿 CSS 类）与无规划时的「可选步骤：分四步规划全书…」说明段；AI 配方助手输入框 placeholder 文字说明「可选：用一段话补充…」置空。均为纯展示文案移除，无逻辑变更。v1.0.251 AI 配方助手修复（方案C）：在 callDeepSeek 层识别推理模型（o1/o3/R1/deepseek-reasoner/思考型/1210 等）并以 max_completion_tokens（思考+正文总预算，默认32K）替代 max_tokens 传限长，同时省略此类模型通常不支持的 temperature/top_p；普通对话模型完全不受影响。根治推理模型下 reasoning_content 耗尽 max_tokens、content 为空的"生成失败"。v1.0.250 AI 配方助手修复（方案A）：此前配方任务误用 clampMaxTokens('json')=4096 输出预算，在推理型模型下 reasoning_content 思考易耗尽预算致 content 为空、finish_reason=length 而"生成失败"；现为 recipe 单独增设 clampMaxTokens('recipe')=8192 档并接线 aiRecipeProduce，同时在 AI_RECIPE_SYS_PRO 增加硬性约束7「控制思考深度、预算留给正文」以约束推理、保证输出完整可 JSON.parse 的数组。v1.0.249 「优化构想」冗余递归清除（abc）：删除无任何引用点的遗留常量 IDEA_POLISH_SYS_LEGACY（旧「结构化 JSON 简报」提示词）与 POLISH_SINGLE_MODE（单稿 JSON 输出后缀），现行统一走 IDEA_POLISH_SYS_PRO（字段化简报/纯文本多方案）；删除 _lastPolishBrief 孤儿消费分支（字段写点已随 v1.0.246 迭代移除，此分支恒为假），navBeacon 兜底收敛为 v1.0.155 纯文本构想粗提，不损失下游（AIBus/规划师/沙盘）消费。保留活的 _v45/导入设定（📥 导入设定按钮及其 applyV45ToOutline/importPolishToState/pendingV45 链路）。v1.0.248 写作风格「标题(tone)/梗概(texture)」残留清除：写风配色收敛为单色（内置方案与自定义新建均只保留章节风格 element 色，取色器/新建表单改单色，旧三色数据读取取末槽=章节色，向后兼容）；删除从未被任何规则消费的 --c-tone/--c-texture CSS 变量及注入；剔除已收敛的 tone/texture 分组继承兜底与阅读器过滤、wsGroupStyleTags 不再需要 group 参数，并清理相关旧注释。v1.0.247 写作风格「节奏/浓度」范式残留清除：删除孤儿字段 out.recipe 与 chapterStyle.intensity（含预设/draft/快照/preset/覆盖全链路）、空占位函数 writeStyleIntHtml、死字段 elemOpen 与 WS_CONC_TXT 浓度注入，修剪 wsStyleNoteBlock 未用参数 st/demoLabel 并同步修正相关旧注释；注入链只保留 tags 驱动的章节风格(element)。v1.0.246 大纲 AI 链路彻底退役清理：大纲早已无 AI 化（genOutline=纯搬运），其整套 AI 管道已成死代码——删除 OUTLINE_GEN_SYS/PRO/LEGACY、JSON_HEADER、buildOutlineSys、buildOutlineUser、formatNavBeaconForOutline、outlineCoreTerms、validateOutlineOutput/gradeOutlineCandidate/fillOutlineSoftFields/validateOutlineFaithful、AIValidators.outline、callAIGuarded 的 tolerateFaithOutline 兼容块，以及 getSystemPrompt/buildAIPrompt/AIBus.get 的 outline 分支；死状态字段 _lastPolishIdeaText 全量移除；保留仍被纯搬运 genOutline 消费的活字段 _lastPolishBrief（回填 navBeacon）。canRunAI/markAIRunning 中的 'outline' 仅为依赖进度状态标记，非 AI 调用，不受影响。v1.0.245 死代码清理：随「大纲无 AI 化」与「规划师四段拆分（v1.0.138）不再产出词典」，删除已无调用点的 GLOSSARY_SYS / outlineGlossaryInject / adherenceSys / NM_NAME_RULE_TEXT，并移除规划师 CHAPTER_PLAN_SYS_PRO 中遗留的 glossary 输出段（JSON schema / 硬性约束5 / 输出示例，该输出无人校验入库），核心任务与注释同步修正为「产出两样产物」。v1.0.244 人物卡 relation 去重（方案乙+丙）：(1)人物卡 relation 契约收紧为「一句话关系摘要（≤20字）」，多组关系的逐条明细一律由「人物关系表」承载——词典达人 prompt 收紧 + 生成校验护栏（>40字阻断并提示改走关系表），词典提取(LEGACY+PRO)的 relation 约束同步统一；(2)人物卡 UI 的 relation 改为只读展示（摘要·只读）+「✏️ 去人物关系表编辑」一键打开人物关系表弹窗，彻底消除人物卡与关系表的内容重复；(3)词典达人 summary 改为可空（空则省略展示），设计亮点说明改为整篇描述由词典达人卡片呈现。v1.0.243 万物词典正文注入去冗余：(1)人物关系/地名关联/专名关联三表不再在 L3 全量注入（与 fog 迷雾版双写纯冗余，且全量关系表会提前剧透），改由 fog 独家承担「按本章出场过滤的迷雾版」（同受预算红线保护，零丢失）；(2)人物行改用 fmtCharFullFields 7 字段上桌（与「人设防火墙」审计字段对齐），age/gender 等「未知」占位不再注入正文；(3)提取 fmtCharFullFields 供 L3 与 formatRelevantGlossary 共用，消除重复实现并接线 v243 预留函数。v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
+const APP_VERSION = '1.0.258';   // v1.0.258 视角·反剧透治理（全景四改）：(1)叙事铁律 L0 新增【视角与反剧透铁律】——正文每章顶层强制「以主角受限感知推进、禁止替路人/配角/反派读心、禁止提前揭示读者与主角尚不该知道的答案（不剥夺侦探权）、背景情报寄生于角色感官禁止作者广播」，把原埋在正文 rule11 深处的视角治理提到共享铁律最高优先级；(2)L4【未收束伏笔】注入加护栏——「只许一笔带过地埋伏笔，不点破、不解释、不揭示答案」，根治"模型拿着未来答案直接剧透式叙述"；(3)收紧 rule11「多视角群像」例外——仅当风格/配方明确选用视角切换类叙事技法才放宽，否则限定视角保持硬性、禁止以"多视角/群像"为借口放松；(4)正文内部一致性自检补充「未提前兑现本章不应揭示的伏笔、未借上帝视角提前剧透」。v1.0.257 AI 配方助手·新词条能力（一次可给全 + 一键入库 + 可空自主判断）：(1) 强化 AI_RECIPE_SYS_PRO——gap 数量由真实缺口自主决定、不机械硬造（现有词库能覆盖时 gap=null、受鼓励；确有多条真实缺口时一次给全、不合并），新增约束3「gap 为 null 与非空都是可接受的自主判断，请勿机械填空、勿为数量造词；gap 非空时每词条五维齐全、尽量覆盖不同风格维度避免同质」，gap 示例由单对象改为双对象；(2) 辅助增强——候选缺口区在 gap.len>1 时新增「＋ 全部加入词库」一键按钮（data-ai-recipe-addgapall，委托 aiRecipeAddGapAll 逐条入库并跳过未入库、去重、兼并与单独加入共用的 aiRecipeAddGap 同口径）。v1.0.255 流程第一步引导+视觉强化（修复"忘记点优化构想直接点生成大纲"连环问题）：(1) genOutline 前置拦截——polishOptions 为空时禁止直接搬入历史方案，toast 引导先「✨优化构想」；(2) 生成大纲按钮在无方案时 disabled（文案「📋 待优化构想后生成」+title 提示）；(3) polishIdea 输入框为空但有历史方案时给出明确 toast（不再静默只弹"请先输入"），引导先填构想或「✔采用」某历史卡再重新优化；(4) polishIdle 强调态判定由「无方案」改为「大纲未生成」——只要有历史记录但尚未生成大纲，✨优化构想按钮即用 btn.first 大红渐变放大强调（文字「🚀 第一步-优化构想」），直指第一步入口，避免用户误点下方更醒目的「生成大纲」；大纲已生成后恢复普通「✨优化构想」视觉。v1.0.254 叙事机械感双防（方案一·A+B，habit 保持删除不恢复）：(A) 软约束 NARRATIVE_IRON_SOFT「每章必须至少落地 1-2 处生活化细碎细节」弱化为「应随情节自然分布、禁为凑数每章硬塞、禁同一细节反复复用」——根治"每章计数"式机械复读；(B) 硬约束 NARRATIVE_IRON_HARD「外显情绪」句补护栏「外显所用意象必须克制且不重复：同章内同一种微表情/小动作最多一次，全书不得反复堆同一套动作当情绪标签」——防"下意识小动作"退化为新的模板复读。habit 维(1.0.253)保持删除，避免具体动作锚点触发"这是他…的习惯"式标签化。v1.0.253 人物维度瘦身：彻底移除「小习惯与习惯性动作(habit)」维——正文 AI 拿到该动作锚点后会在对应情境机械贴「这是他/她…的习惯」标签（tell-don't-show，正文极不自然）；现从人物九/八维契约全面摘除 habit（词典提炼/提取契约、词典达人 JSON与校验、数据模型/快照/推送白名单、正文注入三处、人物卡片标签与字段、UI文案），口头禅(catchphrase)保留；人物契约由十维降为九维(释义处 8 字段)、词典达人由十维降为九维。软约束 NARRATIVE_IRON_SOFT 同步弱化「必须给核心人物绑定专属小动作/习惯」为「可给核心人物绑定 1-2 个专属口头禅」，杜绝 AI 为凑习惯而自造并标注。历史已存 habit 值不注入、不渲染，无需迁移。v1.0.252 UI 文字精简：删除规划师卡片的「先在上方挑选章节微拍节奏…」提示行（cp-stage-hint，容器已无内容，连带清理其孤儿 CSS 类）与无规划时的「可选步骤：分四步规划全书…」说明段；AI 配方助手输入框 placeholder 文字说明「可选：用一段话补充…」置空。均为纯展示文案移除，无逻辑变更。v1.0.251 AI 配方助手修复（方案C）：在 callDeepSeek 层识别推理模型（o1/o3/R1/deepseek-reasoner/思考型/1210 等）并以 max_completion_tokens（思考+正文总预算，默认32K）替代 max_tokens 传限长，同时省略此类模型通常不支持的 temperature/top_p；普通对话模型完全不受影响。根治推理模型下 reasoning_content 耗尽 max_tokens、content 为空的"生成失败"。v1.0.250 AI 配方助手修复（方案A）：此前配方任务误用 clampMaxTokens('json')=4096 输出预算，在推理型模型下 reasoning_content 思考易耗尽预算致 content 为空、finish_reason=length 而"生成失败"；现为 recipe 单独增设 clampMaxTokens('recipe')=8192 档并接线 aiRecipeProduce，同时在 AI_RECIPE_SYS_PRO 增加硬性约束7「控制思考深度、预算留给正文」以约束推理、保证输出完整可 JSON.parse 的数组。v1.0.249 「优化构想」冗余递归清除（abc）：删除无任何引用点的遗留常量 IDEA_POLISH_SYS_LEGACY（旧「结构化 JSON 简报」提示词）与 POLISH_SINGLE_MODE（单稿 JSON 输出后缀），现行统一走 IDEA_POLISH_SYS_PRO（字段化简报/纯文本多方案）；删除 _lastPolishBrief 孤儿消费分支（字段写点已随 v1.0.246 迭代移除，此分支恒为假），navBeacon 兜底收敛为 v1.0.155 纯文本构想粗提，不损失下游（AIBus/规划师/沙盘）消费。保留活的 _v45/导入设定（📥 导入设定按钮及其 applyV45ToOutline/importPolishToState/pendingV45 链路）。v1.0.248 写作风格「标题(tone)/梗概(texture)」残留清除：写风配色收敛为单色（内置方案与自定义新建均只保留章节风格 element 色，取色器/新建表单改单色，旧三色数据读取取末槽=章节色，向后兼容）；删除从未被任何规则消费的 --c-tone/--c-texture CSS 变量及注入；剔除已收敛的 tone/texture 分组继承兜底与阅读器过滤、wsGroupStyleTags 不再需要 group 参数，并清理相关旧注释。v1.0.247 写作风格「节奏/浓度」范式残留清除：删除孤儿字段 out.recipe 与 chapterStyle.intensity（含预设/draft/快照/preset/覆盖全链路）、空占位函数 writeStyleIntHtml、死字段 elemOpen 与 WS_CONC_TXT 浓度注入，修剪 wsStyleNoteBlock 未用参数 st/demoLabel 并同步修正相关旧注释；注入链只保留 tags 驱动的章节风格(element)。v1.0.246 大纲 AI 链路彻底退役清理：大纲早已无 AI 化（genOutline=纯搬运），其整套 AI 管道已成死代码——删除 OUTLINE_GEN_SYS/PRO/LEGACY、JSON_HEADER、buildOutlineSys、buildOutlineUser、formatNavBeaconForOutline、outlineCoreTerms、validateOutlineOutput/gradeOutlineCandidate/fillOutlineSoftFields/validateOutlineFaithful、AIValidators.outline、callAIGuarded 的 tolerateFaithOutline 兼容块，以及 getSystemPrompt/buildAIPrompt/AIBus.get 的 outline 分支；死状态字段 _lastPolishIdeaText 全量移除；保留仍被纯搬运 genOutline 消费的活字段 _lastPolishBrief（回填 navBeacon）。canRunAI/markAIRunning 中的 'outline' 仅为依赖进度状态标记，非 AI 调用，不受影响。v1.0.245 死代码清理：随「大纲无 AI 化」与「规划师四段拆分（v1.0.138）不再产出词典」，删除已无调用点的 GLOSSARY_SYS / outlineGlossaryInject / adherenceSys / NM_NAME_RULE_TEXT，并移除规划师 CHAPTER_PLAN_SYS_PRO 中遗留的 glossary 输出段（JSON schema / 硬性约束5 / 输出示例，该输出无人校验入库），核心任务与注释同步修正为「产出两样产物」。v1.0.244 人物卡 relation 去重（方案乙+丙）：(1)人物卡 relation 契约收紧为「一句话关系摘要（≤20字）」，多组关系的逐条明细一律由「人物关系表」承载——词典达人 prompt 收紧 + 生成校验护栏（>40字阻断并提示改走关系表），词典提取(LEGACY+PRO)的 relation 约束同步统一；(2)人物卡 UI 的 relation 改为只读展示（摘要·只读）+「✏️ 去人物关系表编辑」一键打开人物关系表弹窗，彻底消除人物卡与关系表的内容重复；(3)词典达人 summary 改为可空（空则省略展示），设计亮点说明改为整篇描述由词典达人卡片呈现。v1.0.243 万物词典正文注入去冗余：(1)人物关系/地名关联/专名关联三表不再在 L3 全量注入（与 fog 迷雾版双写纯冗余，且全量关系表会提前剧透），改由 fog 独家承担「按本章出场过滤的迷雾版」（同受预算红线保护，零丢失）；(2)人物行改用 fmtCharFullFields 7 字段上桌（与「人设防火墙」审计字段对齐），age/gender 等「未知」占位不再注入正文；(3)提取 fmtCharFullFields 供 L3 与 formatRelevantGlossary 共用，消除重复实现并接线 v243 预留函数。v1.0.242 AI 配方助手净化升级：(1)复用词典达人「单一专线」——注入 ②优化构想所选方案完整原文（剔除结构段）为唯一蓝本，配方须百分之百贴合本小说，不再只注入书名/简介；(2)移除上传主线简述 TXT 入口（主线简述模块已删，纯遗留物）；(3)描述框改可选——有专线时留空则仅依据所选方案设计；(4)约束强化——现有词库不是天花板更不是必须迁就的对象，设计百分之百贴合本小说的全新词条是核心职责；(5)输出改进——gap 的 cat 五类枚举、tags 词库外 id 标注、JSON 解析失败时重试改发格式修正指令；(6)词库 spec 对多行自定义配方只取首行并标注，避免截断成乱麻；清理 buildRecipeUser 等死代码。v1.0.241 章节标题注入净化三刀：(1)词典换「名称清单」模式（chapterGlossaryBlock 新增 names：只出 人物/地名/专名 名称，无细节字段/关系表/世界观/副线，标题仅需防引入新名）；(2)删除【原始构想】全文注入（与小说简介/核心定位重复）；(3)风格块改轻量版 writeStyleNamesBlock（只给风格名+浓度，去正文向 note/五维）。预计标题输入体量降 50-70%，不损失标题设计必需信息。v1.0.240 节拍表注入净化五刀：(1)规划端不再注入正文向叙事铁律全文（narrativeIronBlock 新增 lean 模式：只留禁则清单+一行规划纪律摘要）；(2)前文骨架收敛为最近 6 章承接串，更早章压缩为一行"已定稿"，杜绝随批次线性膨胀；(3)节拍表改用瘦身词典（人物只留 名称·身份·关系，外貌/爱好/口头禅/习惯/岁数/性别等正文细节不再注入）；(4)移除【导航灯塔】JSON 注入（与核心定位/深层主题/整体情绪基调重复）；(5)输出 schema 放宽——emotional 无变化可留空、requiredEntities 可为空数组。预计节拍表输入体量降 40-60%（长书更明显），不损失设计必需信息。v1.0.239 时间线全局跨度锚点：(1)注入新增【全书时间跨度推断依据】——取首章开篇与末章结局两个端点事件，要求模型先纵览判断整书现实时间轴跨度（数小时→千年仙途），再逐章落点；(2)PLANNER_TIMELINE_SYS 新增硬性规则0「先全局后局部」——把全部章节挂上总时间轴，首章 from 到末章 to 总跨度须与判断一致，严禁无依据一章一天。v1.0.238 全书时间线瘦身+专线三件事：(1)时间线专属线——只注入 全书章节数+每章标题+每拍定制版事件（节拍表新增 tlEvent 字段：时间向，只写时段/耗时/移动/等待，供时间线判时；旧数据回退 event）+团队同场共时（仅多角色，solo 不注入）；移除 书名/情绪基调/大纲节拍结构/时间单位说明/处理范围/上批承接；(2)节拍表配合——每拍除 event（正文向）外另产 tlEvent（时间线定制版），校验缺省补空不强求；(3)输出瘦身——模型只出章级锚点 {index,from,to,jump}，不再逐拍输出 time；校验只查 chapters 数/index/from/to；拍级时点由系统本地回填（章首拍=from、章末拍=to、中间拍保持原值/留空），根治 200 章整段输出被 maxTokens 截断而 16 连败的问题。v1.0.237 词典达人单一专线：输入收敛为只注入②所选方案完整原文（不再单独注入【书名】行与【已在库词典】清单，同名去重由落库端比对兜底）；小说简介标签改多彩渐变+同色系暗描边（描边=字号20%）。v1.0.236 小说简介成稿优化：(1)简介剔除额外去掉 书名/小说名/标题（书名已在故事大纲卡标题栏展示，简介内不重复）与 推荐理由（候选营销文案，不进简介）；(2)新增 renderLoglineHtml 把简介按「标签：内容」排成整齐字段行（对齐优化构想候选卡样式），显示态用格式化排版、编辑态仍用原始文本。v1.0.235 移除已失效的「简介字数范围」设置。v1.0.234 小说简介去重：(1)简介不再「手啃结构/平铺重复节拍」——搬入大纲时剔除候选里的「结构」段，简介卡显示与编辑也实时剔除，节拍结构只归下方「全书节拍」模块；(2)采用大纲时自动触发一次 核心定位/深层命题 提取（force，后台不阻塞，短文自动跳过）。v1.0.233 时间线优化三合一：(1)每拍 time 由必填放宽为按需——只强制章首/末拍给时点，中间拍可留空或同值，同一场戏多拍共享时点、禁止硬排递增时段；(2)修复『第N天整日』被误判晚于『第N天上午』的倒流误报（整日按当日起点计）；(3)正文落库后把真实章末时点同步回全局时间线该章 to 并看板加「实际」标注。v1.0.232 时间职能重构（方案B）：移除「⏱ 时间锚」开关，正文时间注入改由 ④ 全局时间线是否已排定决定，只保留「承接真相源」一个开关。v1.0.231 节拍表 / 全局时间线 自动重试上限升至 16 次（含首次=最多自动重试 15 次）。v1.0.230 全局时间线改「整段一次生成全书」：移除分段/跨段承接/分段轨道与续跑，整段直发、无切点。v1.0.225 词典四类「人物关系表/地名关联表/专名关联表/世界观规则」升级为可编辑弹窗（增删改行，写回 glossary，重新生成章节即生效）+ 独立6次编辑历史（右上角角标、可一键还原）。
 const KEY_CFG = nsKey('cfg');
 
 // 后台任务追踪：autoExtractGlossary / autoUpdateSubplots / extractGlossaryFromChapter 等 fire-and-forget 异步任务
@@ -1361,7 +1361,7 @@ L4 · 滚动摘要与相关设定：最近 3 个滚动摘要区块、相关词�
 8. 正文长度严格以【篇幅体量】块为准，必须在第一次生成时即写足该块硬下限（v1.0.165：取消"不设上限"宽松口径，禁止写成未达下限的梗概式短场景）。
 9. 场景与节拍的自然衔接铁律：全章必须是一条连续流动的叙事线——每个节拍事件的结尾自然引出下一个节拍的开头；时间/地点/视点的切换必须给出过渡（时间词、空间移动、镜头焦点转移或因果钩子），禁止节拍间硬跳切、禁止把每个节拍写成孤立片段。节拍之外的衔接与过渡文字（非情节推进的铺垫/转场内容）同样是正文的组成部分，不是多余的填充。
 10. 时间锚铁律（若 L1 节拍表标注了时间）：每段节拍标注的【时间】（如 现实·第2天·清晨）是本章时间承接的硬基准——正文各段落在哪个时点、就写那一时段的场景（光线/天色/动静/人物状态，如熹微/烈日/夕照/星夜/烛火/虫鸣/人物衣物与倦意等细节自然交代），上一章末尾落到哪个时点，本章开头就从那个时点或其自然延续接入，禁止时间跳跃开场、禁止把本章剧情安排到上一章主线的更早时点（同主线时点禁止倒退）。但时间一律靠场景细节自然体现，严禁出现在段首报时（"现在是/此刻是/此时是/当下是"）、严禁把时间锚或"第X天"字样原样照抄进正文；仅当时间确实跳跃时才用"翌日""三日后的黄昏"等自然过渡语融入叙述、不作注释式开场。跨支线（回忆/梦境/穿越）须按节拍表的支线标签处理，并在文中显式体现进入与回归，不扰乱主线时间顺序。（v1.0.24x：删除"严禁时间词开篇/首句禁时间状语"绝对禁令——与章首铁律④「时间开句可用（仅限频次）」及承接任务书菜单⑥冲突；开场方式以章首铁律 6 式为准。）
-11. 视角与上帝视角铁律（v1.0.180）：默认采用"受限视角"叙述——把"摄影机"约 90% 的时间锁在主角身上，只以主角能看到/听到/摸到/感知到的信息推进叙述；想表现他人内心，一律改从主角的观察与推断出发，禁止直接钻进路人/配角/反派的内心"读心"。仅在下列"合法时机"才允许切到"上帝/他人视角"：(a) 章/节/空行分隔之后（有明确视角分界可用）；(b) 与主角核心目标同场产生重大利益冲突的关键时刻（全章最多一两处，用完立即回到主角）；(c) 只"展示而不解释"的客观信息（写他人"做了什么/什么神态/什么动作"，而不是"心里想什么"）；(d) 背景/世界观/前史等设定信息必须"寄生"在角色的即时感官里（经耳朵听到、鼻子闻到、手触及）传达，禁止作者跳出来大段广播；(e) 悬念揭晓的时刻（对前期已埋设的不确定性的兑现）。禁止项：同一场景内多个角色的内心随意跳切（禁止"跳切"）；禁止用上帝视角提前揭示主角与读者尚不该知道的答案（禁止剥夺"侦探权"）；禁止借上帝视角长篇灌输背景设定（禁止"死神"式信息倾泻）；禁止让配角甚至路人获得与主角同等的心理戏、使情感焦点涣散（禁止稀释"主角感"）。【例外】若本章叙事技法采用了「多视角群像」，可放宽为受控视角切换，但仍须每个视角边界清晰、各视角有辨识度、切换有明确分界（章节/空行），且整体仍以主角视角为主轴。
+11. 视角与上帝视角铁律（v1.0.180）：默认采用"受限视角"叙述——把"摄影机"约 90% 的时间锁在主角身上，只以主角能看到/听到/摸到/感知到的信息推进叙述；想表现他人内心，一律改从主角的观察与推断出发，禁止直接钻进路人/配角/反派的内心"读心"。仅在下列"合法时机"才允许切到"上帝/他人视角"：(a) 章/节/空行分隔之后（有明确视角分界可用）；(b) 与主角核心目标同场产生重大利益冲突的关键时刻（全章最多一两处，用完立即回到主角）；(c) 只"展示而不解释"的客观信息（写他人"做了什么/什么神态/什么动作"，而不是"心里想什么"）；(d) 背景/世界观/前史等设定信息必须"寄生"在角色的即时感官里（经耳朵听到、鼻子闻到、手触及）传达，禁止作者跳出来大段广播；(e) 悬念揭晓的时刻（对前期已埋设的不确定性的兑现）。禁止项：同一场景内多个角色的内心随意跳切（禁止"跳切"）；禁止用上帝视角提前揭示主角与读者尚不该知道的答案（禁止剥夺"侦探权"）；禁止借上帝视角长篇灌输背景设定（禁止"死神"式信息倾泻）；禁止让配角甚至路人获得与主角同等的心理戏、使情感焦点涣散（禁止稀释"主角感"）。【例外】仅当本章写作风格\/配方中明确采用了「多视角群像」等视角切换类叙事技法时，才允许受控视角切换；此时仍须每个视角边界清晰、各视角有辨识度、切换有明确分界（章节\/空行）、整体仍以主角视角为主轴。未明确选用该类技法时，上述限定视角保持硬性，禁止以"多视角\/群像"为借口放松（v1.0.258 收紧例外）。
 
 【内部一致性自检（不写入输出）】
 - 时间线不矛盾
@@ -1371,6 +1371,7 @@ L4 · 滚动摘要与相关设定：最近 3 个滚动摘要区块、相关词�
 - 伏笔 foreshadowing 已按节拍表埋设
 - 叙事铁律未偏离（无禁用词直述内心情绪、无模板词）
 - 视角未在同场景内随意跳切、未替配角/反派/路人直接读心；背景信息已寄生于角色感官而非作者广播；主角情感焦点未被配角稀释（v1.0.180 上帝视角治理）
+- 未提前兑现本章不应揭示的伏笔、未借上帝视角提前剧透读者与主角尚不该知道的答案（v1.0.258 反剧透自检）
 
 【失败处理】
 若自检发现严重冲突无法调和，请只输出正文，并在正文末尾以单行隐藏注释形式输出：<!-- AI_NOTE: 冲突点 -->, 程序将捕获并转人工复核。`;
@@ -1435,7 +1436,12 @@ let polishMulti = true;   // v1.0.121 多方案开关（默认开；极短构想
 // 提示条提供「查看全部（零请求）/ 重新优化（force）/ 清除」；再次优化需 confirm 防误发请求。
 async function polishIdea(btn, force){
   const idea = (state.idea || '').trim();
-  if(!idea){ toast('请先输入故事构想'); return; }
+  if(!idea){
+    // v1.0.255：输入框为空时给出明确引导——历史方案 ≠ 可重跑的输入触体，需先填构想或采用某张历史卡
+    const kept = Array.isArray(state.polishOptions) && state.polishOptions.length;
+    toast(kept ? '输入框为空：请先在上方输入构想，或点某张历史方案卡「✔ 采用此方案」，再点「✨ 优化构想」重新生成' : '请先输入故事构想');
+    return;
+  }
   const kept = Array.isArray(state.polishOptions) && state.polishOptions.length;
   if(kept && !force){
     if(!confirm(`已有 ${kept} 个保留方案，重新优化将覆盖它们。继续？`)) return;
@@ -1668,8 +1674,13 @@ function openPolishBox(){
 }
 
 // v1.0.205 阶段5.5：未生成/无候选方案 → 「第一步」强调态（红色渐变按钮）；已有方案后恢复普通按钮
+// v1.0.255 优化：强调态判定改为「流程仍处最前期」——只要大纲尚未生成（无书名+无简介+无章节），
+// 一律用「🚀 第一步」大红强调态引导用户先点「✨优化构想」，避免误点下方更醒目的「生成大纲」；
+// 已生成大纲后才恢复普通「✨ 优化构想」（为用户回来重新优化保留普通视觉）。
 function polishIdle(){
-  return !(Array.isArray(state.polishOptions) && state.polishOptions.length);
+  const o = state.outline;
+  const hasRealOutline = !!o && (String(o.title||'').trim() || String(o.logline||'').trim() || (Array.isArray(o.chapters)&&o.chapters.length));
+  return !hasRealOutline;
 }
 // v1.0.227 优化构想方案卡：竖向多色卡片（序号徽章/方案名/左侧色条三重视觉编码，复刻 ai配方助手候选列表）。
 // 固定六色序列，按生成顺序取色；正文只读可选中；每卡「采用」即导入构想输入框 +「复制」。
@@ -2342,18 +2353,22 @@ const AI_RECIPE_SYS_PRO = `你是一位资深长篇小说「风格工程师」�
     "why": "为何这样选（中文引用词条 name，1-2句）",
     "scenario": "适用场景（题材/章节阶段/文风匹配度，1-2句）",
     "gap": null
-    // 或 gap: [{"name":"...","cat":"...","id":"...","note":"...","tips":["..."],"avoid":["..."],"check":["..."],"demo":"...","reasons":"..."}]
+    // 或 gap（一次可给多条，务必给全所有缺口）：[
+    //   {"name":"...","cat":"语言质感","id":"...","note":"...","tips":["..."],"avoid":["..."],"check":["..."],"demo":"...","reasons":"..."},
+    //   {"name":"...","cat":"叙事技法","id":"...","note":"...","tips":["..."],"avoid":["..."],"check":["..."],"demo":"...","reasons":"..."}
+    // ]
   }
 ]
 
 【硬性约束】
-1. tags 只能使用现有词库 id。现有词库只是参照、不是天花板，更不是必须迁就的对象：即使现有词条看似可用，只要它不是百分之百贴合本小说（例如只覆盖了一半的意涵），就必须设计完全为本小说量身定制的全新词条放入 gap——这是核心职责（大胆创造），不是加分项。新词条的 note/tips/avoid/check/demo 必须以本小说的题材、人物、世界观为唯一依据书写。
-2. gap 为 null 表示现有词库足够；gap 非空时每个新词条必须五维齐全（note/tips/avoid/check/demo），缺一作废。
-3. 不同候选用词尽量不同、风格拉开差异。
-4. why / scenario / reasons 里引用词条时必须使用中文 name，禁止出现英文 id。
-5. gap 新词条的 cat 只能取以下五类之一：语言质感、情绪与张力、节奏与网感、叙事技法、台词设计。
-6. 只输出上述 JSON 数组，不要 markdown 代码块、不要解释。
-7. 控制思考深度：先想清楚再作答，不要把大量 token 花在内部推理上；务必把预算留给正文，输出一个完整、可直接 JSON.parse 的数组。`;
+1. tags 只能使用现有词库 id。现有词库只是参照、不是天花板，更不是必须迁就的对象：即使现有词条看似可用，只要它不是百分之百贴合本小说（例如只覆盖了一半的意涵），就必须设计完全为本小说量身定制的全新词条放入 gap——这是核心职责（大胆创造），不是加分项。
+2. gap 数量由真实缺口决定、不机械硬造：现有词库已能完全覆盖本小说所需时，gap 应为 null（0 条、完全不生成新词条是合理且受鼓励的答案，绝不为了"看起来有缺口"而硬凑词条）；只有当确实存在现有词库无法覆盖的缺口维度时，才把它们写成独立的 gap 词条（需几条给几条，把真实缺口一次给全、不要只给 1 个、不要偷懒合并成一条）。
+3. gap 为 null 与 gap 非空都是可接受的自主判断，请勿机械填空、勿为数量而造词：gap 非空时每个词条必须五维齐全（note/tips/avoid/check/demo），缺一作废；尽量覆盖不同的风格维度（语言质感/情绪与张力/节奏与网感/叙事技法/台词设计），避免互相同质重复。
+4. 不同候选用词尽量不同、风格拉开差异。
+5. why / scenario / reasons 里引用词条时必须使用中文 name，禁止出现英文 id。
+6. gap 新词条的 cat 只能取以下五类之一：语言质感、情绪与张力、节奏与网感、叙事技法、台词设计。
+7. 只输出上述 JSON 数组，不要 markdown 代码块、不要解释。
+8. 控制思考深度：先想清楚再作答，不要把大量 token 花在内部推理上；务必把预算留给正文，输出一个完整、可直接 JSON.parse 的数组。`;
 
 function aiRecipeUser(extra){
   const cand = selectedPolishCandidate();
@@ -2449,7 +2464,8 @@ function gapFiveHtml(g){
 }
 function gapHtml(c, ci){
   if(!Array.isArray(c.gap) || !c.gap.length) return `<span class="ar-ok">✓ 现有词库即可覆盖，无需新词条</span>`;
-  return `<div class="ar-gaptitle">⚠️ 存在词条缺口（共 ${c.gap.length} 项，确认后立即纳入当前配方）</div>
+  const pending = c.gap.some(g => !((c.tags||[]).includes(g.id) || libHas(g.id)));   // v1.0.256 至少有一条尚未入库才启用「全部加入」
+  return `<div class="ar-gaptitle">⚠️ 存在词条缺口（共 ${c.gap.length} 项，可逐条或一键全部加入，确认后立即纳入当前配方）</div>
   ${ c.gap.map((g,gi)=>`
     <div class="ai-recipe-gapitem">
       <div class="ar-gaphead"><b>${esc(g.name||'')}</b><span class="muted" style="font-size:11px">${ (AI_CAT_LABEL[g.cat]||g.cat||'custom') }</span></div>
@@ -2457,7 +2473,8 @@ function gapHtml(c, ci){
       <div class="ar-gapnote">${gapFiveHtml(g)}</div>
       ${ g.warning ? `<div class="ar-gapwarn">⚠️ ${esc(g.warning)}</div>` : '' }
       <button type="button" class="btn small ghost" data-ai-recipe-addgap="${ci}__${gi}" ${ (c.tags||[]).includes(g.id)|| libHas(g.id) ? 'disabled' : '' }>＋ 加入词库</button>
-    </div>`).join('') }`;
+    </div>`).join('') }
+  ${ c.gap.length>1 ? `<div style="margin-top:6px"><button type="button" class="btn small primary" data-ai-recipe-addgapall="${ci}" ${pending?'':'disabled'} title="仅加入尚未入库的新词条；已入库的自动跳过">＋ 全部加入词库</button></div>` : '' }`;
 }
 function libHas(id){ return !!writeStyleById(id); }
 // v228/P4：候选配方新词条（gap）五维齐全度标注——true=齐全 / false=有缺维；仅标注供候选卡提示，不强制丢弃（宁松勿误伤）
@@ -2482,7 +2499,7 @@ async function aiRecipeProduce(system, user){
   // v1.0.250：配方改用独立 clampMaxTokens('recipe')=8192 档——239-249 一直错用 'json'=4096，
   // 在推理型模型下思考(reasoning_content)易耗尽预算致 content 为空；扩容并靠提示词约束控制思考。
   const opt = { maxTokens: clampMaxTokens('recipe'), temperature:(getCfg().aiRecipeTemp==null?0.9:getCfg().aiRecipeTemp), topP:0.5 };
-  const FIX = `\n\n【上一轮修正：新词条必须五维齐全】含新词条（gap 非空）的配方：每个新词条必须五维齐全——note（一句话定位）、tips（≥2 条）、avoid（≥1 条）、check（≥1 条）、demo（示例句）。请务必为每个候选给全、给对上述字段。`;
+  const FIX = `\n\n【上一轮修正：gap 按需给全、不机械硬造】缺口与否由你自主判断：现有词库能完全覆盖时 gap 应为 null（0 条，不要为凑数而硬造）；确有多条真实缺口时才写 gap，并把它们一次给全（不要只给 1 个、不要合并）；gap 非空时每个新词条必须五维齐全——note（一句话定位）、tips（≥2 条）、avoid（≥1 条）、check（≥1 条）、demo（示例句）。请为非 null 的 gap 给全、给对上述字段。`;
   const FIX_JSON = `\n\n【上一轮修正：JSON 解析失败】上一轮输出无法被解析为合法 JSON 数组。请严格只输出一个 JSON 数组（不要 markdown 代码块、不要解释、不要任何额外文字）。`;
   let list = null, lastJsonOk = false;
   for(let attempt=1; attempt<=2; attempt++){
@@ -2606,6 +2623,19 @@ function aiRecipeAddGap(key){
   const d = wsDraftInit(); if(!d.tags.includes(finalId)) d.tags.push(finalId);
   if(c.tags && !c.tags.includes(finalId)) c.tags.push(finalId);
   toast('已加入词库并纳入当前配方：'+(g.name||finalId));
+  const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = aiRecipeResultHtml();
+}
+
+// v1.0.256 一键全部加入缺口词条：逐条调用 aiRecipeAddGap（自动跳过已入库/标签已含）
+function aiRecipeAddGapAll(ci){
+  if(!aiRp || !Array.isArray(aiRp.list)) return;
+  const c = aiRp.list[ci]; if(!c || !Array.isArray(c.gap) || !c.gap.length) return;
+  let added = 0, skipped = 0;
+  c.gap.forEach((g, gi)=>{
+    if((c.tags||[]).includes(g.id) || (g && writeStyleById(g.id))){ skipped++; return; }
+    aiRecipeAddGap(ci + '__' + gi); added++;
+  });
+  toast(added ? (skipped ? `已加入 ${added} 条新词条（跳过已入库 ${skipped} 条），并已纳入当前配方` : `已加入 ${added} 条新词条，并已纳入当前配方`) : '这些新词条都已在词库中，无需重复加入');
   const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = aiRecipeResultHtml();
 }
 
@@ -3727,7 +3757,7 @@ function langLayerInjection(){
 // ===== v1.0.133 叙事铁律：三大写作要求的统一入口（硬铁律 + 软约束），开关 _narrIron 默认开，作用于正文(System 实际经贸链路) 与 规划师。
 // 保留既有拆分逻辑（禁则清单硬约束 / 语言分层硬+软），仅在这里做入口统一，方便维护与排查。
 const NARRATIVE_IRON_HARD = `〔硬约束 · 铁律，不可逾越，冲突时以此为准〕
-· 禁止直接叙述人物内心情绪。禁止出现直白内心描写；必须改用动作、微表情、下意识小动作来外显情绪。
+· 禁止直接叙述人物内心情绪。禁止出现直白内心描写；必须改用动作、微表情、下意识小动作来外显情绪，但外显所用意象必须克制且不重复：同章内同一种微表情/小动作（如 咬牙、攥拳、拧眉、垂眸、绞手）最多出现一次，全书不得反复堆同一套动作当情绪标签。
 · 禁止频繁使用网文模板词（倏然、眸光、眼底、凤眸、邪魅一笑、轻嗤）。同章内同类模板词必须最多出现一次，能删必修。
 · 对白必须口语化，禁止「端着」的书面腔台词。允许半截话、吐槽、短暂停顿；古风也必须写现代人能读懂的「人话」，例：写「我瞧着这事不妥」，禁止写「吾观此事实为不妥」。
 · 人物行为必须有清晰动机，禁止无故推进剧情。禁止过度美化人物：言行必须与境界相符，允许小瑕疵、怯懦、私心、口误。
@@ -3735,7 +3765,7 @@ const NARRATIVE_IRON_HARD = `〔硬约束 · 铁律，不可逾越，冲突时�
 
 const NARRATIVE_IRON_SOFT = `〔软约束 · 尽力而为、随题材微调〕
 · 可给核心人物绑定 1-2 个专属口头禅，写到自然出现、不刻意。
-· 每章必须至少落地 1-2 处生活化细碎细节作真实毛边。
+· 生活化细碎细节（真实毛边）应随情节自然分布：只在能推进氛围/塑造人物时出现，禁止为凑数量而每章硬塞、禁止同一种细节反复复用。
 · 语言底色必须随题材稳定贯穿全书，禁止中途漂移：都市/网游/沙雕→贴近生活口语；仙侠/红楼风→适度书面高级感。
 · 快节奏场景必须优先大白话短句，禁止绕弯长句，保证读者一目十行不卡壳。`;
 
@@ -3772,6 +3802,10 @@ function narrativeIronBlock(role, opts){
   // v1.0.187 章首反机械化：治"每章都拿主角名+动作开头"的把式开场
   if(role === 'chapter'){
     ironFull += '\n【章首铁律】章首开法**必须**有变化：**禁止**全书或连续多章重复同一种开法、**禁止**每章都以同一类人物动作或同一类时间词起句、也**禁止**连续两章雷同，小说整体**禁止**某一种开法超过三成。下面各方式**可以**混用、**必须**轮流换着来：①续写式（优先）：优先从上一章结局未完成的对话/动作/悬念切入（承接细则以该章承接任务书为准）；例："『这话可说不得。』上回话到一半，屋里便只剩扇子敲桌沿的声响。"；②场景/环境式：从能即时带出情绪与冲突的场景细节/物件/光线/动静切入，人物稍后才点名；例："檐角铜铃被夜风拨响时，堂屋的灯还亮着，桌上摊着两封未拆的信。"；③人物开句式：以人物称谓开句**可以**，但须与前后章错开、**禁止**连续两章相同；④时间开句式：以时间词开句**可以**，但**禁止**连续两章都用时间词开句；⑤他人/群像式：从他人口中或反应侧写入物处境，出场人物不占句首；例："『那人的名讳一提就烫嘴。』有人压着嗓子嘀咕。"；⑥悬念回接式：以章末钩子的延续、一句质问或一个反常细节起首；例："那封密信最终会不会落到衙门手中，成了压在每个人心口的石头。"';
+  }
+  // v1.0.258 视角·反剧透铁律（正文 L0 最高优先级）：原正文提示词第 11 条埋在规则深处、存在感不足，提到共享铁律顶层强制
+  if(role === 'chapter'){
+    ironFull += '\n【视角与反剧透铁律】全章以主角的受限感知推进：只写主角能\/看到听到摸到感知到的；想表现他人内心，一律从主角的观察与推断出发，禁止直接钻进路人\/配角\/反派的内心"读心"。禁止提前揭示读者与主角尚不该知道的答案：伏笔只许一笔带过地埋伏笔，不点破、不解释、不揭示答案（不剥夺读者的"侦探权"）。背景\/世界观\/前史情报必须"寄生"在角色的即时感官里（听\/闻\/触）传达，禁止作者跳出来大段广播。仅在章\/节分界明显、或关键时刻"只展示不解释"的客观动作、或悬念兑现时，才可短暂切出并立即回到主角。';
   }
   const head = role === 'chapter'
     ? '【叙事铁律 · 本章写作总纲】'
@@ -5713,7 +5747,7 @@ function viewStory(){
           </div>
           ${ polishKeepBar() }
           <div class="btn-row">
-            <button id="btnGenOutline" class="btn primary block">${isLong()?'📚 生成大纲':'✨ 生成故事大纲'}</button>
+            <button id="btnGenOutline" class="btn primary block" ${(!(Array.isArray(state.polishOptions) && state.polishOptions.length))?'disabled title="请先点「✨ 优化构想」生成方案，再生成大纲"':''}>${(!(Array.isArray(state.polishOptions) && state.polishOptions.length))?'📋 待优化构想后生成':(isLong()?'📚 生成大纲':'✨ 生成故事大纲')}</button>
           </div>
           <p id="outlineStatus" class="status"></p>
         </div>
@@ -6406,6 +6440,8 @@ function bindAiRecipe(){
     if(save){ aiRecipeSave(+save.dataset.aiRecipeSave); return; }
     const ag = e.target.closest('[data-ai-recipe-addgap]');
     if(ag){ aiRecipeAddGap(ag.dataset.aiRecipeAddgap); return; }
+    const aga = e.target.closest('[data-ai-recipe-addgapall]');
+    if(aga){ aiRecipeAddGapAll(+aga.dataset.aiRecipeAddgapall); return; }   // v1.0.256 一键全部加入
   });
 }
 // —— v10.57 AI 配方历史弹层（书本图标；读持久化快照，与瞬时 aiRp 解耦）——
@@ -9839,6 +9875,9 @@ const genOutline = async function(){
   const st = $('#outlineStatus');
   if(st){ st.className='status'; st.textContent=''; }
   if(!canRunAI('outline')){ toast('请先完成上游步骤：优化构想'); if(btn) busy(btn,false); return; }
+  // v1.0.255 流程第一步引导：从未生成任何优化方案时，禁止直接搬入历史方案——生成大纲前必须先跑「✨ 优化构想」
+  const noOpt = !(Array.isArray(state.polishOptions) && state.polishOptions.length);
+  if(noOpt){ toast('请先点「✨ 优化构想」生成方案，再点「生成大纲」搬入书名 / 简介 / 节拍'); if(btn) busy(btn,false); return; }
   const cand = selectedPolishCandidate();
   if(!cand){ toast('先选择一个优化方案（在②优化构想中点击某张候选卡「✔ 采用此方案」）'); if(btn) busy(btn,false); return; }
   if(dictmasterLocked()){ toast('词典达人已产出万物词典，②方案已锁定，不可再换选重搬'); if(btn) busy(btn,false); return; }
@@ -11507,7 +11546,7 @@ function buildChapterUser(i, opt={}){
       if(_prevEndA && _prevEndA.time) _seg.push(`上一章正文末尾时间锚（真实结尾）：${_prevEndA.time}`);
     }
     if(!_prevHasBody) _seg.push(`上一章结尾状态：${fc.lastScene||'（未记录）'}`);
-    if(_hookList.length) _seg.push(`未收束伏笔：${_hookList.join('、')}`);
+    if(_hookList.length) _seg.push(`未收束伏笔（v1.0.258：只许一笔带过地埋伏笔，不点破、不解释、不揭示答案）：${_hookList.join('、')}`);
     if(_ovdText.length) _seg.push(`⚠️ 已逾期伏笔（本章必须兑现或明显推进，不得遗漏）：${_ovdText.join('、')}`);
     parts.push(`【衔接事实】${_seg.join('；')}`);
   }
