@@ -6,6 +6,8 @@
 }
 .hidden{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* v1.0.267 抑制移动端/WebView 中文强制放大字号，避免窄屏正文换行变密（微信内置浏览器核心成因） */
+html{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;padding:0}
 body{
   background:var(--bg);color:var(--txt);
@@ -38,7 +40,7 @@ body{
 
 /* 内容区 */
 .view{flex:1;padding:16px;padding-bottom:90px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(10px,3.5vw,14px);margin-bottom:14px}
 .card h3{margin:0 0 8px;font-size:15px}
 .muted{color:var(--muted);font-size:12px}
 .sub{color:var(--sub);font-size:13px}
@@ -229,6 +231,18 @@ label.field>span{display:block;font-size:12px;color:var(--sub);margin-bottom:6px
 }
 @media (min-width:900px){
   .modal{align-items:center}
+}
+
+/* v1.0.267 窄屏兜底：收紧容器与卡片水平内边距、缩窄悬浮条，释放横向空间（≤380px 逻辑宽度） */
+@media (max-width:380px){
+  .view{padding-left:10px;padding-right:10px}
+  .flow-sec{padding-left:8px;padding-right:8px}
+  .flow-sec > .flow-sec-head .fs-name{font-size:13.5px}
+  .flow-sec > .flow-sec-head .fs-note{display:none}
+  .flow-sidenav{right:4px;padding:6px 4px;opacity:.92}
+  .flow-sidenav .fsd-btn{width:24px;height:24px;line-height:24px;font-size:11.5px}
+  .card{padding:clamp(8px,3vw,12px)}
+  .pol-cand-body{max-height:min(46vh,260px)}
 }
 
 /* 主题切换（在设置弹窗里） */
@@ -695,7 +709,7 @@ body.reader-lock{overflow:hidden}
 .pol-tools{display:flex;gap:6px;flex-wrap:wrap}
 .pol-cards{display:block}
 /* v1.0.121 优化构想方案卡：竖向多色卡片，左侧 4px 强调色条 + 序号徽章 + 方案名同色，一眼可辨 */
-.pol-cand{position:relative;border:1px solid var(--line);border-left:4px solid var(--pc,#E8A33D);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.08);transition:opacity .15s,border-color .15s,box-shadow .15s}
+.pol-cand{position:relative;border:1px solid var(--line);border-left:4px solid var(--pc,#E8A33D);border-radius:12px;padding:clamp(8px,2.8vw,12px);margin-bottom:10px;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.08);transition:opacity .15s,border-color .15s,box-shadow .15s}
 .pol-cand:not(.on){opacity:.92}
 .pol-cand.on{border-color:var(--pc,#E8A33D);box-shadow:0 0 0 1.5px var(--pc,#E8A33D),0 2px 6px rgba(0,0,0,.12)}
 .pol-cand-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -703,7 +717,7 @@ body.reader-lock{overflow:hidden}
 .pol-name{font-size:13.5px;font-weight:700;flex:0 0 auto}
 .pol-adopted-tag{margin-left:2px;font-size:11px;font-weight:700;color:var(--ok,#189a5c)}
 .pol-cand-actions{margin-left:auto;display:flex;flex-shrink:0}
-.pol-cand-body{margin:8px 0;padding:8px 10px;background:var(--panel2);border:1px dashed var(--line);border-radius:10px;font-size:12.5px;line-height:1.7;color:var(--txt);white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;user-select:text}
+.pol-cand-body{margin:8px 0;padding:clamp(6px,2vw,10px);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;font-size:clamp(12px,3.4vw,13px);line-height:1.7;color:var(--txt);white-space:pre-wrap;word-break:break-word;max-height:clamp(220px,46vh,300px);overflow:auto;user-select:text}
 /* v1.0.227 方案书名横幅：置于卡片头部下方，色条同品牌色 */
 .pol-cand-title{display:block;margin:6px 0 0;padding:7px 10px;border-radius:8px;color:#fff;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .pol-cand-foot{display:flex;justify-content:flex-end}
@@ -1299,7 +1313,7 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 /* v10.34 折叠按钮移到 advice-ai-row 最右侧 */
 .cth-fold-btn{margin-left:auto;display:inline-flex;align-items:center;gap:4px;height:20px;line-height:20px;padding:0 8px;font-size:11px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);border-radius:999px;background:color-mix(in srgb,var(--accent) 10%,transparent);cursor:pointer;user-select:none;flex:none}
 .cth-fold-btn:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}
-.advice-ai-cand{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:6px 0;background:rgba(255,255,255,.03);cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.advice-ai-cand{border:1px solid var(--line);border-radius:10px;padding:clamp(8px,2.8vw,12px);margin:6px 0;background:rgba(255,255,255,.03);cursor:pointer;transition:border-color .15s,box-shadow .15s}
 .advice-ai-cand:hover{border-color:var(--accent2)}
 .advice-ai-cand.adopted{border-color:var(--accent);box-shadow:0 0 0 1.5px var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
 .advice-ai-head{display:flex;align-items:center;gap:8px}
@@ -1779,7 +1793,7 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 /* v1.0.222 侧边导航改为纯悬浮：不再为它预留右侧内边距，主页面恢复最大宽度；侧边条 fixed 悬浮于其上 */
 .flow-wrap{position:relative;max-width:1024px;margin:0 auto}
 .flow-gap{height:10px}
-.flow-sec{border:1px solid var(--line);border-radius:var(--radius);background:transparent;padding:6px 12px 6px 12px;margin-bottom:8px;scroll-margin-top:14px}
+.flow-sec{border:1px solid var(--line);border-radius:var(--radius);background:transparent;padding:clamp(4px,2.5vw,6px) clamp(8px,3vw,12px);margin-bottom:8px;scroll-margin-top:14px}
 .flow-sec > .flow-sec-head{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:8px 4px 0;border-bottom:1px solid var(--line)}
 .flow-sec > .flow-sec-head .fs-no{flex:0 0 auto;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;font-size:13px;font-weight:700;color:var(--on-accent, #fff);background:var(--accent2)}
 .flow-sec > .flow-sec-head .fs-name{font-size:14px;font-weight:700}

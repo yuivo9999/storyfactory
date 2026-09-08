@@ -1766,7 +1766,7 @@ function bindPolishIdea(){
     sync();
     chk.onchange = ()=>{ polishMulti = chk.checked; };
     const idea = $('#ideaInput');
-    if(idea) idea.oninput = ()=>{ state.idea = idea.value; sync(); };
+    if(idea) idea.oninput = ()=>{ state.idea = idea.value; sync(); syncOrigIdeaCard(); };
   }
   // v1.0.121 移除「复制/保存此版/采用此方案」顶部按钮：方案只读，复制与采用移入每张卡片（renderPolishCards 内绑定）。
   // v10.16 收起：仅隐藏优化区（方案保留，提示条仍在）
@@ -2600,17 +2600,14 @@ function aiRecipeSave(ci){
   toast('已加入「我的配方」（未应用）：'+stored.name);
 }
 // 确认加入缺口词条 → styleCustom.added，并立即纳入当前配方草稿（决策2）
-function aiRecipeAddGap(key){
-  if(!aiRp || !Array.isArray(aiRp.list)) return;
-  const [ci, gi] = String(key||'').split('__').map(Number);
-  const c = aiRp.list[ci]; if(!c) return;
-  const g = (c.gap||[])[gi]; if(!g) return;
-  if(writeStyleById(g.id)){ toast('该词条已在词库中'); return; }
+// v1.0.265 缺口词条入库核心（实时候选与历史候选共用）：入词库 + 纳入当前配方草稿；返回新 id，已在库返回 null
+function addGapEntryToLib(g){
+  if(!g) return null;
+  if(writeStyleById(g.id)) return null;
   const group = ['语言质感','情绪与张力','节奏与网感','叙事技法','台词设计'].includes(g.cat) ? g.cat : 'custom';
   const cfg = getCfg(); cfg.styleCustom = cfg.styleCustom || {};
   cfg.styleCustom.added = cfg.styleCustom.added || [];
   const id = (g.id && /^[a-z][a-z0-9_]*$/i.test(g.id)) ? g.id : ('c'+Math.random().toString(36).slice(2,8));
-  // id 冲突则加后缀
   let finalId = id, mx = 1; const existing = writeStyleLib().map(s=>s.id);
   while(existing.includes(finalId)) finalId = id + (mx++);
   cfg.styleCustom.added.push({ id:finalId, group, name:(g.name||'').trim(), note:(g.note||'').trim(),
@@ -2619,11 +2616,42 @@ function aiRecipeAddGap(key){
     check:Array.isArray(g.check)?g.check.map(x=>String(x||'').trim()).filter(Boolean):[],
     demo:(g.demo||'').trim(), seal:(g.seal===undefined?0:g.seal), warning:(g.warning||'') });
   saveCfg(cfg);
-  // 立即纳入当前配方草稿 + 把该 id 补进当前候选 tag
   const d = wsDraftInit(); if(!d.tags.includes(finalId)) d.tags.push(finalId);
+  return finalId;
+}
+function aiRecipeAddGap(key){
+  if(!aiRp || !Array.isArray(aiRp.list)) return;
+  const [ci, gi] = String(key||'').split('__').map(Number);
+  const c = aiRp.list[ci]; if(!c) return;
+  const g = (c.gap||[])[gi]; if(!g) return;
+  const finalId = addGapEntryToLib(g);
+  if(!finalId){ toast('该词条已在词库中'); return; }
   if(c.tags && !c.tags.includes(finalId)) c.tags.push(finalId);
   toast('已加入词库并纳入当前配方：'+(g.name||finalId));
   const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = aiRecipeResultHtml();
+}
+
+// v1.0.265 历史候选缺口词条入库：与实时候选共用 addGapEntryToLib，仅源数据来自历史快照
+function aiHistAddGap(ei, ci, gi){
+  const a = getAiHist(); const entry = a[ei]; if(!entry||!Array.isArray(entry.list)) return;
+  const c = entry.list[ci]; if(!c) return;
+  const g = (c.gap||[])[gi]; if(!g) return;
+  const finalId = addGapEntryToLib(g);
+  if(!finalId){ toast('该词条已在词库中'); return; }
+  toast('已加入词库并纳入当前配方：'+(g.name||finalId));
+  const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = aiRecipeResultHtml();
+}
+function aiHistAddGapAll(ei, ci){
+  const a = getAiHist(); const entry = a[ei]; if(!entry||!Array.isArray(entry.list)) return;
+  const c = entry.list[ci]; if(!c||!Array.isArray(c.gap)||!c.gap.length) return;
+  let added = 0, skipped = 0;
+  c.gap.forEach((g)=>{
+    if(!g) return;
+    if((c.tags||[]).includes(g.id) || writeStyleById(g.id)){ skipped++; return; }
+    if(addGapEntryToLib(g)) added++;
+  });
+  const out = $('[data-ai-recipe-out]'); if(out) out.innerHTML = aiRecipeResultHtml();
+  toast(added ? (skipped ? `已加入 ${added} 条新词条（跳过已入库 ${skipped} 条），并已纳入当前配方` : `已加入 ${added} 条新词条，并已纳入当前配方`) : '这些新词条都已在词库中，无需重复加入');
 }
 
 // v1.0.256 一键全部加入缺口词条：逐条调用 aiRecipeAddGap（自动跳过已入库/标签已含）
@@ -6247,13 +6275,22 @@ function bindFixQueueCard(){
 /* ==================== 4.6 Plus 新增卡片结束 ==================== */
 
 // v10.2 原始构想只读卡：故事页最顶部展示用户构想的原文快照。只读不可编辑、可复制；默认收缩，点击展开。纯前端、无 AI 参与。
+// v1.0.265 实时同步「原始构想」卡片文本（词库未产出时跟随输入框；产出后锁定，不再被输入覆盖）
+function syncOrigIdeaCard(){
+  const t = $('.orig-text'); if(!t) return;
+  if(state.dictmasterRan){ t.value = String(state.originalIdeaSnapshot || state.idea || '').trim() || '（尚未生成万物词典）'; }
+  else { t.value = String(state.idea || '').trim() || '（尚未生成万物词典）'; }
+}
+
 // v1.0.203 阶段3/3.7：该卡内容源从「生成大纲时的 outline.userIdea」改为「用户录入框内容、从未被优化稿覆盖的文本」——
 // 具体地，词典达人生成万物词典前为空（占位提示）；触发词典达人生成（genDictMaster 锁存 originalIdeaSnapshot）后才展示这段原始构想，作为词典的不可变蓝本。
+// v1.0.265 修复「原始构想」未显示输入框内容：词库未产出前实时反映优化构想输入框（state.idea）最新内容；
+// 词库产出后（dictmasterRan）切换为词典达人生成那一刻锁存的原始快照（originalIdeaSnapshot，不可变蓝本）。
 function origIdeaCard(){
   const o = state.outline;
-  const srcIdea = String(state.originalIdeaSnapshot || '').trim()
-    || ((o && typeof o.userIdea === 'string' && o.userIdea.trim()) ? o.userIdea : '')
-    || String(state.idea || '').trim();
+  const show = state.dictmasterRan
+    ? (String(state.originalIdeaSnapshot || '').trim() || String(state.idea || '').trim())
+    : String(state.idea || '').trim();
   return `<div class="card orig-card">
     <div class="orig-head" role="button" tabindex="0" data-orig-toggle title="展开/收起">
       <span class="orig-t">📝 原始构想</span>
@@ -6261,7 +6298,7 @@ function origIdeaCard(){
       <button type="button" class="btn small ghost gs-tool" data-orig-copy title="复制构想原文">📋 复制</button>
     </div>
     <div class="orig-body" hidden>
-      <textarea readonly class="orig-text" spellcheck="false">${esc((state.dictmasterRan ? srcIdea : '') || '（尚未生成万物词典）')}</textarea>
+      <textarea readonly class="orig-text" spellcheck="false">${esc(show || '（尚未生成万物词典）')}</textarea>
     </div>
   </div>`;
 }
@@ -6271,6 +6308,7 @@ function bindOrigIdea(){
   const og = $('[data-orig-toggle]');
   if(og) og.onclick = (e)=>{
     if(e.target.closest('[data-orig-copy]')) return;   // v1.0.162：标题行里的复制按钮不触发展开/收起
+    syncOrigIdeaCard();   // v1.0.265 展开时刷新为最新内容
     const body = $('.orig-body'); if(!body) return;
     const on = !body.hidden;
     body.hidden = on;
@@ -6447,8 +6485,9 @@ function bindAiRecipe(){
   });
 }
 // —— v10.57 AI 配方历史弹层（书本图标；读持久化快照，与瞬时 aiRp 解耦）——
-function aiHistCandHtml(c, idx){
+function aiHistCandHtml(c, idx, ei){
   if(!c) return '';
+  const pendAll = Array.isArray(c.gap) && c.gap.some(g => !((c.tags||[]).includes(g.id) || libHas(g.id)));
   return `<div class="ai-recipe-cand" style="margin-top:6px">
     <div class="ai-recipe-cand-head">
       <b>${esc(c.name||('候选'+(idx+1)))}</b>
@@ -6460,12 +6499,14 @@ function aiHistCandHtml(c, idx){
     <div class="ai-recipe-sec"><span class="ar-lab">适用场景</span>${esc(wiseWhyText(c.scenario||''))}</div>
     <div class="ai-recipe-gap">
       ${ Array.isArray(c.gap) && c.gap.length
-        ? `<div class="ar-gaptitle">⚠️ 词条缺口（${c.gap.length} 项）</div>` + c.gap.map(g=>`
+        ? `<div class="ar-gaptitle">⚠️ 词条缺口（${c.gap.length} 项）</div>` + c.gap.map((g,gi)=>`
             <div class="ai-recipe-gapitem">
               <div class="ar-gaphead"><b>${esc((g&&g.name)||'')}</b><span class="muted" style="font-size:11px">${ (AI_CAT_LABEL[(g&&g.cat)||'']||((g&&g.cat)||'custom')) }</span></div>
               <div class="ar-gapwhy">${esc((g&&g.reasons)||'')}</div>
               ${gapFiveHtml(g)}
+              <button type="button" class="btn small ghost" data-ah-addgap="${ei}__${idx}__${gi}" ${ (c.tags||[]).includes(g.id)|| libHas(g.id) ? 'disabled' : '' }>＋ 加入词库</button>
             </div>`).join('')
+            + (c.gap.length>1 ? `<div style="margin-top:6px"><button type="button" class="btn small primary" data-ah-addgapall="${ei}__${idx}" ${pendAll?'':'disabled'} title="仅加入尚未入库的新词条；已入库的自动跳过">＋ 全部加入词库</button></div>` : '')
         : `<span class="ar-ok">✓ 现有词库即可覆盖，无需新词条</span>` }
     </div>
     <div style="margin-top:6px"><button type="button" class="btn small primary" data-ah-candpick="${idx}" title="恢复此候选并应用到写作风格">✔ 恢复为此候选</button></div>
@@ -6487,7 +6528,7 @@ function openAiHistPanel(){
           <button type="button" class="btn small ghost" data-ah-export="${ei}" title="导出该批配方为 JSON（自动附带其引用的自定义词条与 gap 新词条，导入方即可正常使用）">⬇ 导出</button>
           <button type="button" class="btn small ghost" data-ah-del="${ei}">删</button>
         </div>
-        ${ (Array.isArray(e.list)&&e.list.length) ? e.list.map((c,i)=>aiHistCandHtml(c,i)).join('<hr style="margin:6px 0;opacity:.2">') : '<p class="muted">无候选。</p>' }
+        ${ (Array.isArray(e.list)&&e.list.length) ? e.list.map((c,i)=>aiHistCandHtml(c,i,ei)).join('<hr style="margin:6px 0;opacity:.2">') : '<p class="muted">无候选。</p>' }
       </div>
     </div>`;
   };
@@ -6521,6 +6562,10 @@ function openAiHistPanel(){
     if(apply){ const ei=+apply.dataset.ahApply; const entry=hist[ei]; if(entry&&Array.isArray(entry.list)&&entry.list.length){ applyChosenCandidate(entry.list[0], {render:false}); refreshAiHistBadge(); close(); } return; }
     const candpick = e.target.closest('[data-ah-candpick]');
     if(candpick){ const ci=+candpick.dataset.ahCandpick; const grp=candpick.closest('.ws-lib-group'); const fold=grp&&grp.querySelector('[data-ah-fold]'); const ei=fold?+fold.dataset.ahFold:-1; const entry=hist[ei]; const c=(entry&&Array.isArray(entry.list))?entry.list[ci]:null; if(c){ applyChosenCandidate(c, {render:true}); refreshAiHistBadge(); close(); } return; }
+    const ahAdd = e.target.closest('[data-ah-addgap]');
+    if(ahAdd){ const p=(ahAdd.dataset.ahAddgap||'').split('__'); if(p.length===3){ const ei=+p[0], ci=+p[1], gi=+p[2]; aiHistAddGap(ei, ci, gi); refreshAiHistBadge(); } return; }
+    const ahAddAll = e.target.closest('[data-ah-addgapall]');
+    if(ahAddAll){ const p=(ahAddAll.dataset.ahAddgapall||'').split('__'); if(p.length===2){ aiHistAddGapAll(+p[0], +p[1]); refreshAiHistBadge(); } return; }
     const del = e.target.closest('[data-ah-del]');
     if(del){ const ei=+del.dataset.ahDel; const a=getAiHist(); if(a[ei]){ a.splice(ei,1); setAiHist(a); } refreshAiHistBadge(); const p=$('#aiHistPanel'); if(p) p.remove(); openAiHistPanel(); return; }
     const clr = e.target.closest('[data-ah-clear]');
@@ -7380,7 +7425,7 @@ function chapterPlanBlock(){
               <span class="cp-micropick-ic">${b.emoji||'🥁'}</span>
               <span class="cp-micropick-txt">
                 <b>${esc(b.label)}</b>
-                <i>${esc(b.desc||'')}${b.wc?`（${b.wc}）`:''}</i>
+                <i>${esc(b.desc||'')}</i>
               </span>
               <input type="radio" name="cpMicroPick" value="${b.id}" ${b.id===currentBeatId()?'checked':''} style="display:none">
             </label>
@@ -9511,7 +9556,7 @@ function bindView(){
 
   // P1
   const idea = $('#ideaInput'); if(idea){
-    idea.oninput = ()=> state.idea = idea.value;
+    idea.oninput = ()=>{ state.idea = idea.value; syncOrigIdeaCard(); };
     // 阶段3/3.2：生成大纲 = 纯搬运函数（before-outline 态也仅在 ideaInput 在场时才有 btnGenOutline）
     const _go0 = $('#btnGenOutline'); if(_go0) _go0.onclick = ()=> genOutline();
     // v1.0.186 叙事主体·团队：选中即持久化并整页重渲染
