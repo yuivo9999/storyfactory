@@ -1518,7 +1518,7 @@ textarea[readonly]::selection{ background:color-mix(in srgb, var(--accent2) 45%,
 .reader-syn-card .rb-ov-sec{ margin:12px 0 }
 .reader-syn-card .rb-ov-sec:first-child{ margin-top:4px }
 .reader-syn-card .rb-ov-lb{ display:inline-block; margin-bottom:5px; padding:2px 12px; border-radius:20px; font-size:12px; font-weight:700; color:#fff; background:linear-gradient(135deg,#8b5cf6,#7c3aed); box-shadow:0 1px 4px rgba(124,58,237,.4) }
-.reader-syn-card .rb-ov-sec > div{ font-size:14px; line-height:1.8; color:rgba(255,255,255,.9); word-break:break-word; white-space:normal }
+.reader-syn-card .rb-ov-sec > div{ font-size:14px; line-height:1.8; color:var(--txt); word-break:break-word; white-space:normal }
 /* v1.0.115 速读梗概 · 阅读风容器（古风 palette，仅对本容器生效，不动全局主题变量，避免误伤其它界面） */
 .strip-read{
   background:#f7f1e3;               /* 宣纸米底 */
