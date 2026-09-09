@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0f1115">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f6f8">
 <title>影视前期提示词生成器</title>
-<meta name="app-version" content="1.0.298">
+<meta name="app-version" content="1.0.299">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="assets/style.css?v=199">
 <link rel="stylesheet" href="assets/vendor/nouislider/nouislider.min.css">
@@ -180,6 +180,16 @@
         <p class="hint">各任务专属温度已并入「🎯 分任务模型设置」面板中每行标题右侧的温度框，随分任务模型一并保存（含词典达人 / 正文 / 规划师 / 标题 / 词库 / 梗概 / 摘要 / 内容建议 / 资产 / 配方等）。此处全局温度仅作用于未单独设置温度的任务。</p>
       </div>
 
+      <!-- v1.0.299 完成声音提示 -->
+      <div class="set-block">
+        <div class="set-block-head"><span>🔔 完成声音提示</span></div>
+        <label class="field"><span>节拍表完成 / 一键四步全部完成时播放提醒音</span>
+          <input id="cfgSoundDone" type="checkbox"></label>
+        <label class="field"><span>音量 <span id="cfgSoundVolLabel" class="muted">80%</span></span>
+          <input id="cfgSoundVol" type="range" min="0" max="100" step="5" value="80"></label>
+        <p class="hint">Web Audio 本地合成、无需联网；仅「节拍表」完成响一声、四步全部完成快速响两声。浏览器自动播放策略要求首次点击任意界面即可解锁音频（点击生成按钮本身即解锁）。</p>
+      </div>
+
       <div class="modal-actions">
         <button id="btnCfgTest" class="btn ghost">测试连接</button>
         <button id="btnCfgSave" class="btn primary">保存</button>
@@ -259,6 +269,6 @@
   <script src="assets/vendor/tom-select/tom-select.complete.min.js"></script>
 <script src="assets/vendor/jszip.min.js"></script>
 <script src="assets/idb.js?v=5"></script>
-  <script src="assets/app.js?v=339"></script>
+  <script src="assets/app.js?v=340"></script>
   </body>
 </html>
